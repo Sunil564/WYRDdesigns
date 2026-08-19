@@ -1,0 +1,6 @@
+.next
+node_modules
+public
+build-logs
+docs/brand.md
+docs/supplied-superseded

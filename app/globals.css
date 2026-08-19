@@ -1,0 +1,236 @@
+@import 'tailwindcss';
+
+/*
+  WYRD design tokens. Tailwind v4, CSS first. Every value here is traceable in
+  docs/design-system.md, which records whether it came from docs/brand.md or
+  from section 4 of the build brief.
+
+  Nothing outside this file may hardcode a hex colour or a px font size.
+*/
+
+@theme inline {
+  --font-sans: var(--font-satoshi), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
+}
+
+@theme {
+  /* Colour. Dark canvas, one accent. Brief section 4.1. */
+  --color-void: #08080a;
+  --color-surface: #101013;
+  --color-surface-2: #191920;
+  --color-line: #26262e;
+  --color-paper: #f2efe9;
+  --color-muted: #8b8b95;
+  --color-signal: #ff521f;
+  --color-signal-dim: #b33714;
+
+  /* Type scale. Fluid, clamped. Brief section 4.2, mega adjusted, see docs. */
+  --text-mega: clamp(2.25rem, 7vw, 6rem);
+  --text-mega--line-height: 0.95;
+  --text-mega--letter-spacing: -0.03em;
+
+  --text-display: clamp(2.25rem, 5vw, 5rem);
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.022em;
+
+  --text-title: clamp(1.5rem, 2.4vw, 2.5rem);
+  --text-title--line-height: 1.15;
+  --text-title--letter-spacing: -0.012em;
+
+  --text-lead: clamp(1.125rem, 1.5vw, 1.5rem);
+  --text-lead--line-height: 1.5;
+  --text-lead--letter-spacing: -0.006em;
+
+  --text-body: clamp(1rem, 1.1vw, 1.125rem);
+  --text-body--line-height: 1.6;
+  --text-body--letter-spacing: 0em;
+
+  --text-label: clamp(0.75rem, 0.85vw, 0.8125rem);
+  --text-label--line-height: 1.4;
+  --text-label--letter-spacing: 0.12em;
+
+  /* Radii. Structural blocks are square. Brief section 4.4. */
+  --radius-none: 0px;
+  --radius-input: 4px;
+  --radius-pill: 999px;
+
+  /* Layout. 12 columns, 1440px content ceiling. Brief section 4.3. */
+  --container-content: 1440px;
+  --container-measure: 68ch;
+
+  /* Motion. Brief section 5.1. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 200ms;
+  --dur-base: 500ms;
+  --dur-slow: 900ms;
+
+  /* Stagger constants, referenced by GSAP and by CSS delays alike. */
+  --stagger-sibling: 60ms;
+  --stagger-char: 18ms;
+}
+
+/*
+  Base layer. Dark canvas only, no light mode. See docs/decisions/0010.
+*/
+@layer base {
+  :root {
+    color-scheme: dark;
+    --gutter: 24px;
+    --section-y: 128px;
+  }
+
+  @media (width >= 64rem) {
+    :root {
+      --gutter: 48px;
+      --section-y: 192px;
+    }
+  }
+
+  * {
+    min-width: 0;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  /* Lenis owns the scroll when it is mounted, so native smooth scroll steps aside. */
+  html.lenis {
+    scroll-behavior: auto;
+  }
+
+  body {
+    background-color: var(--color-void);
+    color: var(--color-paper);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.6;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-weight: 700;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: var(--color-signal);
+    color: var(--color-void);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-signal);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* Anything that has focus but is not keyboard focused keeps the canvas clean. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    /*
+      Reduced motion is a hard stop, not a softening. Nothing transitions,
+      nothing loops, everything is already in its final state.
+    */
+    *,
+    *::before,
+    *::after {
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 1ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/*
+  Utilities. Kept few on purpose. Anything used twice becomes a component,
+  anything used once stays inline.
+*/
+
+/* The measure cap from section 4.2. Body copy never runs wider than 68ch. */
+@utility measure {
+  max-width: var(--container-measure);
+}
+
+/* Uppercase label treatment used by every eyebrow and meta line. */
+@utility label {
+  font-size: var(--text-label);
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Editorial italic. One phrase per viewport, never UI, never body copy. */
+@utility editorial {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Section rhythm. 128px mobile, 192px desktop, driven by one custom property. */
+@utility section-y {
+  padding-block: var(--section-y);
+}
+
+/* Hairline dividers. 1px, --color-line, no shadow anywhere on this site. */
+@utility hairline-t {
+  border-top: 1px solid var(--color-line);
+}
+
+@utility hairline-b {
+  border-bottom: 1px solid var(--color-line);
+}
+
+/*
+  The grain overlay. One tiling noise texture, fixed, non interactive, low
+  opacity. This is what stops the dark canvas reading as flat. Brief 4.4.
+*/
+@utility grain {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image: url('/noise.png');
+  background-repeat: repeat;
+  background-size: 128px 128px;
+  opacity: 0.04;
+  mix-blend-mode: soft-light;
+}
+
+/*
+  Mask rendered client logo. The file is an alpha only ink mask, so the colour
+  comes from currentColor and the hover transition is one property. See
+  docs/decisions/0004.
+*/
+@utility logo-mask {
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
