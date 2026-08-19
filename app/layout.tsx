@@ -42,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           staying invisible. One rule, no runtime cost.
         */}
         <noscript>
-          <style>{`[data-reveal]{opacity:1 !important;transform:none !important}`}</style>
+          <style>{`[data-reveal],[data-enter]{opacity:1 !important;transform:none !important}`}</style>
         </noscript>
       </head>
       <body>

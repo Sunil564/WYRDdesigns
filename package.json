@@ -14,12 +14,16 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:dashes": "python scripts/check-dashes.py",
+    "check:shell": "node scripts/check-shell.mjs",
+    "check:tiers": "node scripts/check-tiers.mjs",
+    "check:hero": "node scripts/check-hero.mjs",
+    "shoot": "node scripts/shoot.mjs",
     "assets": "python scripts/process-assets.py",
     "verify": "npm run check:dashes && npm run typecheck && npm run lint && npm run build"
   },
   "dependencies": {
-    "@react-three/drei": "^10.7.8",
-    "@react-three/fiber": "^9.7.0",
+    "@react-three/drei": "10.7.8",
+    "@react-three/fiber": "9.7.0",
     "@vercel/analytics": "2.0.1",
     "@vercel/speed-insights": "2.0.0",
     "gsap": "3.15.0",
@@ -29,7 +33,7 @@
     "next": "15.5.23",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "three": "^0.185.1",
+    "three": "0.180.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
@@ -38,7 +42,7 @@
     "@types/node": "22.19.0",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
-    "@types/three": "^0.185.4",
+    "@types/three": "0.180.0",
     "eslint": "9.39.5",
     "eslint-config-next": "15.5.23",
     "playwright": "^1.62.1",

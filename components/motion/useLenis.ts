@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import type Lenis from 'lenis'
+import { loadGsap } from '@/components/motion/gsap'
 import { useReducedMotion } from '@/components/motion/useReducedMotion'
 
 /**
@@ -30,14 +31,11 @@ export function useLenis(): void {
     let cleanupTicker: (() => void) | undefined
 
     const start = async () => {
-      const [{ default: LenisCtor }, { gsap }, { ScrollTrigger }] = await Promise.all([
+      const [{ default: LenisCtor }, { gsap, ScrollTrigger }] = await Promise.all([
         import('lenis'),
-        import('gsap'),
-        import('gsap/ScrollTrigger'),
+        loadGsap(),
       ])
       if (cancelled) return
-
-      gsap.registerPlugin(ScrollTrigger)
 
       const lenis = new LenisCtor({
         duration: 1.05,

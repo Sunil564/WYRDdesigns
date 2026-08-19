@@ -21,11 +21,15 @@ Installed later, in the phase that needs them, so they are not in the graph befo
 
 | Layer | Package | Phase |
 |---|---|---|
-| WebGL | `three`, `@react-three/fiber`, `@react-three/drei`, `@types/three` | 2b |
+| WebGL | `three` 0.180.0 pinned, `@react-three/fiber` 9.7.0, `@react-three/drei` 10.7.8, `@types/three` 0.180.0 | 2b |
 | Email | `resend` | 5 |
 | Long form content | `@next/mdx` and the MDX pipeline | 5 |
 
 Next.js 16 is current. This build stays on 15 because the brief specifies it. See ADR 0006.
+
+`three` is pinned to 0.180.0 rather than the current 0.185. From 0.184 onward three prints a `THREE.Clock` deprecation warning, and R3F 9.7 constructs a `Clock` internally, so every page with a canvas would log a warning. Criterion 18 allows none. The pin comes off when R3F moves to `THREE.Timer`. See ADR 0017.
+
+`drei` is installed and imported nowhere. It stays that way until a specific helper earns its bytes, per the cut order in ADR 0016.
 
 ## 2. Commands
 
@@ -39,6 +43,10 @@ Next.js 16 is current. This build stays on 15 because the brief specifies it. Se
 | `npm run check:dashes` | fails on any em dash, en dash, horizontal bar, or minus sign in the repo |
 | `npm run assets` | regenerates `public/logos` and `public/brand` from the source folder |
 | `npm run verify` | dashes, types, lint, build, in that order |
+| `node scripts/shoot.mjs` | screenshots every route at 375, 768, and 1440, plus a reduced motion pass |
+| `node scripts/check-shell.mjs` | asserts the Phase 2 shell behaviours in a real browser |
+| `node scripts/check-tiers.mjs` | asserts the tier split and the byte budgets against `next start` |
+| `node scripts/check-hero.mjs` | asserts the Phase 3 hero criteria against `next start` |
 
 `npm run verify` is what a phase runs before reporting. It is not a substitute for looking at the site.
 

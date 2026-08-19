@@ -25,7 +25,7 @@
   --color-signal-dim: #b33714;
 
   /* Type scale. Fluid, clamped. Brief section 4.2, mega adjusted, see docs. */
-  --text-mega: clamp(2.25rem, 7vw, 6rem);
+  --text-mega: clamp(2.25rem, 7vw, 5rem);
   --text-mega--line-height: 0.95;
   --text-mega--letter-spacing: -0.03em;
 
@@ -170,12 +170,53 @@
     transition-delay: var(--reveal-delay);
   }
 
+  /*
+    Hero entrance. Same shape as the reveal above: one attribute, transform and
+    opacity only, and the transition declared once.
+  */
+  .hero-enter {
+    transition:
+      opacity var(--dur-base) var(--ease-out),
+      transform var(--dur-base) var(--ease-out);
+  }
+
+  .hero-enter-late {
+    /* The 300ms the brief puts between the headline finishing and the actions. */
+    transition-delay: 300ms;
+  }
+
+  [data-enter='out'] {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+
+  [data-enter='in'] {
+    opacity: 1;
+    transform: none;
+  }
+
+  /*
+    SplitText line and character wrappers. The line mask is what makes characters
+    rise out of a hard edge rather than fade up out of nothing.
+  */
+  .headline-line {
+    overflow: hidden;
+    display: block;
+  }
+
+  .headline-char {
+    display: inline-block;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
     }
 
     /* Reduced motion renders the final state on first paint, never a delayed one. */
+    [data-enter],
     [data-reveal] {
       opacity: 1 !important;
       transform: none !important;
