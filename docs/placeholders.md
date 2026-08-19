@@ -20,8 +20,11 @@ Kept current at the end of every phase. Updated through Phase 4.
 
 | Where | Component | Seed | What is there now | What replaces it |
 |---|---|---|---|---|
-| S4 Selected work, card 1 | `Placeholder` | project slug | Generated abstract visual, 4:5 | The lead visual for that project |
-| S4 Selected work, cards 2 and 3 | `Placeholder` | project slug | Generated abstract visual, 16:9 | The lead visual for that project |
+| S4 lead card | `Placeholder` | `ecommerce-garments` | Generated abstract visual, 4:5, `gradient` | The lead visual for that project |
+| S4 second card | `Placeholder` | `brand-film-manufacturing` | Generated abstract visual, 16:9, `lines` | The lead visual for that project |
+| S4 third card | `Placeholder` | `exhibition-hospitality` | Generated abstract visual, 16:9, `mesh` | The lead visual for that project |
+
+Each S4 card also carries a visible `Pending clearance` tag, because the project itself is a placeholder and not only its visual. The tag disappears when the entry in `content/projects.ts` sets `placeholder: false`.
 
 ## Work
 

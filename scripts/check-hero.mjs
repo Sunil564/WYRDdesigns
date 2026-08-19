@@ -26,9 +26,14 @@ function record(name, pass, detail = '') {
  */
 const EXPECTED_404 = /_vercel\/(insights|speed-insights)|\/(work|studio|contact)(\?_rsc=|$)/
 
-const browser = await chromium.launch({
-  args: ['--enable-precise-memory-info', '--use-gl=angle', '--use-angle=swiftshader'],
-})
+/*
+  No explicit GL flags. Headless Chromium already falls back to SwiftShader for
+  WebGL, and forcing `--use-angle=swiftshader` makes the compositor leave stale
+  tiles on screen during scroll, which looks exactly like a layout bug in a
+  screenshot and is not one. Confirmed by taking the same shot with and without
+  the flag.
+*/
+const browser = await chromium.launch({ args: ['--enable-precise-memory-info'] })
 
 async function open(tier, viewport, options = {}) {
   const context = await browser.newContext({
@@ -189,12 +194,12 @@ async function open(tier, viewport, options = {}) {
         requestAnimationFrame(tick)
       }),
   )
-  // Chromium headless with SwiftShader software rendering, which is far slower
-  // than any real GPU. Anything above 30 here means a real device is fine.
+  // Headless software rendering, far slower than any real GPU. Anything above 30
+  // here means a real device is comfortable.
   record(
     'the field holds frame rate under software rendering',
     fps > 30,
-    `${fps.toFixed(1)}fps with SwiftShader, no hardware GPU`,
+    `${fps.toFixed(1)}fps with no hardware GPU`,
   )
 
   // No CPU loop over particle positions: the main thread must stay idle enough to

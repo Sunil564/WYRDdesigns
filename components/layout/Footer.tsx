@@ -27,12 +27,12 @@ export function Footer() {
 
           <nav aria-label="Footer">
             <p className="label text-muted">Site</p>
-            <ul className="mt-6 flex flex-col gap-3">
+            <ul className="mt-4 flex flex-col">
               {nav.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-body text-paper hover:text-signal transition-colors duration-[var(--dur-fast)]"
+                    className="tap text-body text-paper hover:text-signal transition-colors duration-[var(--dur-fast)]"
                   >
                     {link.label}
                   </Link>
@@ -43,11 +43,11 @@ export function Footer() {
 
           <div>
             <p className="label text-muted">Contact</p>
-            <ul className="mt-6 flex flex-col gap-3">
+            <ul className="mt-4 flex flex-col">
               <li>
                 <a
                   href={`mailto:${site.email}`}
-                  className="text-body text-paper hover:text-signal transition-colors duration-[var(--dur-fast)]"
+                  className="tap text-body text-paper hover:text-signal transition-colors duration-[var(--dur-fast)]"
                 >
                   {site.email}
                 </a>
@@ -56,7 +56,7 @@ export function Footer() {
                 <li key={phone}>
                   <a
                     href={`tel:${phone.replace(/\s+/g, '')}`}
-                    className="text-body text-paper hover:text-signal transition-colors duration-[var(--dur-fast)]"
+                    className="tap text-body text-paper hover:text-signal transition-colors duration-[var(--dur-fast)]"
                   >
                     {phone}
                   </a>
@@ -68,7 +68,7 @@ export function Footer() {
                     href={social.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-body text-paper hover:text-signal transition-colors duration-[var(--dur-fast)]"
+                    className="tap text-body text-paper hover:text-signal transition-colors duration-[var(--dur-fast)]"
                   >
                     {social.name}
                   </a>
@@ -87,7 +87,7 @@ export function Footer() {
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className="label text-muted hover:text-paper transition-colors duration-[var(--dur-fast)]"
+                  className="tap label text-muted hover:text-paper transition-colors duration-[var(--dur-fast)]"
                 >
                   {link.label}
                 </Link>

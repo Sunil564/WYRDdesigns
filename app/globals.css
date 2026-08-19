@@ -313,6 +313,193 @@
 }
 
 /*
+  Minimum tap target. Criterion 17 asks for 44px on every interactive element, and
+  a text link in a list is 20px tall by default. This makes the target 44px without
+  changing the type size or the visual rhythm of the list.
+*/
+@utility tap {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/*
+  S3 capability grid. The pointer highlight is a radial gradient positioned by two
+  custom properties written on pointermove, so the compositor paints it and no
+  JavaScript repaint happens per frame. Brief 6.1 S3.
+*/
+@utility capability-grid {
+  position: relative;
+  --pointer-x: 50%;
+  --pointer-y: 50%;
+  --pointer-opacity: 0;
+}
+
+.capability-grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--pointer-opacity);
+  transition: opacity var(--dur-base) var(--ease-out);
+  background: radial-gradient(
+    360px circle at var(--pointer-x) var(--pointer-y),
+    color-mix(in oklab, var(--color-paper) 7%, transparent),
+    transparent 70%
+  );
+}
+
+.capability-block {
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.capability-block:hover,
+.capability-block:focus-within {
+  background-color: var(--color-surface-2);
+}
+
+/* The hairline that sweeps left to right across the top edge on hover. */
+.capability-sweep {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background-color: var(--color-signal);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.capability-block:hover .capability-sweep,
+.capability-block:focus-within .capability-sweep {
+  transform: scaleX(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .capability-grid::before {
+    display: none;
+  }
+
+  .capability-sweep {
+    transition: none;
+  }
+}
+
+/*
+  S4 work cards. The visual scales inside a fixed frame, so the frame never moves
+  and the card can never shift the layout. Transform only. Brief 6.1 S4.
+*/
+.work-card-visual {
+  transform: scale(1);
+  transition: transform var(--dur-base) var(--ease-out);
+  will-change: transform;
+}
+
+.work-card:hover .work-card-visual,
+.work-card:focus-within .work-card-visual {
+  transform: scale(1.04);
+}
+
+.work-card-title {
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.work-card:hover .work-card-title,
+.work-card:focus-within .work-card-title {
+  transform: translate3d(8px, 0, 0);
+}
+
+/*
+  The VIEW label that replaces the native cursor inside a card. Positioned by a
+  transform written from one RAF loop that only runs while the pointer is inside.
+*/
+.cursor-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  pointer-events: none;
+  display: none;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-signal);
+  color: var(--color-void);
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.cursor-label[data-active='true'] {
+  display: block;
+  opacity: 1;
+}
+
+@media (pointer: fine) {
+  .work-card:hover a {
+    cursor: none;
+  }
+}
+
+/*
+  S5 marquee. Two rows, opposite directions, paused on hover and when out of view.
+  CSS transform, no library, no JavaScript on the animation path. Built for eight
+  logos or more, unused at six. Brief 6.1 S5.
+*/
+.marquee {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  overflow: hidden;
+  /* Fade the edges to void so logos do not hard cut at the viewport edge. */
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+.marquee-row {
+  display: flex;
+  overflow: hidden;
+}
+
+.marquee-track {
+  display: flex;
+  align-items: center;
+  gap: 4rem;
+  padding-inline-end: 4rem;
+  flex: none;
+  animation-name: marquee-pass;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-play-state: paused;
+}
+
+.marquee[data-running='true'] .marquee-track {
+  animation-play-state: running;
+}
+
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-pass {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+
+  .cursor-label {
+    display: none !important;
+  }
+}
+
+/*
   Mask rendered client logo. The file is an alpha only ink mask, so the colour
   comes from currentColor and the hover transition is one property. See
   docs/decisions/0004.

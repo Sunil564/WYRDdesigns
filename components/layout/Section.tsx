@@ -36,7 +36,9 @@ export function Section({
     <section
       id={id}
       aria-label={label}
-      className={cn('relative', rhythm && 'section-y', divider && 'hairline-t', className)}
+      // z-10 keeps section content above the Thread overlay, which sits at z-2,
+      // above the grain at z-1. The Thread is never in front of content.
+      className={cn('relative z-10', rhythm && 'section-y', divider && 'hairline-t', className)}
     >
       <Container bleed={bleed} className={innerClassName}>
         {children}

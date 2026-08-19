@@ -68,7 +68,7 @@ export function Header() {
           <Link
             href="/"
             aria-label="WYRD Designs, home"
-            className="transition-opacity duration-[var(--dur-fast)] hover:opacity-80"
+            className="tap transition-opacity duration-[var(--dur-fast)] hover:opacity-80"
           >
             <Wordmark />
           </Link>
@@ -80,7 +80,7 @@ export function Header() {
                 href={link.href}
                 aria-current={pathname === link.href ? 'page' : undefined}
                 className={cn(
-                  'label transition-colors duration-[var(--dur-fast)]',
+                  'tap label transition-colors duration-[var(--dur-fast)]',
                   pathname === link.href ? 'text-paper' : 'text-muted hover:text-paper',
                 )}
               >
