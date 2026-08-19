@@ -255,6 +255,23 @@
 }
 
 /*
+  The closing wordmark in the footer. Set at viewport width so it is clipped by
+  the bottom edge of the page. Lives here because it is the one type size on the
+  site that is not on the scale, and no px or rem font size may exist outside
+  this file.
+*/
+@utility wordmark-close {
+  font-size: clamp(6rem, 26vw, 26rem);
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: var(--color-surface-2);
+  margin-bottom: -0.18em;
+  text-align: center;
+  width: 100%;
+}
+
+/*
   Mask rendered client logo. The file is an alpha only ink mask, so the colour
   comes from currentColor and the hover transition is one property. See
   docs/decisions/0004.

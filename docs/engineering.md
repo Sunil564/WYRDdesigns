@@ -104,7 +104,7 @@ Per tier, because a single blended number hides the thing that matters.
 
 The LCP element is text on every route. If the canvas ever becomes the LCP element, that is a bug.
 
-If the Full tier exceeds 500kb, the cut comes from drei imports and postprocessing before it comes from particle count. See ADR 0017.
+If the Full tier exceeds 500kb, the cut comes from drei imports and postprocessing before it comes from particle count. See ADR 0016.
 
 ## 7. Content
 

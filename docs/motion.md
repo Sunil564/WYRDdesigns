@@ -60,7 +60,7 @@ The organising idea from brief section 2.2, and the reason the motion system is 
 - Below 1024px: a single straight vertical line, no branching. Branch geometry depends on a two column grid that does not exist on mobile.
 - Reduced motion: the full path renders at rest colour with no draw animation and no travelling segment.
 
-Technical approach and the mobile fallback: ADR 0016.
+Technical approach and the mobile fallback: ADR 0018.
 
 ## 5. Per section motion
 
@@ -99,6 +99,8 @@ Magnetic button and cursor label are disabled on coarse pointers and under reduc
 ADR 0008 records the split. A fourth animation library needs its own ADR.
 
 ## 7. Scroll
+
+Architecture and the single RAF loop: ADR 0014.
 
 Lenis owns the scroll, GSAP ScrollTrigger is driven from Lenis's `scroll` event, and `ScrollTrigger.update` is called from it. `lenis.raf` runs on GSAP's ticker so there is exactly one RAF loop for scroll on the page.
 

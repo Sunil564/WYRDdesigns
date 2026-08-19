@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from 'next'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { SiteMotion } from '@/components/motion/SiteMotion'
 import { instrumentSerif, satoshi } from '@/lib/fonts'
 import { SITE_URL } from '@/lib/site-url'
 import { THEME_COLOR_VOID } from '@/lib/theme'
@@ -43,7 +46,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </noscript>
       </head>
       <body>
-        {children}
+        <SiteMotion>
+          <Header />
+          <div id="content">{children}</div>
+          <Footer />
+        </SiteMotion>
         <div className="grain" aria-hidden="true" />
         <Analytics />
         <SpeedInsights />
