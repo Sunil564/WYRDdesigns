@@ -216,7 +216,6 @@ record(
   await page.waitForTimeout(1500)
 
   const before = await page.evaluate(async () => {
-    // eslint-disable-next-line no-undef
     if (window.gc) window.gc()
     const memory = performance.memory
     return memory ? memory.usedJSHeapSize : 0
