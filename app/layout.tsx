@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { instrumentSerif, satoshi } from '@/lib/fonts'
 import { SITE_URL } from '@/lib/site-url'
+import { THEME_COLOR_VOID } from '@/lib/theme'
 import { defaultMeta, site } from '@/content/site'
 import './globals.css'
 
@@ -24,13 +25,23 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#08080A',
+  themeColor: THEME_COLOR_VOID,
   colorScheme: 'dark',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${satoshi.variable} ${instrumentSerif.variable}`}>
+      <head>
+        {/*
+          Entrances are flipped on by an IntersectionObserver. With JavaScript off
+          nothing would flip, so the content is shown in its final state instead of
+          staying invisible. One rule, no runtime cost.
+        */}
+        <noscript>
+          <style>{`[data-reveal]{opacity:1 !important;transform:none !important}`}</style>
+        </noscript>
+      </head>
       <body>
         {children}
         <div className="grain" aria-hidden="true" />

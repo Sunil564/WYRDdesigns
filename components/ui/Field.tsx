@@ -1,0 +1,160 @@
+import type { ComponentPropsWithoutRef, ReactNode } from 'react'
+import { cn } from '@/lib/utils'
+
+type FieldShellProps = {
+  id: string
+  label: string
+  /** Rendered as an inline message and wired to the control with aria-describedby. */
+  error?: string | null
+  /** Quiet helper line under the label. */
+  hint?: string
+  required?: boolean
+  children: ReactNode
+  className?: string
+}
+
+const control =
+  'w-full rounded-input border bg-surface px-4 py-3 text-body text-paper ' +
+  'placeholder:text-muted transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out)] ' +
+  'hover:border-muted focus:border-signal focus:outline-none'
+
+/**
+ * One shell, three controls. The label, the error wiring, and the 4px radius are
+ * identical across input, textarea, and select, so they live in one place and the
+ * three exports below only differ by the element they render.
+ *
+ * Error text is plain and inline. No red panic, no icon, and the entered value is
+ * never cleared, which is a requirement of the form spec in brief section 6.5.
+ */
+export function FieldShell({
+  id,
+  label,
+  error,
+  hint,
+  required,
+  children,
+  className,
+}: FieldShellProps) {
+  return (
+    <div className={cn('flex flex-col gap-2', className)}>
+      <label className="label text-muted" htmlFor={id}>
+        {label}
+        {required && (
+          <span aria-hidden="true" className="text-signal ml-1">
+            *
+          </span>
+        )}
+      </label>
+      {hint && <p className="text-body text-muted">{hint}</p>}
+      {children}
+      {error && (
+        <p id={`${id}-error`} className="text-body text-signal" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
+type FieldProps = Omit<FieldShellProps, 'children'> &
+  Omit<ComponentPropsWithoutRef<'input'>, 'id' | 'className' | 'required'>
+
+export function Field({ id, label, error, hint, required, className, ...rest }: FieldProps) {
+  return (
+    <FieldShell
+      id={id}
+      label={label}
+      error={error}
+      hint={hint}
+      required={required}
+      className={className}
+    >
+      <input
+        id={id}
+        name={rest.name ?? id}
+        required={required}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-error` : undefined}
+        className={cn(control, error ? 'border-signal' : 'border-line')}
+        {...rest}
+      />
+    </FieldShell>
+  )
+}
+
+type TextAreaProps = Omit<FieldShellProps, 'children'> &
+  Omit<ComponentPropsWithoutRef<'textarea'>, 'id' | 'className' | 'required'>
+
+export function TextAreaField({
+  id,
+  label,
+  error,
+  hint,
+  required,
+  className,
+  ...rest
+}: TextAreaProps) {
+  return (
+    <FieldShell
+      id={id}
+      label={label}
+      error={error}
+      hint={hint}
+      required={required}
+      className={className}
+    >
+      <textarea
+        id={id}
+        name={rest.name ?? id}
+        required={required}
+        rows={rest.rows ?? 5}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-error` : undefined}
+        className={cn(control, 'resize-y', error ? 'border-signal' : 'border-line')}
+        {...rest}
+      />
+    </FieldShell>
+  )
+}
+
+type SelectProps = Omit<FieldShellProps, 'children'> & {
+  options: ReadonlyArray<{ value: string; label: string }>
+} & Omit<ComponentPropsWithoutRef<'select'>, 'id' | 'className' | 'required' | 'children'>
+
+export function SelectField({
+  id,
+  label,
+  error,
+  hint,
+  required,
+  options,
+  className,
+  ...rest
+}: SelectProps) {
+  return (
+    <FieldShell
+      id={id}
+      label={label}
+      error={error}
+      hint={hint}
+      required={required}
+      className={className}
+    >
+      <select
+        id={id}
+        name={rest.name ?? id}
+        required={required}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-error` : undefined}
+        className={cn(control, 'appearance-none', error ? 'border-signal' : 'border-line')}
+        {...rest}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value} className="bg-surface text-paper">
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </FieldShell>
+  )
+}

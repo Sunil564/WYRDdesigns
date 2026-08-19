@@ -21,6 +21,11 @@ const config = [
       'no-console': ['error', { allow: ['warn', 'error'] }],
     },
   },
+  {
+    // The screenshot harness is a development tool and its whole output is a report.
+    files: ['scripts/**/*.mjs'],
+    rules: { 'no-console': 'off' },
+  },
 ]
 
 export default config

@@ -1,0 +1,51 @@
+# Placeholder register
+
+Every placeholder on the site, what it stands in for, and what replaces it. Generated visuals carry a `data-placeholder` attribute with the note text, so this list can be checked against the built HTML with a grep:
+
+```
+grep -o 'data-placeholder="[^"]*"' .next/server/app/*.html
+```
+
+Kept current at the end of every phase. Updated through Phase 4.
+
+## Brand
+
+| Where | Path | What is there now | What replaces it |
+|---|---|---|---|
+| Header mark | `components/layout/Header.tsx` | `WYRD` set in Satoshi, letterspaced, paper with `Designs` in muted | The real mark, once a vector and a dark background variant exist. The supplied PNG is black on transparent and invisible on `--color-void`. See ADR 0003 and BLOCKERS item 2. |
+| Footer wordmark | `components/layout/Footer.tsx` | Same treatment at display scale | Same |
+| Favicon 16 and 32 | `public/brand/icon-16.png`, `icon-32.png` | The supplied wordmark contained on brand paper. Legible as a shape, not as letters, at 16px | A square single glyph mark |
+
+## Home
+
+| Where | Component | Seed | What is there now | What replaces it |
+|---|---|---|---|---|
+| S4 Selected work, card 1 | `Placeholder` | project slug | Generated abstract visual, 4:5 | The lead visual for that project |
+| S4 Selected work, cards 2 and 3 | `Placeholder` | project slug | Generated abstract visual, 16:9 | The lead visual for that project |
+
+## Work
+
+| Where | Component | What is there now | What replaces it |
+|---|---|---|---|
+| `/work` grid cards | `Placeholder` | One generated visual per project entry | Real project visuals |
+| `/work/[slug]` hero and body visuals | `Placeholder` | Generated visuals at the aspect ratios in the template | Real project visuals |
+
+## Content
+
+| Where | File | What is there now | What replaces it |
+|---|---|---|---|
+| Project entries | `content/projects.ts` | Entries flagged `placeholder: true`, with no client name, no outcome metric, and a generic sector description | Cleared project data. Until then the outcome block does not render at all, per ADR 0009. |
+
+## What is deliberately absent rather than placeheld
+
+These are not placeholders. They are sections that do not render because the fact does not exist, which is the correct behaviour per section 1 of the brief.
+
+| Thing | Why absent |
+|---|---|
+| Team section on `/studio` | No real names supplied |
+| Street address | None supplied. Only `Bangalore, Karnataka, India` renders. |
+| Outcome metrics on case studies | None supplied. Never invented. |
+| Testimonials | None supplied. No section exists for them. |
+| Client count, founding year, team size, awards | None supplied. Nothing on the site refers to any of them. |
+| Prices | Banned outright. Pricing is a conversation. |
+| Client logo marquee | Six logos supplied, and the marquee needs eight. A static centred row renders instead, per ADR 0004. |

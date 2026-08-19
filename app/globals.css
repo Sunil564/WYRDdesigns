@@ -146,9 +146,40 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /*
+    Reveal. Entrance state for anything that enters on scroll. Declarative on
+    purpose: the observer only flips one attribute, so there is no per frame
+    JavaScript and no layout thrash. Transform and opacity only.
+  */
+  [data-reveal] {
+    --reveal-y: 32px;
+    --reveal-delay: 0ms;
+  }
+
+  [data-reveal='out'] {
+    opacity: 0;
+    transform: translate3d(0, var(--reveal-y), 0);
+  }
+
+  [data-reveal='in'] {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity var(--dur-base) var(--ease-out),
+      transform var(--dur-base) var(--ease-out);
+    transition-delay: var(--reveal-delay);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
+    }
+
+    /* Reduced motion renders the final state on first paint, never a delayed one. */
+    [data-reveal] {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
     }
 
     /*
