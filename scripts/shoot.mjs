@@ -22,7 +22,7 @@ import { chromium } from 'playwright'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
-const BASE = process.env.SHOOT_BASE ?? 'http://localhost:3002'
+const BASE = process.env.SHOOT_BASE ?? 'http://localhost:3000'
 const OUT = 'build-logs/screens'
 const WIDTHS = [375, 768, 1440]
 
@@ -74,7 +74,7 @@ for (const route of targets) {
       if (/three|r3f|fiber|drei/i.test(url)) threeBytes.push(url)
     })
 
-    await page.goto(`${BASE}${route}`, { waitUntil: 'networkidle' })
+    await page.goto(`${BASE}${route}`, { waitUntil: 'load' })
     if (scrollTo > 0) {
       await page.evaluate((y) => window.scrollTo(0, y), scrollTo)
       await page.waitForTimeout(1200)

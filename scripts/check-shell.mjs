@@ -11,7 +11,7 @@
 
 import { chromium } from 'playwright'
 
-const BASE = process.env.SHOOT_BASE ?? 'http://localhost:3002'
+const BASE = process.env.SHOOT_BASE ?? 'http://localhost:3000'
 const results = []
 
 function record(name, pass, detail = '') {
@@ -31,7 +31,7 @@ const browser = await chromium.launch()
   })
   page.on('pageerror', (e) => errors.push(e.message))
 
-  await page.goto(`${BASE}/tokens`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/tokens`, { waitUntil: 'load' })
   await page.waitForTimeout(600)
 
   const atTop = await page.getAttribute('header', 'data-state')
@@ -121,7 +121,7 @@ const browser = await chromium.launch()
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
 
-  await page.goto(`${BASE}/tokens`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/tokens`, { waitUntil: 'load' })
   await page.waitForTimeout(400)
 
   const openButton = page.getByRole('button', { name: 'Open menu' })
@@ -197,7 +197,7 @@ const browser = await chromium.launch()
 
   for (const width of widths) {
     await page.setViewportSize({ width, height: 900 })
-    await page.goto(`${BASE}/tokens`, { waitUntil: 'networkidle' })
+    await page.goto(`${BASE}/tokens`, { waitUntil: 'load' })
     await page.waitForTimeout(400)
     const overflow = await page.evaluate(() => ({
       scroll: document.documentElement.scrollWidth,
@@ -221,7 +221,7 @@ const browser = await chromium.launch()
     reducedMotion: 'reduce',
   })
   const page = await context.newPage()
-  await page.goto(`${BASE}/tokens`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/tokens`, { waitUntil: 'load' })
   await page.waitForTimeout(900)
 
   const lenisMounted = await page.evaluate(() => Boolean(window.__lenis))

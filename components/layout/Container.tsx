@@ -1,9 +1,10 @@
-import type { ElementType, ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import { htmlTag, type HtmlTag } from '@/lib/polymorphic'
 import { cn } from '@/lib/utils'
 
 type ContainerProps = {
   children: ReactNode
-  as?: ElementType
+  as?: HtmlTag
   /** Full bleed content still needs the gutter, so it opts out of the max width only. */
   bleed?: boolean
   className?: string
@@ -15,7 +16,7 @@ type ContainerProps = {
  * classes anywhere else in the build.
  */
 export function Container({ children, as, bleed = false, className }: ContainerProps) {
-  const Tag = (as ?? 'div') as ElementType
+  const Tag = htmlTag(as, 'div')
   return (
     <Tag className={cn('w-full px-[var(--gutter)]', !bleed && 'max-w-content mx-auto', className)}>
       {children}

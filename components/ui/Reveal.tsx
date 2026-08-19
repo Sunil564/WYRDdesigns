@@ -1,13 +1,14 @@
 'use client'
 
-import type { ElementType, ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { useInView } from '@/components/motion/useInView'
+import { htmlTag, type HtmlTag } from '@/lib/polymorphic'
 import { cn } from '@/lib/utils'
 
 type RevealProps = {
   children: ReactNode
   /** Element to render. A reveal wrapper should not break document structure. */
-  as?: ElementType
+  as?: HtmlTag
   /** Delay in ms. Siblings step by 60ms, per brief section 5.2. */
   delay?: number
   /** Travel distance in px. 32 is the section default. */
@@ -26,7 +27,7 @@ type RevealProps = {
  * opacity and transform change. Nothing here can cause layout shift.
  */
 export function Reveal({ children, as, delay = 0, y = 32, className }: RevealProps) {
-  const Tag = (as ?? 'div') as ElementType
+  const Tag = htmlTag(as, 'div')
   const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.2, once: true })
 
   return (
@@ -37,7 +38,7 @@ export function Reveal({ children, as, delay = 0, y = 32, className }: RevealPro
         {
           '--reveal-delay': `${delay}ms`,
           '--reveal-y': `${y}px`,
-        } as React.CSSProperties
+        } as CSSProperties
       }
       className={cn(className)}
     >
