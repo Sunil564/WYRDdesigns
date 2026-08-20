@@ -19,6 +19,7 @@ import { useReducedMotion } from '@/components/motion/useReducedMotion'
  *   [data-thread-branch-point]    where one line becomes four
  *   [data-thread-branch-target]   the four cluster blocks
  *   [data-thread-converge]        the contact button, where four become one
+ *   [data-inverse-band]           a stretch of page where the ground is dark
  *
  * Above 1024px: one line down to the capabilities section, four strands from there
  * to the four cluster blocks, four strands running down the page, reconverging into
@@ -28,12 +29,19 @@ import { useReducedMotion } from '@/components/motion/useReducedMotion'
  * column grid that does not exist on mobile, and the brief says not to pay the
  * layout cost. The line still draws on scroll.
  *
+ * Where the Thread crosses a dark block it has to change colour or vanish into it.
+ * Every path is therefore drawn twice: once in `--border` and once in
+ * `--border-inverse` clipped to the dark bands, so exactly one of each pair is
+ * visible at any point down the page. See docs/decisions/0019.
+ *
  * Reduced motion: every path renders complete, at rest colour, with no draw and no
  * travelling segment.
  */
 
 /** Length of the accent coloured segment that follows the draw head, in px. */
 const HEAD_LENGTH = 240
+
+type Band = { top: number; bottom: number }
 
 type Geometry = {
   width: number
@@ -42,6 +50,8 @@ type Geometry = {
   branches: string[]
   strands: string[]
   converge: string
+  /** Stretches of page where the ground is dark and the hairline must invert. */
+  bands: Band[]
 }
 
 function centreOf(element: Element, scrollY: number) {
@@ -71,6 +81,15 @@ function measure(host: HTMLElement, wide: boolean): Geometry | null {
   const nodes = Array.from(document.querySelectorAll('[data-thread-node]'))
   const converge = document.querySelector('[data-thread-converge]')
 
+  // Every full bleed dark block on the page, in local coordinates. The Thread has
+  // to change colour for exactly these stretches or it disappears into them.
+  const bands: Band[] = Array.from(document.querySelectorAll('[data-inverse-band]')).map(
+    (element) => {
+      const box = centreOf(element, scrollY)
+      return { top: toLocal(box.top), bottom: toLocal(box.bottom) }
+    },
+  )
+
   const centreX = width / 2
   const startY = origin ? toLocal(centreOf(origin, scrollY).bottom) : 0
   const endY = converge ? toLocal(centreOf(converge, scrollY).top) : height
@@ -85,6 +104,7 @@ function measure(host: HTMLElement, wide: boolean): Geometry | null {
       branches: [],
       strands: [],
       converge: '',
+      bands,
     }
   }
 
@@ -136,6 +156,7 @@ function measure(host: HTMLElement, wide: boolean): Geometry | null {
     branches,
     strands,
     converge: `M ${convergeX} ${endY} L ${convergeX} ${endY + 8}`,
+    bands,
   }
 }
 
@@ -192,6 +213,7 @@ export function Thread() {
 
         for (const group of groups) {
           const body = group.querySelector<SVGPathElement>('[data-thread-body]')
+          const inverseBody = group.querySelector<SVGPathElement>('[data-thread-body-inverse]')
           const head = group.querySelector<SVGPathElement>('[data-thread-head]')
           if (!body) continue
 
@@ -206,6 +228,10 @@ export function Thread() {
           // still needs the real length, because its window is 240 real pixels.
           body.style.strokeDasharray = '1'
           body.style.strokeDashoffset = '1'
+          if (inverseBody) {
+            inverseBody.style.strokeDasharray = '1'
+            inverseBody.style.strokeDashoffset = '1'
+          }
           if (head) {
             gsap.set(head, {
               strokeDasharray: `${HEAD_LENGTH} ${total + HEAD_LENGTH}`,
@@ -231,6 +257,9 @@ export function Thread() {
             onUpdate: () => {
               const drawn = total * state.progress
               body.style.strokeDashoffset = String(1 - state.progress)
+              // The twin is the same path in the inverse hairline colour, clipped
+              // to the dark bands, so it draws in lockstep with the body.
+              if (inverseBody) inverseBody.style.strokeDashoffset = String(1 - state.progress)
               if (head) {
                 // The visible window sits at [drawn - HEAD_LENGTH, drawn], so the
                 // signal segment travels with the live tip and the body sits back.
@@ -272,11 +301,32 @@ export function Thread() {
           fill="none"
           className="absolute inset-0 h-full w-full"
         >
+          {/*
+            One clip region covering every dark block. The inverse coloured copy of
+            each path is clipped to it, so each path is drawn twice and only the
+            correct half of each pair is ever visible. Blend modes were the other
+            option and they lose: see docs/decisions/0019.
+          */}
+          <defs>
+            <clipPath id="wyrd-thread-inverse">
+              {geometry.bands.map((band, index) => (
+                <rect
+                  key={`band-${index}`}
+                  x={0}
+                  y={band.top}
+                  width={geometry.width}
+                  height={Math.max(0, band.bottom - band.top)}
+                />
+              ))}
+            </clipPath>
+          </defs>
+
           <ThreadGroup
             d={geometry.spine}
             start="[data-thread-origin]"
             end="[data-thread-branch-point]"
             reduced={reduced}
+            hasBands={geometry.bands.length > 0}
           />
 
           {geometry.branches.map((d, index) => (
@@ -286,6 +336,7 @@ export function Thread() {
               start="[data-thread-branch-point]"
               end="#capabilities"
               reduced={reduced}
+              hasBands={geometry.bands.length > 0}
             />
           ))}
 
@@ -296,6 +347,7 @@ export function Thread() {
               start="#work"
               end="[data-thread-converge]"
               reduced={reduced}
+              hasBands={geometry.bands.length > 0}
             />
           ))}
         </svg>
@@ -309,11 +361,13 @@ function ThreadGroup({
   start,
   end,
   reduced,
+  hasBands,
 }: {
   d: string
   start: string
   end: string
   reduced: boolean
+  hasBands: boolean
 }) {
   return (
     <g data-thread-group data-start={start} data-end={end}>
@@ -332,6 +386,28 @@ function ThreadGroup({
         strokeDasharray="1"
         strokeDashoffset={reduced ? 0 : 1}
       />
+      {/*
+        The same path in the inverse hairline colour, clipped to the dark blocks.
+        On the light canvas it is clipped away entirely, inside a dark block it is
+        the only one of the pair that shows.
+      */}
+      {hasBands && (
+        <path
+          data-thread-body-inverse
+          d={d}
+          stroke="var(--color-border-inverse)"
+          strokeWidth="1"
+          pathLength={1}
+          strokeDasharray="1"
+          strokeDashoffset={reduced ? 0 : 1}
+          clipPath="url(#wyrd-thread-inverse)"
+        />
+      )}
+
+      {/*
+        The accent head needs no twin: #FF521F measures 3.24:1 on white, which is
+        fine for a graphic, and 6.10:1 on the dark ground. One colour, both grounds.
+      */}
       {!reduced && (
         <path data-thread-head d={d} stroke="var(--color-accent)" strokeWidth="1.5" opacity="0" />
       )}

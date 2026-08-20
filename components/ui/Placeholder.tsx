@@ -236,8 +236,8 @@ export function Placeholder({
         className={cn(
           'pointer-events-none absolute inset-0 bg-repeat',
           inverse
-            ? "bg-[url('/noise-light.png')] mix-blend-screen opacity-[0.04]"
-            : "bg-[url('/noise-dark.png')] mix-blend-multiply opacity-[0.03]",
+            ? "bg-[url('/noise-light.png')] opacity-[0.04] mix-blend-screen"
+            : "bg-[url('/noise-dark.png')] opacity-[0.03] mix-blend-multiply",
         )}
         style={{ backgroundSize: '128px 128px' }}
       />
