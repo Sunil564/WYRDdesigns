@@ -8,43 +8,98 @@ Precedence, per ADR 0001: `brand.md` wins on brand matters. The superseded `desi
 
 ## 1. Colour
 
+Light canvas, dark blocks as punctuation. Phase 4b, which amends section 4 of the build brief. The superseded dark values are recorded at the end of this section rather than deleted.
+
+Tokens are named by **role**, not by appearance, so no component knows or cares which context it is in. They keep the `--color-` prefix because that is the namespace Tailwind v4 generates utilities from: the role name is everything after the prefix, and the utilities read `bg-bg`, `text-fg`, `border-border`.
+
+### 1.1 Light context, the default
+
 | Token | Value | Use | Origin |
 |---|---|---|---|
-| `--color-bg` | `#08080A` | page canvas | brief |
-| `--color-bg-raised` | `#101013` | cards, raised blocks | brief |
-| `--color-bg-sunken` | `#191920` | hover state, inset blocks | brief |
-| `--color-border` | `#26262E` | hairlines, borders, the Thread at rest | brief |
-| `--color-fg` | `#F2EFE9` | primary text, never pure white | brief |
-| `--color-fg-muted` | `#8B8B95` | secondary text, labels, meta | brief |
-| `--color-accent` | `#FF521F` | the one accent | brief |
-| `--color-accent-strong` | `#B33714` | accent pressed and secondary state | brief |
+| `--color-bg` | `#FFFFFF` | page canvas | Phase 4b |
+| `--color-bg-raised` | `#F7F6F4` | cards, panels on the canvas | Phase 4b |
+| `--color-bg-sunken` | `#EFEDE9` | hover and inset states | Phase 4b |
+| `--color-border` | `#E2DFDA` | hairlines, dividers, the Thread at rest | Phase 4b |
+| `--color-fg` | `#0A0A0C` | primary text | Phase 4b |
+| `--color-fg-muted` | `#5E5E66` | secondary text, labels, meta | Phase 4b |
+| `--color-accent` | `#FF521F` | large text and non text graphics only | brief, restricted |
+| `--color-accent-strong` | `#C93C0E` | any accent at text size | Phase 4b |
 
-`brand.md` is silent on colour. Its section 1 fixes identity, not palette, and the palette in the superseded document belongs to a different site. So the brief's dark canvas stands unopposed.
+### 1.2 Inverse context, the dark blocks
 
-One accent. No second accent, no gradient palette. Emphasis that cannot use signal orange uses scale and weight.
+| Token | Value | Use | Origin |
+|---|---|---|---|
+| `--color-bg-inverse` | `#0A0A0C` | dark block ground | Phase 4b |
+| `--color-fg-inverse` | `#F7F6F4` | text on a dark block | Phase 4b |
+| `--color-fg-inverse-muted` | `#9A9AA2` | secondary text on a dark block | Phase 4b |
+| `--color-border-inverse` | `#24242A` | hairline on a dark block | Phase 4b |
+| `--color-accent-on-inverse` | `#FF521F` | accent inside a dark block | Phase 4b |
 
-Contrast, computed on the actual token pairs rather than assumed:
+`--color-accent` and `--color-accent-on-inverse` hold the same value today and are deliberately separate tokens. The orange that works on white is not the orange that works on black, and one day one of them changes without the other.
+
+`brand.md` is silent on colour. Its section 1 fixes identity, not palette.
+
+One accent. No second accent, no gradient palette. Emphasis that cannot use the accent uses scale and weight.
+
+### 1.3 Contrast, every pair enumerated
+
+Computed on the actual token values, not sampled from one automated check on one page.
+
+**Light context**
 
 | Pair | Ratio | Verdict |
 |---|---|---|
-| paper on void | 17.44 | AAA at every size |
-| paper on surface | 16.55 | AAA at every size |
-| paper on surface-2 | 15.23 | AAA at every size |
-| signal on void | 6.17 | AA at every size, AAA at large |
-| signal on surface | 5.86 | AA at every size |
-| muted on void | 5.93 | AA at every size |
-| muted on surface | 5.63 | AA at every size |
-| muted on surface-2 | 5.18 | AA at every size |
-| void on signal | 6.17 | AA at every size, the filled button |
-| paper on signal | 2.82 | fails, never used |
-| line on void | 1.33 | decorative hairline, never text |
+| fg on bg | 19.78 | AAA at every size |
+| fg on bg-raised | 18.31 | AAA at every size |
+| fg on bg-sunken | 16.92 | AAA at every size |
+| fg-muted on bg | 6.42 | AA at every size |
+| fg-muted on bg-raised | 5.95 | AA at every size |
+| fg-muted on bg-sunken | 5.49 | AA at every size |
+| accent-strong on bg | 5.08 | AA at every size |
+| accent-strong on bg-raised | 4.70 | AA at every size |
+| accent-strong on bg-sunken | 4.34 | AA at every size |
+| bg on accent-strong | 5.08 | AA at every size, the filled button |
+| accent on bg | 3.24 | large text and graphics only |
+| accent on bg-raised | 3.00 | graphics only, at the floor |
+| bg on accent | 3.24 | **fails for a label, not used** |
+| border on bg | 1.33 | decorative hairline, never text |
 
-Two consequences that constrain components:
+**Inverse context**
 
-1. **The filled signal button sets its label in `--color-bg`, not `--color-fg`.** Paper on signal is 2.82 and fails AA outright. Void on signal is 6.17 and passes at every size. This is not a stylistic preference, and a later change to a light label on the orange button is a regression.
-2. `--color-fg-muted` holds AA on all three surface values, so meta and label text can sit on any of them. It has no headroom for a fourth darker surface, and there is not going to be one.
+| Pair | Ratio | Verdict |
+|---|---|---|
+| fg-inverse on bg-inverse | 18.31 | AAA at every size |
+| fg-inverse-muted on bg-inverse | 7.08 | AA at every size |
+| accent-on-inverse on bg-inverse | 6.10 | AA at every size |
+| bg-inverse on accent-on-inverse | 6.10 | AA at every size, the filled button on dark |
+| accent-strong on bg-inverse | 3.90 | focus ring, clears the 3:1 non text floor |
+| border-inverse on bg-inverse | 1.28 | decorative hairline, never text |
 
-Text over the particle field and over placeholder visuals is checked against its rendered background in Phase 3 and Phase 4, not against the canvas token, since a particle can land behind a character.
+Four consequences that constrain components:
+
+1. **The accent is restricted.** `#FF521F` is 3.24:1 on white. Legal for large text and non text graphics, illegal for body copy, labels, meta, and small links. Those use `--color-accent-strong`.
+2. **Filled accent surfaces use `--accent-strong` with white text.** Phase 4b 3.3 specifies white on `--accent` and asks for the pair to be verified. Verified, it is 3.24:1 and fails AA for a 13px label. The `accent-surface` utility therefore fills with `--accent-strong`, where white is 5.08:1. Inside an inverse block the bright accent is correct, because near black on it is 6.10:1, which is what `accent-surface-inverse` does.
+3. **The focus ring is `--accent-strong`, not `--accent`.** `--accent` measures 3.00:1 against `--bg-raised`, exactly the floor and no margin against a form field. `--accent-strong` has headroom on white, on raised, and on the dark ground.
+4. `--color-fg-muted` holds AA on all three light surfaces. There is no headroom for a fourth darker light surface, and there is not going to be one.
+
+Text over the particle field and over placeholder visuals is checked against its rendered background, not against the canvas token, since a particle can land behind a character.
+
+### 1.4 Superseded, recorded not deleted
+
+The dark canvas palette this replaced, from Phase 0b to Phase 4:
+
+| Old token | Old value | Now |
+|---|---|---|
+| `--color-void` | `#08080A` | `--color-bg`, `#FFFFFF`. The old value survives as `--color-bg-inverse` at `#0A0A0C` |
+| `--color-surface` | `#101013` | `--color-bg-raised`, `#F7F6F4` |
+| `--color-surface-2` | `#191920` | `--color-bg-sunken`, `#EFEDE9` |
+| `--color-line` | `#26262E` | `--color-border`, `#E2DFDA`. The old value is near `--color-border-inverse` at `#24242A` |
+| `--color-paper` | `#F2EFE9` | `--color-fg`, `#0A0A0C`. The old value survives as `--color-fg-inverse` |
+| `--color-muted` | `#8B8B95` | `--color-fg-muted`, `#5E5E66`. The old grey measured 3.37:1 on white and failed AA |
+| `--color-signal` | `#FF521F` | `--color-accent`, unchanged in value, restricted in use |
+| `--color-signal-dim` | `#B33714` | `--color-accent-strong`, `#C93C0E`, and it is now a contrast tool rather than a pressed state |
+
+Why the theme changed at all, and the five decisions that came with it: ADR 0019.
 
 ## 2. Type
 

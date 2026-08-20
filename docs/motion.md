@@ -55,6 +55,7 @@ The organising idea from brief section 2.2, and the reason the motion system is 
 - A fixed position SVG overlay spanning the homepage. `pointer-events: none`, above the grain, below content.
 - The path is drawn with `stroke-dasharray` and `stroke-dashoffset`, offset driven by scroll progress with GSAP ScrollTrigger and `scrub: 1`.
 - Body stroke is `--color-border`. A 240px travelling segment of `--color-accent` follows the draw head, so the live tip glows and the drawn body sits back. Implemented as a second path with its own dash pattern rather than a gradient, because a gradient cannot follow a path head.
+- Where the Thread crosses a dark block it would vanish into it, so every path is drawn twice: once in `--color-border` masked to exclude the dark bands, once in `--color-border-inverse` clipped to them. The accent head needs no twin, because the accent works on both grounds. Phase 4b section 7, resolved in ADR 0019.
 - At the capabilities section the path branches into four strands, one terminating at each cluster block.
 - At the contact section the four strands reconverge into one line that terminates at the button.
 - Below 1024px: a single straight vertical line, no branching. Branch geometry depends on a two column grid that does not exist on mobile.
@@ -69,7 +70,7 @@ Technical approach and the mobile fallback: ADR 0018.
 | S1 Hero headline | SplitText to characters, from `opacity: 0, y: 40%, rotateX: -35deg`, 18ms stagger, `--dur-slow`, `--ease-out`, each line masked by `overflow: hidden` | on mount, once |
 | S1 Hero eyebrow | fade in 200ms before the headline | on mount |
 | S1 Hero lead and actions | fade and rise, 300ms after the headline finishes | on mount |
-| S1 Particle field | curl noise drift in the vertex shader, cursor repulsion by inverse square, cursor uniform lerped at 0.08 | continuous while in view |
+| S1 Particle field | curl noise drift in the vertex shader, cursor repulsion by inverse square, cursor uniform lerped at 0.08. Normal blending with per point alpha since Phase 4b, dark points on a light ground | continuous while in view |
 | S2 Positioning | line by line mask reveal, 120ms stagger, italic phrase 400ms after the rest, surrounding text held at 70 percent opacity until it completes | scroll, once |
 | S3 Capabilities | Thread branches scrubbed to scroll, blocks enter with 60ms stagger and `y: 32px` | scroll, once |
 | S3 Capability hover | background `--color-bg-raised` to `--color-bg-sunken` over `--dur-fast`, index digit to `--color-accent`, hairline sweeps left to right across the top edge | pointer |

@@ -96,6 +96,8 @@ These are the rules that keep the performance budget. They are not suggestions.
 - Dispose geometries, materials, and textures on unmount.
 - Ship a context loss handler that falls back to the Reduced tier.
 - All particle motion in the vertex shader. A CPU `for` loop over positions means it was built wrong.
+- Normal blending, not additive. The canvas is light: additive blending on white produces nothing. See ADR 0019.
+- Point distributions match the camera frustum. Scattering points across a box the camera cannot see makes the count a lie.
 
 ## 6. Performance budget
 

@@ -154,8 +154,14 @@
     color: var(--color-bg);
   }
 
+  /*
+    Focus ring. --accent measures 3.24:1 on white and 3.00:1 on --bg-raised, which
+    is exactly the 3:1 floor for a non text indicator and no margin at all against a
+    form field. --accent-strong measures 5.08 on white, 4.70 on --bg-raised, and 3.90
+    on --bg-inverse, so one value has headroom on every ground the site has.
+  */
   :focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--color-accent-strong);
     outline-offset: 3px;
     border-radius: 2px;
   }

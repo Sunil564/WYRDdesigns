@@ -1,8 +1,15 @@
 # 0010. Single dark theme, no light mode
 
-Status: accepted
+Status: superseded by ADR 0019
 Date: 2026-08-19
 Phase: 0b
+
+> Superseded on 2026-08-20 by Phase 4b, which converts the site to a light canvas
+> with dark blocks used as contrast. The reasoning below is kept because it records
+> why the dark canvas was chosen and what it cost to change. The palette it describes
+> is preserved in docs/design-system.md section 1.4. One thing it got right survives:
+> there is still exactly one theme, no toggle, and every token has one value. Dark is
+> now a context applied to specific blocks rather than the whole canvas.
 
 ## Context
 
