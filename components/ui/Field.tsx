@@ -40,7 +40,7 @@ export function FieldShell({
       <label className="label text-fg-muted" htmlFor={id}>
         {label}
         {required && (
-          <span aria-hidden="true" className="text-accent ml-1">
+          <span aria-hidden="true" className="text-accent-strong ml-1">
             *
           </span>
         )}
@@ -48,7 +48,7 @@ export function FieldShell({
       {hint && <p className="text-body text-fg-muted">{hint}</p>}
       {children}
       {error && (
-        <p id={`${id}-error`} className="text-body text-accent" role="alert">
+        <p id={`${id}-error`} className="text-body text-accent-strong" role="alert">
           {error}
         </p>
       )}
@@ -75,7 +75,7 @@ export function Field({ id, label, error, hint, required, className, ...rest }: 
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
-        className={cn(control, error ? 'border-accent' : 'border-border')}
+        className={cn(control, error ? 'border-accent-strong' : 'border-border')}
         {...rest}
       />
     </FieldShell>
@@ -110,7 +110,7 @@ export function TextAreaField({
         rows={rest.rows ?? 5}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
-        className={cn(control, 'resize-y', error ? 'border-accent' : 'border-border')}
+        className={cn(control, 'resize-y', error ? 'border-accent-strong' : 'border-border')}
         {...rest}
       />
     </FieldShell>
@@ -146,7 +146,7 @@ export function SelectField({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
-        className={cn(control, 'appearance-none', error ? 'border-accent' : 'border-border')}
+        className={cn(control, 'appearance-none', error ? 'border-accent-strong' : 'border-border')}
         {...rest}
       >
         {options.map((option) => (

@@ -352,7 +352,7 @@ for (const width of [375, 768, 1023]) {
     'S5 renders six real client logos as masks in muted, with real names',
     logos.length === 6 &&
       logos.every((logo) => logo.mask && logo.name) &&
-      logos.every((logo) => logo.colour === 'rgb(139, 139, 149)'),
+      logos.every((logo) => logo.colour === 'rgb(94, 94, 102)'),
     logos.map((logo) => logo.name).join(', '),
   )
 

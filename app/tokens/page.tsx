@@ -20,14 +20,77 @@ export const metadata: Metadata = {
 }
 
 const colours = [
-  { token: '--color-bg', className: 'bg-bg', use: 'page canvas' },
-  { token: '--color-bg-raised', className: 'bg-bg-raised', use: 'cards, raised blocks' },
-  { token: '--color-bg-sunken', className: 'bg-bg-sunken', use: 'hover, inset blocks' },
-  { token: '--color-border', className: 'bg-border', use: 'hairlines, the Thread at rest' },
-  { token: '--color-fg', className: 'bg-fg', use: 'primary text' },
-  { token: '--color-fg-muted', className: 'bg-fg-muted', use: 'secondary text, meta' },
-  { token: '--color-accent', className: 'bg-accent', use: 'the one accent' },
-  { token: '--color-accent-strong', className: 'bg-accent-strong', use: 'accent pressed' },
+  { token: '--color-bg', className: 'bg-bg', use: 'page canvas', contrast: 'ground' },
+  {
+    token: '--color-bg-raised',
+    className: 'bg-bg-raised',
+    use: 'cards, raised blocks',
+    contrast: '1.06 on bg',
+  },
+  {
+    token: '--color-bg-sunken',
+    className: 'bg-bg-sunken',
+    use: 'hover, inset blocks',
+    contrast: '1.17 on bg',
+  },
+  {
+    token: '--color-border',
+    className: 'bg-border',
+    use: 'hairlines, the Thread at rest',
+    contrast: '1.33 on bg',
+  },
+  { token: '--color-fg', className: 'bg-fg', use: 'primary text', contrast: '19.78 on bg' },
+  {
+    token: '--color-fg-muted',
+    className: 'bg-fg-muted',
+    use: 'secondary text, meta',
+    contrast: '6.42 on bg',
+  },
+  {
+    token: '--color-accent',
+    className: 'bg-accent',
+    use: 'large text and graphics only',
+    contrast: '3.24 on bg',
+  },
+  {
+    token: '--color-accent-strong',
+    className: 'bg-accent-strong',
+    use: 'any accent text',
+    contrast: '5.08 on bg',
+  },
+]
+
+const inverseColours = [
+  {
+    token: '--color-bg-inverse',
+    className: 'bg-bg-inverse',
+    use: 'dark block ground',
+    contrast: 'ground',
+  },
+  {
+    token: '--color-fg-inverse',
+    className: 'bg-fg-inverse',
+    use: 'text on a dark block',
+    contrast: '18.31 on inverse',
+  },
+  {
+    token: '--color-fg-inverse-muted',
+    className: 'bg-fg-inverse-muted',
+    use: 'secondary text on a dark block',
+    contrast: '7.08 on inverse',
+  },
+  {
+    token: '--color-border-inverse',
+    className: 'bg-border-inverse',
+    use: 'hairline on a dark block',
+    contrast: '1.28 on inverse',
+  },
+  {
+    token: '--color-accent-on-inverse',
+    className: 'bg-accent-on-inverse',
+    use: 'accent inside a dark block',
+    contrast: '6.10 on inverse',
+  },
 ]
 
 const type = [
@@ -85,7 +148,7 @@ export default function TokensPage() {
   return (
     <main className="relative z-10">
       <Container as="header" className="pt-32 pb-16">
-        <p className="label text-accent">Internal</p>
+        <p className="label text-accent-strong">Internal</p>
         <h1 className="text-display mt-6 font-bold">Tokens and primitives</h1>
         <p className="measure text-lead text-fg-muted mt-6">
           Every token in <code>app/globals.css</code> and every primitive in{' '}
@@ -94,13 +157,27 @@ export default function TokensPage() {
         </p>
       </Container>
 
-      <Block title="Colour">
+      <Block title="Colour, light context">
         <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
           {colours.map((colour) => (
             <div key={colour.token}>
               <div className={`border-border h-24 border ${colour.className}`} />
               <p className="text-body mt-3">{colour.token}</p>
               <p className="text-body text-fg-muted">{colour.use}</p>
+              <p className="label text-fg-muted mt-1">{colour.contrast}</p>
+            </div>
+          ))}
+        </div>
+      </Block>
+
+      <Block title="Colour, inverse context">
+        <div className="bg-bg-inverse grid grid-cols-2 gap-6 p-8 md:grid-cols-4 md:p-12">
+          {inverseColours.map((colour) => (
+            <div key={colour.token}>
+              <div className={`border-border-inverse h-24 border ${colour.className}`} />
+              <p className="text-body text-fg-inverse mt-3">{colour.token}</p>
+              <p className="text-body text-fg-inverse-muted">{colour.use}</p>
+              <p className="label text-fg-inverse-muted mt-1">{colour.contrast}</p>
             </div>
           ))}
         </div>

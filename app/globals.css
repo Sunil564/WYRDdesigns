@@ -14,15 +14,38 @@
 }
 
 @theme {
-  /* Colour. Dark canvas, one accent. Brief section 4.1. */
-  --color-bg: #08080a;
-  --color-bg-raised: #101013;
-  --color-bg-sunken: #191920;
-  --color-border: #26262e;
-  --color-fg: #f2efe9;
-  --color-fg-muted: #8b8b95;
+  /*
+    Colour, by role. Light canvas, dark blocks as punctuation. Phase 4b sections
+    2 and 3. Measured contrast for every pair is in docs/design-system.md, and the
+    values that were superseded are recorded there rather than deleted.
+
+    Tokens keep the --color- prefix because that is the namespace Tailwind v4
+    generates utilities from. The role name is everything after the prefix.
+  */
+
+  /* Light context, the default. */
+  --color-bg: #ffffff;
+  --color-bg-raised: #f7f6f4;
+  --color-bg-sunken: #efede9;
+  --color-border: #e2dfda;
+  --color-fg: #0a0a0c;
+  --color-fg-muted: #5e5e66;
+  /* 3.24:1 on white. Large text and non text graphics only. See 3.3. */
   --color-accent: #ff521f;
-  --color-accent-strong: #b33714;
+  /* 5.08:1 on white. This is the accent for anything text sized. */
+  --color-accent-strong: #c93c0e;
+
+  /* Inverse context, the dark blocks. */
+  --color-bg-inverse: #0a0a0c;
+  --color-fg-inverse: #f7f6f4;
+  --color-fg-inverse-muted: #9a9aa2;
+  --color-border-inverse: #24242a;
+  /*
+    Same value as --color-accent today, and deliberately a separate token: the
+    orange that works on white is not the orange that works on black, and one day
+    one of these changes without the other.
+  */
+  --color-accent-on-inverse: #ff521f;
 
   /* Type scale. Fluid, clamped. Brief section 4.2, mega adjusted, see docs. */
   --text-mega: clamp(2.25rem, 7vw, 5rem);
@@ -71,11 +94,12 @@
 }
 
 /*
-  Base layer. Dark canvas only, no light mode. See docs/decisions/0010.
+  Base layer. Light canvas only, no dark mode toggle. Dark is a context applied to
+  specific blocks, not a theme the visitor chooses. See docs/decisions/0019.
 */
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
     --gutter: 24px;
     --section-y: 128px;
   }
@@ -126,7 +150,7 @@
   }
 
   ::selection {
-    background-color: var(--color-accent);
+    background-color: var(--color-accent-strong);
     color: var(--color-bg);
   }
 
@@ -306,7 +330,8 @@
   line-height: 1;
   font-weight: 900;
   letter-spacing: -0.04em;
-  color: var(--color-bg-sunken);
+  /* The footer is an inverse block, so the closing mark is a hairline value on it. */
+  color: var(--color-border-inverse);
   margin-bottom: -0.18em;
   text-align: center;
   width: 100%;
@@ -343,9 +368,16 @@
   pointer-events: none;
   opacity: var(--pointer-opacity);
   transition: opacity var(--dur-base) var(--ease-out);
+  /*
+    Painted above the blocks with a screen blend, so the highlight lifts a dark
+    block instead of tinting the gutter between them. On white, screen with a light
+    tint is a no op, which is why the effect reads only where it should.
+  */
+  z-index: 1;
+  mix-blend-mode: screen;
   background: radial-gradient(
     360px circle at var(--pointer-x) var(--pointer-y),
-    color-mix(in oklab, var(--color-fg) 7%, transparent),
+    color-mix(in oklab, var(--color-fg-inverse) 14%, transparent),
     transparent 70%
   );
 }
@@ -423,7 +455,7 @@
   display: none;
   padding: 0.75rem 1rem;
   border-radius: var(--radius-pill);
-  background-color: var(--color-accent);
+  background-color: var(--color-accent-strong);
   color: var(--color-bg);
   font-weight: 700;
   opacity: 0;

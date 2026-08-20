@@ -118,7 +118,7 @@ export function Process() {
                 className="rounded-pill bg-fg mb-8 hidden size-1.5 lg:block"
                 style={{ marginTop: '0.4rem' }}
               />
-              <p className="label text-accent">{step.index}</p>
+              <p className="label text-accent-strong">{step.index}</p>
               <h3 className="text-title text-fg mt-4 font-bold">{step.name}</h3>
               <p className="measure text-body text-fg-muted mt-3">{step.line}</p>
             </li>

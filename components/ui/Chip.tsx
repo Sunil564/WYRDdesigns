@@ -24,7 +24,7 @@ export function Chip({ children, selected = false, className, ...rest }: ChipPro
         'label rounded-pill inline-flex min-h-11 items-center border px-4 py-2',
         'transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out)]',
         selected
-          ? 'border-accent bg-accent text-bg'
+          ? 'accent-surface border-accent-strong'
           : 'border-border text-fg-muted hover:border-fg hover:text-fg',
         className,
       )}

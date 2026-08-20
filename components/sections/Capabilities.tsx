@@ -23,7 +23,10 @@ export function Capabilities() {
 
       {/* The spine. Full width, above the four, and the branch point of the Thread. */}
       <Reveal delay={60}>
-        <div className="border-border bg-bg-raised mt-16 border p-8 md:p-12" data-thread-branch-point>
+        <div
+          className="border-border bg-bg-raised mt-16 border p-8 md:p-12"
+          data-thread-branch-point
+        >
           <h2 className="text-title text-fg font-bold">{spine.name}</h2>
           <p className="measure text-lead text-fg-muted mt-4">{spine.briefLine}</p>
           <p className="measure text-body text-fg-muted mt-3">{spine.line}</p>

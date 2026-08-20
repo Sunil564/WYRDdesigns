@@ -32,7 +32,7 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="tap text-body text-fg hover:text-accent transition-colors duration-[var(--dur-fast)]"
+                    className="tap text-body text-fg hover:text-accent-on-inverse transition-colors duration-[var(--dur-fast)]"
                   >
                     {link.label}
                   </Link>
@@ -47,7 +47,7 @@ export function Footer() {
               <li>
                 <a
                   href={`mailto:${site.email}`}
-                  className="tap text-body text-fg hover:text-accent transition-colors duration-[var(--dur-fast)]"
+                  className="tap text-body text-fg hover:text-accent-on-inverse transition-colors duration-[var(--dur-fast)]"
                 >
                   {site.email}
                 </a>
@@ -56,7 +56,7 @@ export function Footer() {
                 <li key={phone}>
                   <a
                     href={`tel:${phone.replace(/\s+/g, '')}`}
-                    className="tap text-body text-fg hover:text-accent transition-colors duration-[var(--dur-fast)]"
+                    className="tap text-body text-fg hover:text-accent-on-inverse transition-colors duration-[var(--dur-fast)]"
                   >
                     {phone}
                   </a>
@@ -68,7 +68,7 @@ export function Footer() {
                     href={social.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="tap text-body text-fg hover:text-accent transition-colors duration-[var(--dur-fast)]"
+                    className="tap text-body text-fg hover:text-accent-on-inverse transition-colors duration-[var(--dur-fast)]"
                   >
                     {social.name}
                   </a>

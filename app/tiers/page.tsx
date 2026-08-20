@@ -19,7 +19,7 @@ export default function TiersPage() {
   return (
     <main className="relative z-10">
       <Container className="pt-32 pb-32">
-        <p className="label text-accent">Internal</p>
+        <p className="label text-accent-strong">Internal</p>
         <h1 className="text-display mt-6 font-bold">Render tiers</h1>
         <p className="measure text-lead text-fg-muted mt-6">
           Full loads Three.js. Reduced and Static download none of it. Force a tier, cycle the

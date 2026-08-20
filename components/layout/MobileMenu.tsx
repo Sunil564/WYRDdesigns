@@ -116,7 +116,7 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
               type="button"
               onClick={onClose}
               aria-label="Close menu"
-              className="text-fg hover:text-accent flex size-11 items-center justify-center transition-colors duration-[var(--dur-fast)]"
+              className="text-fg hover:text-accent-strong flex size-11 items-center justify-center transition-colors duration-[var(--dur-fast)]"
             >
               <X aria-hidden="true" className="size-6" />
             </button>
@@ -134,7 +134,7 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
                 <Link
                   href={link.href}
                   onClick={onClose}
-                  className="text-display text-fg hover:text-accent block py-3 font-bold transition-colors duration-[var(--dur-fast)]"
+                  className="text-display text-fg hover:text-accent-strong block py-3 font-bold transition-colors duration-[var(--dur-fast)]"
                 >
                   {link.label}
                 </Link>
@@ -145,7 +145,7 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
               <Link
                 href={cta.href}
                 onClick={onClose}
-                className="label rounded-pill bg-accent text-bg inline-flex min-h-11 items-center px-6 py-3 font-bold"
+                className="label accent-surface rounded-pill inline-flex min-h-11 items-center px-6 py-3 font-bold"
               >
                 {cta.label}
               </Link>
