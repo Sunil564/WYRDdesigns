@@ -25,11 +25,27 @@ const browser = await chromium.launch()
 {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   const page = await context.newPage()
+  /*
+    Route prefetches for routes Phase 5 has not built, and the two Vercel analytics
+    scripts, which only exist on Vercel. Both 404 locally and neither is a runtime
+    error. The same allowlist is in check-hero and check-home.
+  */
+  const EXPECTED_404 =
+    /_vercel\/(insights|speed-insights)|\/(work|studio|contact|privacy|terms)(\?_rsc=|\/|$)/
   const errors = []
   page.on('console', (m) => {
-    if (m.type() === 'error') errors.push(m.text())
+    if (m.type() !== 'error') return
+    // A bare resource load failure carries no URL in its text. The response
+    // listener below sees the same failure with its URL and applies the allowlist.
+    if (/Failed to load resource/.test(m.text())) return
+    errors.push(m.text())
   })
   page.on('pageerror', (e) => errors.push(e.message))
+  page.on('response', (response) => {
+    if (response.status() >= 400 && !EXPECTED_404.test(response.url())) {
+      errors.push(`${response.status()} ${response.url()}`)
+    }
+  })
 
   await page.goto(`${BASE}/tokens`, { waitUntil: 'load' })
   await page.waitForTimeout(600)
