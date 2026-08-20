@@ -71,10 +71,17 @@ export function ParticleField2D({ seed = 'wyrd-hero', className }: ParticleField
     const cursor = { x: -9999, y: -9999, active: false }
 
     const countFor = (w: number) => {
-      // 90 on desktop, 40 on tablet, fewer on a phone. Capped either way.
-      if (w >= 1024) return 90
-      if (w >= 768) return 60
-      return 40
+      /*
+        Phase 4b section 5 says halve the count and then tune up if it reads too
+        sparse. Halving landed at 45 on desktop, which measured a third of the ink
+        the shader field puts down and read as a handful of stray dots rather than a
+        field. Tuned back up to 72, which matches the shader field's presence at the
+        same viewport. Still well under the dark build's density per visible pixel,
+        because that field scattered most of its points outside the frustum.
+      */
+      if (w >= 1024) return 72
+      if (w >= 768) return 48
+      return 30
     }
 
     const build = () => {
@@ -100,8 +107,10 @@ export function ParticleField2D({ seed = 'wyrd-hero', className }: ParticleField
           y,
           offsetX: 0,
           offsetY: 0,
-          radius: 0.5 + next() * 1,
-          alpha: accent ? 0.5 : 0.2 + next() * 0.3,
+          // Points read smaller against light, so the radius is up by about a
+          // third, matching the shader field.
+          radius: 0.7 + next() * 1.3,
+          alpha: accent ? 0.55 : 0.3 + next() * 0.3,
           colour: accent ? palette.accent : next() > 0.5 ? palette.fgMuted : palette.border,
           phase: next() * Math.PI * 2,
           speed: 0.15 + next() * 0.35,

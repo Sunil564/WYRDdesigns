@@ -155,8 +155,11 @@ void main() {
   vAccent = step(0.917, aRandom);
 
   // Perspective correct size, capped so a near particle cannot become a disc.
-  float size = uSize * aScale * uPixelRatio * (1.0 + vAccent * 0.45);
-  gl_PointSize = clamp(size * (3.0 / -mvPosition.z), 1.0, 9.0);
+  // Dark points on a light ground read smaller than light points on a dark one, so
+  // the base size is up and the accent no longer gets extra size on top: it is
+  // already the loudest thing in the field.
+  float size = uSize * aScale * uPixelRatio;
+  gl_PointSize = clamp(size * (3.0 / -mvPosition.z), 1.0, 10.0);
 }
 `
 
@@ -179,15 +182,21 @@ void main() {
   float core = smoothstep(0.5, 0.0, d);
   core *= core;
 
-  // The bloom, done in the fragment shader rather than as a postprocessing pass.
-  // A wide low amplitude halo on accent points only. See ADR 0017 for why there is
-  // no EffectComposer in this build.
-  float halo = smoothstep(0.5, 0.08, d) * 0.26 * vAccent;
+  // No halo lobe. It stood in for the bloom pass on the dark canvas, and a wide
+  // low amplitude lobe on a light ground is a grey wash around every accent point.
+  // Phase 4b section 5.
 
   vec3 colour = mix(uColourBorder, uColourFgMuted, smoothstep(0.2, 0.9, vRandom));
   colour = mix(colour, uColourAccent, vAccent);
 
-  float alpha = (core * (0.45 + vRandom * 0.5) + halo) * uOpacity;
+  // 30 to 60 percent alpha, per Phase 4b section 5. With normal blending the alpha
+  // is the whole story: a dark point on white is only as present as its alpha, and
+  // the additive trick that carried the dark build does nothing here.
+  //
+  // Accent points sit back a little. Orange at full field alpha on white reads as
+  // scattered confetti rather than as flecks in the weave, which is the kind of
+  // thing only the tuning pass catches.
+  float alpha = core * (0.3 + vRandom * 0.3) * mix(1.0, 0.78, vAccent) * uOpacity;
   if (alpha < 0.002) discard;
 
   gl_FragColor = vec4(colour, alpha);
