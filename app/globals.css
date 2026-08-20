@@ -304,27 +304,54 @@
 }
 
 /*
-  The grain overlay. One tiling noise texture, fixed, non interactive, low
-  opacity. This is what stops the dark canvas reading as flat. Brief 4.4.
+  Grain. Phase 4b section 6.
+
+  Two layers, because a light canvas and a dark block need opposite grain and one
+  texture cannot do both. The canvas gets dark speckles multiplied over white. An
+  inverse block gets light speckles screened over near black, scoped to the block
+  so it does not leak onto the canvas.
+
+  Opacity is 3 percent on the canvas, the top of the brief's band. The old dark
+  build ran 4 percent, which is roughly double what white can carry, and the
+  texture itself is now a near black speckle rather than neutral grey noise.
+
+  Chosen over a single neutral grey texture with soft-light because soft-light on
+  white lifts the whole canvas toward grey at any opacity that makes the grain
+  visible. Recorded in docs/decisions/0019.
 */
 @utility grain {
   position: fixed;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background-image: url('/noise.png');
+  background-image: url('/noise-dark.png');
   background-repeat: repeat;
   background-size: 128px 128px;
-  opacity: 0.04;
-  mix-blend-mode: soft-light;
+  /*
+    3 percent, the top of the brief's 1.5 to 3 percent band. Measured on a flat
+    patch of canvas that lands at mean 252.3 of 255 with a standard deviation of
+    1.4 levels: present as texture, nowhere near dirt.
+  */
+  opacity: 0.03;
+  mix-blend-mode: multiply;
 }
 
 /*
-  The closing wordmark in the footer. Set at viewport width so it is clipped by
-  the bottom edge of the page. Lives here because it is the one type size on the
-  site that is not on the scale, and no px or rem font size may exist outside
-  this file.
+  The inverse grain. Sits inside an inverse block, above its background and below
+  its content, so the block carries texture rather than reading as flat ink.
 */
+@utility grain-inverse {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url('/noise-light.png');
+  background-repeat: repeat;
+  background-size: 128px 128px;
+  opacity: 0.03;
+  mix-blend-mode: screen;
+}
+
 @utility wordmark-close {
   font-size: clamp(6rem, 26vw, 26rem);
   line-height: 1;
