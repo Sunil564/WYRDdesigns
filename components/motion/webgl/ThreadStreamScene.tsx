@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { BufferAttribute, Color, NormalBlending } from 'three'
-import type { Points } from 'three'
+import type { Points, ShaderMaterial } from 'three'
 import { subscribeThread, threadState } from '@/components/motion/threadStore'
 import type { ThreadStreamData } from '@/components/motion/threadStore'
 import { currentScroll } from '@/components/motion/useLenis'
@@ -31,6 +31,7 @@ const BASE_SIZE = 2.0
  */
 export function ThreadStream({ onCount }: { onCount?: (value: number) => void }) {
   const points = useRef<Points | null>(null)
+  const material = useRef<ShaderMaterial | null>(null)
   const [data, setData] = useState<ThreadStreamData | null>(() => threadState().data)
 
   useEffect(() => {
@@ -58,7 +59,8 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
 
   useFrame((state, delta) => {
     const object = points.current
-    if (!object || !data) return
+    const shader = material.current
+    if (!object || !shader || !data) return
 
     /*
       Document pixels to world units, on the object's own transform.
@@ -90,12 +92,31 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
     object.scale.set(worldPerPx, -worldPerPx, 1)
     object.position.set((-size.width / 2) * worldPerPx, (size.height / 2 + scroll) * worldPerPx, 0)
 
-    uniforms.uOpacity.value = Math.min(1, uniforms.uOpacity.value + Math.min(delta, 0.05) * 1.4)
-  })
+    /*
+      Written through the live material, never through the object this component
+      memoised.
 
-  useEffect(() => {
-    uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio || 1, 2)
-  }, [uniforms])
+      This is the fault that hid the whole stream. The hero field animates its
+      uniforms through `material.current.uniforms` and works; this scene wrote to its
+      own `useMemo` object and the fade-in never left zero, so every fragment fell
+      through `alpha < 0.002` and discarded. The vec2 in the same block did reach the
+      GPU, because mutating an array in place is visible through any copy that shares
+      the array reference, which is what made the failure look like it was about
+      placement rather than about alpha.
+
+      `material.uniforms` is by definition the object the renderer uploads. Writing
+      there is the fix for the path rather than for the symptom, and it is why the
+      pixel ratio moved here too: stale at 1 it would have halved the point size on
+      every 2x display, which is a bug that would have shipped looking like a design
+      choice.
+    */
+    const live = shader.uniforms
+    live.uPixelRatio!.value = Math.min(window.devicePixelRatio || 1, 2)
+    live.uOpacity!.value = Math.min(
+      1,
+      (live.uOpacity!.value as number) + Math.min(delta, 0.05) * 1.4,
+    )
+  })
 
   if (!data) return null
   const { samples } = data
@@ -114,6 +135,7 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
         <primitive attach="attributes-aRandom" object={new BufferAttribute(samples.random, 1)} />
       </bufferGeometry>
       <shaderMaterial
+        ref={material}
         vertexShader={threadVertexShader}
         fragmentShader={threadFragmentShader}
         uniforms={uniforms}

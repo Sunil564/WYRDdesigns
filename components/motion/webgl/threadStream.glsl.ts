@@ -62,7 +62,7 @@ void main() {
     discrete particles at that lightness on white are invisible. 50 to 70 percent
     alpha, per the same section.
   */
-  float alpha = core * (0.5 + vRandom * 0.2) * 1.0;
+  float alpha = core * (0.5 + vRandom * 0.2) * uOpacity;
   if (alpha < 0.002) discard;
 
   gl_FragColor = vec4(uColourRest, alpha);

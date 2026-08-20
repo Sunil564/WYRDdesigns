@@ -5,6 +5,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { BufferAttribute, Color, NormalBlending } from 'three'
 import type { Points, ShaderMaterial } from 'three'
 import { heroFragmentShader, heroVertexShader } from '@/components/motion/webgl/heroField.glsl'
+import { currentScroll } from '@/components/motion/useLenis'
 import { clamp, lerp, seededRandom } from '@/lib/utils'
 
 /**
@@ -179,20 +180,6 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
   }, [])
 
   useEffect(() => {
-    uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio || 1, 2)
-
-    /*
-      Point size follows the viewport as well as the count.
-
-      A point is a fixed number of pixels, but the type around it is not: at 1440
-      the headline is 80px and a 3px dot is dust, at 375 the headline is 36px and the
-      same dot is grit. Scaling the size with width keeps the ratio between the field
-      and the type roughly constant, which is what the eye actually reads.
-    */
-    uniforms.uSize.value = BASE_SIZE * clamp(size.width / REFERENCE_WIDTH, 0.6, 1)
-  }, [uniforms, size])
-
-  useEffect(() => {
     const onPointerMove = (event: PointerEvent) => {
       /*
         Screen pixels to the field's own frame, which is centred on the hero and
@@ -226,7 +213,8 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
     const object = points.current
     if (!shader) return
 
-    const scroll = window.scrollY
+    // The scroll authority, not the document. See currentScroll.
+    const scroll = currentScroll()
     const band = hero.current
 
     /*
@@ -249,6 +237,23 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
     */
     const live = _state.size
     const box = _state.viewport
+    shader.uniforms.uPixelRatio!.value = Math.min(window.devicePixelRatio || 1, 2)
+    /*
+      Point size follows the viewport as well as the count.
+
+      A point is a fixed number of pixels, but the type around it is not: at 1440
+      the headline is 80px and a 3px dot is dust, at 375 the headline is 36px and the
+      same dot is grit. Scaling the size with width keeps the ratio between the field
+      and the type roughly constant, which is what the eye actually reads.
+
+      Both of these were set in an effect against this component's own memoised
+      uniforms object, which is not the object the renderer uploads. The size was
+      right by luck, since its stale value is its intended one at 1440. The pixel
+      ratio was not: stale at 1, every point on a 2x display was half the size it
+      should be. Found while working out why the Thread stream was invisible, which
+      was the same fault with a fatal symptom.
+    */
+    shader.uniforms.uSize!.value = BASE_SIZE * clamp(live.width / REFERENCE_WIDTH, 0.6, 1)
     shader.uniforms.uWorldPerPx!.value = live.height > 0 ? box.height / live.height : 1
     const halfSize = shader.uniforms.uHalfSizePx!.value as [number, number]
     halfSize[0] = live.width / 2
