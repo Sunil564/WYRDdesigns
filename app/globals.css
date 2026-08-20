@@ -338,6 +338,39 @@
 }
 
 /*
+  Filled accent surface.
+
+  Phase 4b 3.3 says filled accent buttons use the accent with white text, and asks
+  for that pair to be verified. Verified: #FFFFFF on #FF521F is 3.24:1, legal for
+  large text and failing for a 13px label. The fill is therefore
+  --color-accent-strong, where white measures 5.08:1 and clears AA at any size.
+  Recorded in docs/decisions/0019.
+*/
+@utility accent-surface {
+  background-color: var(--color-accent-strong);
+  color: var(--color-bg);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.accent-surface:hover {
+  background-color: color-mix(in oklab, var(--color-accent-strong) 86%, var(--color-fg));
+}
+
+/*
+  The same surface inside an inverse block. There the bright accent is correct:
+  near black on #FF521F measures 6.10:1.
+*/
+@utility accent-surface-inverse {
+  background-color: var(--color-accent-on-inverse);
+  color: var(--color-bg-inverse);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.accent-surface-inverse:hover {
+  background-color: color-mix(in oklab, var(--color-accent-on-inverse) 88%, var(--color-fg-inverse));
+}
+
+/*
   Minimum tap target. Criterion 17 asks for 44px on every interactive element, and
   a text link in a list is 20px tall by default. This makes the target 44px without
   changing the type size or the visual rhythm of the list.
