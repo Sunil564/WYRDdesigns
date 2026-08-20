@@ -344,19 +344,32 @@ for (const width of [375, 768, 1023]) {
   await page.waitForTimeout(1500)
 
   const logos = await page.evaluate(() => {
-    const list = Array.from(document.querySelectorAll('#clients [role="img"]'))
-    return list.map((element) => ({
+    const masks = Array.from(document.querySelectorAll('#clients [role="img"]')).map((element) => ({
       name: element.getAttribute('aria-label'),
       mask: getComputedStyle(element).maskImage.includes('url'),
       colour: getComputedStyle(element).backgroundColor,
     }))
+    const images = Array.from(document.querySelectorAll('#clients img')).map((element) => ({
+      name: element.getAttribute('alt'),
+      src: element.getAttribute('src'),
+    }))
+    return { masks, images }
   })
+
+  /*
+    Six logos, five of them tinted masks in --fg-muted. SITEO ships as original
+    artwork because it does not survive monochroming on the light canvas, so it is
+    an img with its real name as alt rather than a mask. Phase 4b section 8 and
+    docs/BLOCKERS.md item 8.
+  */
   record(
-    'S5 renders six real client logos as masks in muted, with real names',
-    logos.length === 6 &&
-      logos.every((logo) => logo.mask && logo.name) &&
-      logos.every((logo) => logo.colour === 'rgb(94, 94, 102)'),
-    logos.map((logo) => logo.name).join(', '),
+    'S5 renders six real client logos, five as muted masks and SITEO as original artwork',
+    logos.masks.length === 5 &&
+      logos.masks.every((logo) => logo.mask && logo.name) &&
+      logos.masks.every((logo) => logo.colour === 'rgb(94, 94, 102)') &&
+      logos.images.length === 1 &&
+      logos.images[0]?.name === 'SITEO',
+    `${logos.masks.length} masks: ${logos.masks.map((l) => l.name).join(', ')} | ${logos.images.length} original: ${logos.images.map((l) => l.name).join(', ')}`,
   )
 
   const marquee = await page.evaluate(() => document.querySelectorAll('.marquee').length)

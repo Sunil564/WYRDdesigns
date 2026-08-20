@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { BufferAttribute, Color, NormalBlending } from 'three'
 import type { Points, ShaderMaterial } from 'three'
 import { SceneCanvas } from '@/components/motion/webgl/SceneCanvas'
 import { heroFragmentShader, heroVertexShader } from '@/components/motion/webgl/heroField.glsl'
-import { lerp, seededRandom } from '@/lib/utils'
+import { clamp, lerp, seededRandom } from '@/lib/utils'
 
 /**
  * Particle count. Phase 4b section 5 halves the band, from 20,000 to 40,000 down to
@@ -36,7 +36,14 @@ function readPalette() {
   }
 }
 
-function Field({ count }: { count: number }) {
+/** Reference viewport the count and the point size are calibrated against. */
+const REFERENCE_AREA = 1440 * 900
+const REFERENCE_WIDTH = 1440
+
+/** Point size at the reference width, chosen by measuring ink coverage. */
+const BASE_SIZE = 6.0
+
+function Field({ count, onResolved }: { count: number; onResolved: (value: number) => void }) {
   const points = useRef<Points | null>(null)
   const material = useRef<ShaderMaterial | null>(null)
   const { viewport, size } = useThree()
@@ -47,10 +54,19 @@ function Field({ count }: { count: number }) {
   const fps = useRef({ frames: 0, elapsed: 0 })
 
   const geometry = useMemo(() => {
-    const random = seededRandom(`wyrd-hero-field:${count}`)
-    const positions = new Float32Array(count * 3)
-    const randoms = new Float32Array(count)
-    const scales = new Float32Array(count)
+    /*
+      Density is the constant, not the count. Spread follows the viewport, so a
+      fixed count means a narrow window gets the same points in a quarter of the
+      area and the field reads as noise rather than as dust. Found by looking at the
+      375px screenshot, which is what the review pass in criterion 14 is for.
+    */
+    const area = size.width * size.height || REFERENCE_AREA
+    const scaled = clamp(Math.round(count * (area / REFERENCE_AREA)), 2200, count)
+
+    const random = seededRandom(`wyrd-hero-field:${scaled}`)
+    const positions = new Float32Array(scaled * 3)
+    const randoms = new Float32Array(scaled)
+    const scales = new Float32Array(scaled)
 
     /*
       Spread across the visible frustum rather than an arbitrary slab. The dark
@@ -65,7 +81,7 @@ function Field({ count }: { count: number }) {
     const spreadX = viewport.width * 1.2
     const spreadY = viewport.height * 1.2
 
-    for (let index = 0; index < count; index += 1) {
+    for (let index = 0; index < scaled; index += 1) {
       positions[index * 3] = (random() - 0.5) * spreadX
       positions[index * 3 + 1] = (random() - 0.5) * spreadY
       // Depth only needs to be enough for a parallax hint.
@@ -74,8 +90,12 @@ function Field({ count }: { count: number }) {
       scales[index] = 0.5 + random() * 0.8
     }
 
-    return { positions, randoms, scales }
-  }, [count, viewport.width, viewport.height])
+    return { positions, randoms, scales, drawn: scaled }
+  }, [count, size.width, size.height, viewport.width, viewport.height])
+
+  useEffect(() => {
+    onResolved(geometry.drawn)
+  }, [geometry.drawn, onResolved])
 
   const uniforms = useMemo(() => {
     const palette = readPalette()
@@ -84,7 +104,7 @@ function Field({ count }: { count: number }) {
       uCursor: { value: [0, 0] as [number, number] },
       uCursorStrength: { value: 0 },
       uPixelRatio: { value: 1 },
-      uSize: { value: 6.0 },
+      uSize: { value: BASE_SIZE },
       uDrift: { value: 0.55 },
       uOpacity: { value: 0 },
       uColourBorder: { value: palette.border },
@@ -96,6 +116,16 @@ function Field({ count }: { count: number }) {
 
   useEffect(() => {
     uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio || 1, 2)
+
+    /*
+      Point size follows the viewport as well as the count.
+
+      A point is a fixed number of pixels, but the type around it is not: at 1440
+      the headline is 80px and a 3px dot is dust, at 375 the headline is 36px and the
+      same dot is grit. Scaling the size with width keeps the ratio between the field
+      and the type roughly constant, which is what the eye actually reads.
+    */
+    uniforms.uSize.value = BASE_SIZE * clamp(size.width / REFERENCE_WIDTH, 0.6, 1)
   }, [uniforms, size])
 
   useEffect(() => {
@@ -199,6 +229,8 @@ function Field({ count }: { count: number }) {
  */
 export function HeroFieldScene({ onContextLost }: { onContextLost?: () => void }) {
   const [count, setCount] = useState(COUNT)
+  const [drawn, setDrawn] = useState(COUNT)
+  const onResolved = useCallback((value: number) => setDrawn(value), [])
 
   // The watchdog in Field fires this at most once per mount. Halving the count
   // rebuilds the geometry, which is a one off cost on a machine that has already
@@ -215,9 +247,10 @@ export function HeroFieldScene({ onContextLost }: { onContextLost?: () => void }
     <SceneCanvas
       frameloop="always"
       onContextLost={onContextLost}
+      pointCount={drawn}
       className="absolute inset-0 h-full w-full"
     >
-      <Field count={count} />
+      <Field count={count} onResolved={onResolved} />
     </SceneCanvas>
   )
 }

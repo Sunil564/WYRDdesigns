@@ -68,19 +68,23 @@ export function Section({
   if (variant === 'light') return inner
 
   return (
-    <div className="relative">
-      {/*
-        The dark ground, and the light grain that gives it texture. Marked as a
-        band so the Thread knows which stretch of itself to draw in the inverse
-        hairline colour.
-      */}
-      <div
-        aria-hidden="true"
-        data-inverse-band
-        className="bg-bg-inverse absolute inset-0 z-[1] overflow-hidden"
-      >
-        <span className="grain-inverse" />
-      </div>
+    /*
+      The dark ground sits on the wrapper, which is an ancestor of the text.
+
+      It was a separate sibling layer at first, which looked identical and was wrong
+      in a way only a checker catches: every automated contrast tool, and the one in
+      scripts/check-contrast.mjs, walks up the DOM for a background, found nothing,
+      assumed white, and reported near white text on white. Painting the ground on the
+      ancestor fixes the report and the layering at once.
+
+      `relative` with no z-index does not create a stacking context, so the ground
+      paints in the positioned-auto layer, below the Thread at z-2 and below the
+      content at z-10. Ground, Thread, content, which is what lets the Thread cross
+      the block instead of hiding behind it.
+    */
+    <div data-inverse-band className="bg-bg-inverse relative overflow-hidden">
+      {/* The light grain, so a dark block carries texture rather than flat ink. */}
+      <span aria-hidden="true" className="grain-inverse" />
       {inner}
     </div>
   )

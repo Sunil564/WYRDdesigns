@@ -13,6 +13,11 @@ type SceneCanvasProps = {
   frameloop?: 'always' | 'demand'
   /** Called when the WebGL context is lost, so the caller can drop a tier. */
   onContextLost?: () => void
+  /**
+   * Published as `data-field-count` so verification can read how many points the
+   * scene actually decided to draw, rather than inferring it from pixels.
+   */
+  pointCount?: number
   className?: string
 }
 
@@ -74,6 +79,7 @@ export function SceneCanvas({
   children,
   frameloop = 'always',
   onContextLost,
+  pointCount,
   className,
 }: SceneCanvasProps) {
   const hostRef = useRef<HTMLDivElement | null>(null)
@@ -110,6 +116,7 @@ export function SceneCanvas({
       ref={hostRef}
       aria-hidden="true"
       data-field="webgl"
+      data-field-count={pointCount}
       className={className}
       style={{ pointerEvents: 'none' }}
     >
