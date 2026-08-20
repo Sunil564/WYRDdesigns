@@ -50,7 +50,7 @@ export function Hero() {
         data-thread-origin
         className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center"
       >
-        <span className="to-line block h-24 w-px bg-gradient-to-b from-transparent" />
+        <span className="to-border block h-24 w-px bg-gradient-to-b from-transparent" />
       </div>
     </section>
   )

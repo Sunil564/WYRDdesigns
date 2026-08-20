@@ -12,7 +12,7 @@ Kept current at the end of every phase. Updated through Phase 4.
 
 | Where | Path | What is there now | What replaces it |
 |---|---|---|---|
-| Header mark | `components/layout/Header.tsx` | `WYRD` set in Satoshi, letterspaced, paper with `Designs` in muted | The real mark, once a vector and a dark background variant exist. The supplied PNG is black on transparent and invisible on `--color-void`. See ADR 0003 and BLOCKERS item 2. |
+| Header mark | `components/layout/Header.tsx` | `WYRD` set in Satoshi, letterspaced, paper with `Designs` in muted | The real mark, once a vector and a dark background variant exist. The supplied PNG is black on transparent and invisible on `--color-bg`. See ADR 0003 and BLOCKERS item 2. |
 | Footer wordmark | `components/layout/Footer.tsx` | Same treatment at display scale | Same |
 | Favicon 16 and 32 | `public/brand/icon-16.png`, `icon-32.png` | The supplied wordmark contained on brand paper. Legible as a shape, not as letters, at 16px | A square single glyph mark |
 

@@ -22,7 +22,7 @@ export function ContactCta() {
     >
       <div className="w-full">
         <Reveal>
-          <h2 className="text-mega text-paper max-w-[24ch] font-black">{contactCta.headline}</h2>
+          <h2 className="text-mega text-fg max-w-[24ch] font-black">{contactCta.headline}</h2>
         </Reveal>
 
         <Reveal delay={60}>
@@ -35,7 +35,7 @@ export function ContactCta() {
         <Reveal delay={120}>
           <a
             href={`mailto:${site.email}`}
-            className="tap text-lead text-muted hover:text-paper mt-6 transition-colors duration-[var(--dur-fast)]"
+            className="tap text-lead text-fg-muted hover:text-fg mt-6 transition-colors duration-[var(--dur-fast)]"
           >
             {site.email}
           </a>

@@ -14,25 +14,25 @@ export function Footer() {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="border-line relative z-10 overflow-hidden border-t">
+    <footer className="border-border relative z-10 overflow-hidden border-t">
       <Container className="pt-32 pb-16">
         <div className="grid gap-16 md:grid-cols-3">
           <div>
-            <p className="text-title text-paper font-black tracking-[-0.02em]">WYRD</p>
-            <p className="measure text-body text-muted mt-6">{site.tagline}</p>
-            <p className="measure text-body text-muted mt-3">
+            <p className="text-title text-fg font-black tracking-[-0.02em]">WYRD</p>
+            <p className="measure text-body text-fg-muted mt-6">{site.tagline}</p>
+            <p className="measure text-body text-fg-muted mt-3">
               A digital and creative studio in {site.location.city}.
             </p>
           </div>
 
           <nav aria-label="Footer">
-            <p className="label text-muted">Site</p>
+            <p className="label text-fg-muted">Site</p>
             <ul className="mt-4 flex flex-col">
               {nav.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="tap text-body text-paper hover:text-signal transition-colors duration-[var(--dur-fast)]"
+                    className="tap text-body text-fg hover:text-accent transition-colors duration-[var(--dur-fast)]"
                   >
                     {link.label}
                   </Link>
@@ -42,12 +42,12 @@ export function Footer() {
           </nav>
 
           <div>
-            <p className="label text-muted">Contact</p>
+            <p className="label text-fg-muted">Contact</p>
             <ul className="mt-4 flex flex-col">
               <li>
                 <a
                   href={`mailto:${site.email}`}
-                  className="tap text-body text-paper hover:text-signal transition-colors duration-[var(--dur-fast)]"
+                  className="tap text-body text-fg hover:text-accent transition-colors duration-[var(--dur-fast)]"
                 >
                   {site.email}
                 </a>
@@ -56,7 +56,7 @@ export function Footer() {
                 <li key={phone}>
                   <a
                     href={`tel:${phone.replace(/\s+/g, '')}`}
-                    className="tap text-body text-paper hover:text-signal transition-colors duration-[var(--dur-fast)]"
+                    className="tap text-body text-fg hover:text-accent transition-colors duration-[var(--dur-fast)]"
                   >
                     {phone}
                   </a>
@@ -68,7 +68,7 @@ export function Footer() {
                     href={social.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="tap text-body text-paper hover:text-signal transition-colors duration-[var(--dur-fast)]"
+                    className="tap text-body text-fg hover:text-accent transition-colors duration-[var(--dur-fast)]"
                   >
                     {social.name}
                   </a>
@@ -79,7 +79,7 @@ export function Footer() {
         </div>
 
         <div className="hairline-t mt-24 flex flex-wrap items-center justify-between gap-6 pt-8">
-          <p className="label text-muted">
+          <p className="label text-fg-muted">
             {site.legalName}, {year}
           </p>
           <ul className="flex gap-8">
@@ -87,7 +87,7 @@ export function Footer() {
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className="tap label text-muted hover:text-paper transition-colors duration-[var(--dur-fast)]"
+                  className="tap label text-fg-muted hover:text-fg transition-colors duration-[var(--dur-fast)]"
                 >
                   {link.label}
                 </Link>

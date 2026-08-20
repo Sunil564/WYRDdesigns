@@ -15,14 +15,14 @@
 
 @theme {
   /* Colour. Dark canvas, one accent. Brief section 4.1. */
-  --color-void: #08080a;
-  --color-surface: #101013;
-  --color-surface-2: #191920;
-  --color-line: #26262e;
-  --color-paper: #f2efe9;
-  --color-muted: #8b8b95;
-  --color-signal: #ff521f;
-  --color-signal-dim: #b33714;
+  --color-bg: #08080a;
+  --color-bg-raised: #101013;
+  --color-bg-sunken: #191920;
+  --color-border: #26262e;
+  --color-fg: #f2efe9;
+  --color-fg-muted: #8b8b95;
+  --color-accent: #ff521f;
+  --color-accent-strong: #b33714;
 
   /* Type scale. Fluid, clamped. Brief section 4.2, mega adjusted, see docs. */
   --text-mega: clamp(2.25rem, 7vw, 5rem);
@@ -102,8 +102,8 @@
   }
 
   body {
-    background-color: var(--color-void);
-    color: var(--color-paper);
+    background-color: var(--color-bg);
+    color: var(--color-fg);
     font-family: var(--font-sans);
     font-size: var(--text-body);
     line-height: 1.6;
@@ -126,12 +126,12 @@
   }
 
   ::selection {
-    background-color: var(--color-signal);
-    color: var(--color-void);
+    background-color: var(--color-accent);
+    color: var(--color-bg);
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-signal);
+    outline: 2px solid var(--color-accent);
     outline-offset: 3px;
     border-radius: 2px;
   }
@@ -270,13 +270,13 @@
   padding-block: var(--section-y);
 }
 
-/* Hairline dividers. 1px, --color-line, no shadow anywhere on this site. */
+/* Hairline dividers. 1px, --color-border, no shadow anywhere on this site. */
 @utility hairline-t {
-  border-top: 1px solid var(--color-line);
+  border-top: 1px solid var(--color-border);
 }
 
 @utility hairline-b {
-  border-bottom: 1px solid var(--color-line);
+  border-bottom: 1px solid var(--color-border);
 }
 
 /*
@@ -306,7 +306,7 @@
   line-height: 1;
   font-weight: 900;
   letter-spacing: -0.04em;
-  color: var(--color-surface-2);
+  color: var(--color-bg-sunken);
   margin-bottom: -0.18em;
   text-align: center;
   width: 100%;
@@ -345,7 +345,7 @@
   transition: opacity var(--dur-base) var(--ease-out);
   background: radial-gradient(
     360px circle at var(--pointer-x) var(--pointer-y),
-    color-mix(in oklab, var(--color-paper) 7%, transparent),
+    color-mix(in oklab, var(--color-fg) 7%, transparent),
     transparent 70%
   );
 }
@@ -356,7 +356,7 @@
 
 .capability-block:hover,
 .capability-block:focus-within {
-  background-color: var(--color-surface-2);
+  background-color: var(--color-bg-sunken);
 }
 
 /* The hairline that sweeps left to right across the top edge on hover. */
@@ -365,7 +365,7 @@
   inset-inline: 0;
   top: 0;
   height: 1px;
-  background-color: var(--color-signal);
+  background-color: var(--color-accent);
   transform: scaleX(0);
   transform-origin: left center;
   transition: transform var(--dur-base) var(--ease-out);
@@ -423,8 +423,8 @@
   display: none;
   padding: 0.75rem 1rem;
   border-radius: var(--radius-pill);
-  background-color: var(--color-signal);
-  color: var(--color-void);
+  background-color: var(--color-accent);
+  color: var(--color-bg);
   font-weight: 700;
   opacity: 0;
   transition: opacity var(--dur-fast) var(--ease-out);
@@ -451,7 +451,7 @@
   flex-direction: column;
   gap: 3rem;
   overflow: hidden;
-  /* Fade the edges to void so logos do not hard cut at the viewport edge. */
+  /* Fade the edges out so logos do not hard cut at the viewport edge. */
   mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
 }
 

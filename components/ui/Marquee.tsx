@@ -67,7 +67,7 @@ export function Marquee({ items, duration = 40 }: MarqueeProps) {
             {[...row, ...row].map((client, index) => (
               <span
                 key={`${client.name}-${index}`}
-                className="text-muted hover:text-paper transition-colors duration-[var(--dur-base)]"
+                className="text-fg-muted hover:text-fg transition-colors duration-[var(--dur-base)]"
               >
                 <span
                   role="img"

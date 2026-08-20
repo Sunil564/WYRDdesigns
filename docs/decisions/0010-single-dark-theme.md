@@ -12,7 +12,7 @@ The superseded `design-system.md` in `docs/supplied-superseded/` specifies a lig
 
 ## Decision
 
-One theme, dark. `color-scheme: dark` on `:root`, `--color-void` on `body`, no `prefers-color-scheme` branch, no toggle, no light token set. Every token has exactly one value.
+One theme, dark. `color-scheme: dark` on `:root`, `--color-bg` on `body`, no `prefers-color-scheme` branch, no toggle, no light token set. Every token has exactly one value.
 
 ## Consequences
 

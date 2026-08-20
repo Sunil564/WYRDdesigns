@@ -132,7 +132,7 @@ The invariant: a field that has no verified value is `null`, and the component c
 - Lighthouse Accessibility 100 on every route.
 - Every canvas is `aria-hidden` and `pointer-events: none`.
 - A WebGL rendered project visual keeps an accessible DOM equivalent behind it. An image in WebGL is invisible to a screen reader.
-- Focus is visible on every interactive element, 2px `--color-signal` at 3px offset.
+- Focus is visible on every interactive element, 2px `--color-accent` at 3px offset.
 - Focus is never trapped except intentionally in the mobile menu, which closes on Escape and on route change.
 - Touch targets 44px minimum.
 - No horizontal scroll from 320px to 2560px.

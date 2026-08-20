@@ -6,8 +6,8 @@
  * names as they appear in the artwork. Nothing here is renamed or invented.
  *
  * Each file is an alpha only ink mask, rendered in `currentColor` through the
- * `logo-mask` utility, which is how the row moves from `--color-muted` to
- * `--color-paper` on hover with one CSS transition. See ADR 0004.
+ * `logo-mask` utility, which is how the row moves from `--color-fg-muted` to
+ * `--color-fg` on hover with one CSS transition. See ADR 0004.
  *
  * Six logos is below the eight the brief sets as the marquee threshold, so S5
  * renders a single centred static row. A marquee with six logos looks like a

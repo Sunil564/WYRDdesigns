@@ -16,7 +16,7 @@ export function StudioStrip() {
       <div className="max-w-[46rem]" data-thread-node>
         {studioStrip.lines.map((line, index) => (
           <Reveal key={line} delay={index * 60}>
-            <p className="text-title text-paper font-bold">{line}</p>
+            <p className="text-title text-fg font-bold">{line}</p>
           </Reveal>
         ))}
         <Reveal delay={studioStrip.lines.length * 60}>

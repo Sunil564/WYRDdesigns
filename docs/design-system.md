@@ -10,14 +10,14 @@ Precedence, per ADR 0001: `brand.md` wins on brand matters. The superseded `desi
 
 | Token | Value | Use | Origin |
 |---|---|---|---|
-| `--color-void` | `#08080A` | page canvas | brief |
-| `--color-surface` | `#101013` | cards, raised blocks | brief |
-| `--color-surface-2` | `#191920` | hover state, inset blocks | brief |
-| `--color-line` | `#26262E` | hairlines, borders, the Thread at rest | brief |
-| `--color-paper` | `#F2EFE9` | primary text, never pure white | brief |
-| `--color-muted` | `#8B8B95` | secondary text, labels, meta | brief |
-| `--color-signal` | `#FF521F` | the one accent | brief |
-| `--color-signal-dim` | `#B33714` | accent pressed and secondary state | brief |
+| `--color-bg` | `#08080A` | page canvas | brief |
+| `--color-bg-raised` | `#101013` | cards, raised blocks | brief |
+| `--color-bg-sunken` | `#191920` | hover state, inset blocks | brief |
+| `--color-border` | `#26262E` | hairlines, borders, the Thread at rest | brief |
+| `--color-fg` | `#F2EFE9` | primary text, never pure white | brief |
+| `--color-fg-muted` | `#8B8B95` | secondary text, labels, meta | brief |
+| `--color-accent` | `#FF521F` | the one accent | brief |
+| `--color-accent-strong` | `#B33714` | accent pressed and secondary state | brief |
 
 `brand.md` is silent on colour. Its section 1 fixes identity, not palette, and the palette in the superseded document belongs to a different site. So the brief's dark canvas stands unopposed.
 
@@ -41,8 +41,8 @@ Contrast, computed on the actual token pairs rather than assumed:
 
 Two consequences that constrain components:
 
-1. **The filled signal button sets its label in `--color-void`, not `--color-paper`.** Paper on signal is 2.82 and fails AA outright. Void on signal is 6.17 and passes at every size. This is not a stylistic preference, and a later change to a light label on the orange button is a regression.
-2. `--color-muted` holds AA on all three surface values, so meta and label text can sit on any of them. It has no headroom for a fourth darker surface, and there is not going to be one.
+1. **The filled signal button sets its label in `--color-bg`, not `--color-fg`.** Paper on signal is 2.82 and fails AA outright. Void on signal is 6.17 and passes at every size. This is not a stylistic preference, and a later change to a light label on the orange button is a regression.
+2. `--color-fg-muted` holds AA on all three surface values, so meta and label text can sit on any of them. It has no headroom for a fourth darker surface, and there is not going to be one.
 
 Text over the particle field and over placeholder visuals is checked against its rendered background in Phase 3 and Phase 4, not against the canvas token, since a particle can land behind a character.
 
@@ -116,7 +116,7 @@ Gutter and section rhythm are single custom properties that switch at one breakp
 | `--radius-input` | 4px | inputs, textareas, selects | brief |
 | `--radius-pill` | 999px | buttons, chips | brief |
 
-Borders are 1px `--color-line` and nothing else. No shadows anywhere on the site. Depth is a surface value shift, `--color-surface` to `--color-surface-2`.
+Borders are 1px `--color-border` and nothing else. No shadows anywhere on the site. Depth is a surface value shift, `--color-bg-raised` to `--color-bg-sunken`.
 
 The superseded document allowed "a single subtle lift on hover" with a 2px translate. Not used. The brief bans shadows and scale transforms on hover, and the hover treatment in S3 is a background shift plus a hairline sweep.
 
@@ -124,7 +124,7 @@ The superseded document allowed "a single subtle lift on hover" with a 2px trans
 
 One tiling noise texture, `public/noise.png`, 128px, generated deterministically by `scripts/make-noise.py` from a fixed seed. Fixed position, full viewport, `pointer-events: none`, `opacity: 0.04`, `mix-blend-mode: soft-light`. Applied once in the root layout through the `grain` utility.
 
-Origin: brief 4.4, which specifies 3 to 5 percent. 4 percent with soft-light reads as texture on both `--color-void` and `--color-surface`. Straight `normal` blending at the same opacity lifts the canvas visibly toward grey, which is why the blend mode is part of the token rather than the opacity alone.
+Origin: brief 4.4, which specifies 3 to 5 percent. 4 percent with soft-light reads as texture on both `--color-bg` and `--color-bg-raised`. Straight `normal` blending at the same opacity lifts the canvas visibly toward grey, which is why the blend mode is part of the token rather than the opacity alone.
 
 ## 6. Utilities
 
@@ -136,7 +136,7 @@ Deliberately few. Anything used twice becomes a component, anything used once st
 | `label` | the uppercase eyebrow and meta treatment, `--text-label` with 0.12em tracking |
 | `editorial` | Instrument Serif italic, for manifesto lines and pull quotes only |
 | `section-y` | vertical section rhythm from `--section-y` |
-| `hairline-t`, `hairline-b` | 1px `--color-line` divider |
+| `hairline-t`, `hairline-b` | 1px `--color-border` divider |
 | `grain` | the fixed grain overlay |
 | `logo-mask` | renders an alpha only client logo mask in `currentColor` |
 

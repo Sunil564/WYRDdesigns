@@ -14,7 +14,7 @@ Blocks: Phase 7 deploy to a production domain. Nothing earlier.
 
 ### 2. No vector or light variant of the WYRD mark
 
-The supplied mark is a black on transparent PNG. It is invisible on `--color-void`, and it is not this build's place to recolour a brand mark. The header and footer therefore set the wordmark in Satoshi as an interim treatment, tagged `data-placeholder`.
+The supplied mark is a black on transparent PNG. It is invisible on `--color-bg`, and it is not this build's place to recolour a brand mark. The header and footer therefore set the wordmark in Satoshi as an interim treatment, tagged `data-placeholder`.
 
 Unblocks by: supplying an SVG, AI, EPS, or PDF of the mark, plus a variant intended for dark backgrounds. Ideally also a square single glyph mark for a 16px favicon.
 

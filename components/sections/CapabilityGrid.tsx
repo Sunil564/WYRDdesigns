@@ -7,8 +7,8 @@ import type { Cluster } from '@/content/services'
 /**
  * The 2x2 cluster grid. Brief 6.1 S3.
  *
- * Hover: the block background lifts from `--color-surface` to `--color-surface-2`,
- * the index digit goes to `--color-signal`, and a hairline sweeps left to right
+ * Hover: the block background lifts from `--color-bg-raised` to `--color-bg-sunken`,
+ * the index digit goes to `--color-accent`, and a hairline sweeps left to right
  * across the top edge. No scale transform, no shadow. All of it is CSS on
  * `:hover` and `:focus-within`, so there is no JavaScript on the hover path.
  *
@@ -55,23 +55,23 @@ export function CapabilityGrid({ clusters }: { clusters: Cluster[] }) {
         <Reveal key={cluster.slug} delay={index * 60}>
           <article
             data-thread-branch-target={cluster.slug}
-            className="capability-block group border-line bg-surface relative flex h-full flex-col border p-8 md:p-12"
+            className="capability-block group border-border bg-bg-raised relative flex h-full flex-col border p-8 md:p-12"
           >
             {/* The hairline that sweeps the top edge on hover. */}
             <span aria-hidden="true" className="capability-sweep" />
 
-            <p className="label text-muted group-hover:text-signal transition-colors duration-[var(--dur-fast)]">
+            <p className="label text-fg-muted group-hover:text-accent transition-colors duration-[var(--dur-fast)]">
               {cluster.index}
             </p>
 
-            <h3 className="text-title text-paper mt-8 font-bold">{cluster.name}</h3>
-            <p className="measure text-lead text-muted mt-4">{cluster.line}</p>
+            <h3 className="text-title text-fg mt-8 font-bold">{cluster.name}</h3>
+            <p className="measure text-lead text-fg-muted mt-4">{cluster.line}</p>
 
             <ul className="mt-10 flex flex-col gap-4">
               {cluster.services.map((service) => (
                 <li key={service.name} className="hairline-t pt-4">
-                  <p className="text-body text-paper">{service.name}</p>
-                  <p className="measure text-body text-muted mt-1">{service.line}</p>
+                  <p className="text-body text-fg">{service.name}</p>
+                  <p className="measure text-body text-fg-muted mt-1">{service.line}</p>
                 </li>
               ))}
             </ul>

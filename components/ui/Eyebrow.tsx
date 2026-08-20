@@ -14,9 +14,9 @@ type EyebrowProps = {
  */
 export function Eyebrow({ children, marker = false, className }: EyebrowProps) {
   return (
-    <p className={cn('label text-muted flex items-center gap-3', className)}>
+    <p className={cn('label text-fg-muted flex items-center gap-3', className)}>
       {marker && (
-        <span aria-hidden="true" className="bg-signal inline-block h-px w-8 align-middle" />
+        <span aria-hidden="true" className="bg-accent inline-block h-px w-8 align-middle" />
       )}
       {children}
     </p>

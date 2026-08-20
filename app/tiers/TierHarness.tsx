@@ -56,15 +56,15 @@ export function TierHarness() {
   return (
     <div className="flex flex-col gap-12">
       <div className="flex flex-wrap items-center gap-6">
-        <p className="label text-muted">
+        <p className="label text-fg-muted">
           Detected tier:{' '}
-          <span data-testid="tier" className="text-paper">
+          <span data-testid="tier" className="text-fg">
             {tier}
           </span>
         </p>
-        <p className="label text-muted">
+        <p className="label text-fg-muted">
           Mount cycles:{' '}
-          <span data-testid="cycles" className="text-paper">
+          <span data-testid="cycles" className="text-fg">
             {cycles}
           </span>
         </p>
@@ -97,7 +97,7 @@ export function TierHarness() {
         </Button>
       </div>
 
-      <div className="border-line bg-surface relative h-[60vh] border">
+      <div className="border-border bg-bg-raised relative h-[60vh] border">
         {mounted && (
           <TierGate
             className="absolute inset-0"

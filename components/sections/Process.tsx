@@ -102,11 +102,11 @@ export function Process() {
       <div ref={hostRef} className="relative mt-16" data-thread-node>
         {/* The horizontal thread through the nodes. Desktop only. */}
         <div className="absolute inset-x-0 top-3 hidden lg:block">
-          <span aria-hidden="true" className="bg-line block h-px w-full" />
+          <span aria-hidden="true" className="bg-border block h-px w-full" />
           <span
             aria-hidden="true"
             data-process-line
-            className="bg-signal absolute inset-x-0 top-0 block h-px w-full"
+            className="bg-accent absolute inset-x-0 top-0 block h-px w-full"
           />
         </div>
 
@@ -115,12 +115,12 @@ export function Process() {
             <li key={step.index} data-process-step data-process-node className="relative">
               <span
                 aria-hidden="true"
-                className="rounded-pill bg-paper mb-8 hidden size-1.5 lg:block"
+                className="rounded-pill bg-fg mb-8 hidden size-1.5 lg:block"
                 style={{ marginTop: '0.4rem' }}
               />
-              <p className="label text-signal">{step.index}</p>
-              <h3 className="text-title text-paper mt-4 font-bold">{step.name}</h3>
-              <p className="measure text-body text-muted mt-3">{step.line}</p>
+              <p className="label text-accent">{step.index}</p>
+              <h3 className="text-title text-fg mt-4 font-bold">{step.name}</h3>
+              <p className="measure text-body text-fg-muted mt-3">{step.line}</p>
             </li>
           ))}
         </ol>

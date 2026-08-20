@@ -6,7 +6,7 @@ import { Header } from '@/components/layout/Header'
 import { SiteMotion } from '@/components/motion/SiteMotion'
 import { instrumentSerif, satoshi } from '@/lib/fonts'
 import { SITE_URL } from '@/lib/site-url'
-import { THEME_COLOR_VOID } from '@/lib/theme'
+import { THEME_COLOR_BG } from '@/lib/theme'
 import { defaultMeta, site } from '@/content/site'
 import './globals.css'
 
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: THEME_COLOR_VOID,
+  themeColor: THEME_COLOR_BG,
   colorScheme: 'dark',
 }
 

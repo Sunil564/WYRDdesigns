@@ -103,11 +103,11 @@ export function Positioning() {
           body sized wrapper is 240px, not 1200px, and the block collapses to one
           word per line.
         */}
-        <p className="text-display text-paper mx-auto max-w-[26ch] font-bold" data-thread-node>
+        <p className="text-display text-fg mx-auto max-w-[26ch] font-bold" data-thread-node>
           <span className="block" data-positioning-line>
             {positioning.before}
           </span>
-          <span className="editorial text-paper mt-6 block" data-positioning-emphasis>
+          <span className="editorial text-fg mt-6 block" data-positioning-emphasis>
             {positioning.emphasis}
           </span>
           <span className="mt-6 block" data-positioning-line>

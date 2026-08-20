@@ -109,14 +109,14 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
           initial="hidden"
           animate="visible"
           exit="exit"
-          className="bg-void fixed inset-0 z-50 flex flex-col lg:hidden"
+          className="bg-bg fixed inset-0 z-50 flex flex-col lg:hidden"
         >
           <div className="flex h-20 items-center justify-end px-[var(--gutter)]">
             <button
               type="button"
               onClick={onClose}
               aria-label="Close menu"
-              className="text-paper hover:text-signal flex size-11 items-center justify-center transition-colors duration-[var(--dur-fast)]"
+              className="text-fg hover:text-accent flex size-11 items-center justify-center transition-colors duration-[var(--dur-fast)]"
             >
               <X aria-hidden="true" className="size-6" />
             </button>
@@ -134,7 +134,7 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
                 <Link
                   href={link.href}
                   onClick={onClose}
-                  className="text-display text-paper hover:text-signal block py-3 font-bold transition-colors duration-[var(--dur-fast)]"
+                  className="text-display text-fg hover:text-accent block py-3 font-bold transition-colors duration-[var(--dur-fast)]"
                 >
                   {link.label}
                 </Link>
@@ -145,7 +145,7 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
               <Link
                 href={cta.href}
                 onClick={onClose}
-                className="label rounded-pill bg-signal text-void inline-flex min-h-11 items-center px-6 py-3 font-bold"
+                className="label rounded-pill bg-accent text-bg inline-flex min-h-11 items-center px-6 py-3 font-bold"
               >
                 {cta.label}
               </Link>
@@ -160,7 +160,7 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
           >
             <a
               href={`mailto:${site.email}`}
-              className="text-body text-muted hover:text-paper transition-colors duration-[var(--dur-fast)]"
+              className="text-body text-fg-muted hover:text-fg transition-colors duration-[var(--dur-fast)]"
             >
               {site.email}
             </a>
@@ -170,7 +170,7 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
                 href={social.href}
                 target="_blank"
                 rel="noreferrer"
-                className="label text-muted hover:text-paper transition-colors duration-[var(--dur-fast)]"
+                className="label text-fg-muted hover:text-fg transition-colors duration-[var(--dur-fast)]"
               >
                 {social.name}
               </a>

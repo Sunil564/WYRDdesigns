@@ -163,9 +163,9 @@ void main() {
 export const heroFragmentShader = /* glsl */ `
 precision mediump float;
 
-uniform vec3 uColourLine;
-uniform vec3 uColourMuted;
-uniform vec3 uColourSignal;
+uniform vec3 uColourBorder;
+uniform vec3 uColourFgMuted;
+uniform vec3 uColourAccent;
 uniform float uOpacity;
 
 varying float vRandom;
@@ -184,8 +184,8 @@ void main() {
   // no EffectComposer in this build.
   float halo = smoothstep(0.5, 0.08, d) * 0.26 * vAccent;
 
-  vec3 colour = mix(uColourLine, uColourMuted, smoothstep(0.2, 0.9, vRandom));
-  colour = mix(colour, uColourSignal, vAccent);
+  vec3 colour = mix(uColourBorder, uColourFgMuted, smoothstep(0.2, 0.9, vRandom));
+  colour = mix(colour, uColourAccent, vAccent);
 
   float alpha = (core * (0.45 + vRandom * 0.5) + halo) * uOpacity;
   if (alpha < 0.002) discard;

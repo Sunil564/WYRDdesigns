@@ -32,7 +32,7 @@ export function WorkCard({ project, aspect, className }: WorkCardProps) {
     <article ref={cardRef} className={cn('work-card group relative', className)}>
       <Link href={`/work/${project.slug}`} className="block focus-visible:outline-offset-8">
         {/* The fixed frame. The visual scales inside it and never outside it. */}
-        <div className="border-line relative overflow-hidden border">
+        <div className="border-border relative overflow-hidden border">
           <div className="work-card-visual">
             <Placeholder
               seed={project.seed}
@@ -44,19 +44,19 @@ export function WorkCard({ project, aspect, className }: WorkCardProps) {
         </div>
 
         <div className="mt-6 flex flex-col gap-2">
-          <h3 className="work-card-title text-title text-paper font-bold">{project.title}</h3>
-          <p className="measure text-body text-muted">{project.summary}</p>
+          <h3 className="work-card-title text-title text-fg font-bold">{project.title}</h3>
+          <p className="measure text-body text-fg-muted">{project.summary}</p>
 
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
             {project.services.map((service) => (
-              <span key={service} className="label text-muted">
+              <span key={service} className="label text-fg-muted">
                 {service}
               </span>
             ))}
             {/* Year and client render only when they are real. */}
-            {project.year !== null && <span className="label text-muted">{project.year}</span>}
+            {project.year !== null && <span className="label text-fg-muted">{project.year}</span>}
             {project.placeholder && (
-              <span className="label rounded-pill border-line text-muted border px-3 py-1">
+              <span className="label rounded-pill border-border text-fg-muted border px-3 py-1">
                 Pending clearance
               </span>
             )}

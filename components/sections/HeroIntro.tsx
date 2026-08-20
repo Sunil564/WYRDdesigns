@@ -46,12 +46,12 @@ export function HeroIntro({ eyebrow, lines, lead, primary, secondary }: HeroIntr
         lines={lines}
         onComplete={onComplete}
         delay={0.2}
-        className="text-mega text-paper mt-8 font-black"
+        className="text-mega text-fg mt-8 font-black"
         lineClassName="overflow-hidden pb-[0.08em]"
       />
 
       <p
-        className="hero-enter text-lead text-muted mt-10 max-w-[60ch]"
+        className="hero-enter text-lead text-fg-muted mt-10 max-w-[60ch]"
         data-enter={headlineDone ? 'in' : 'out'}
       >
         {lead}

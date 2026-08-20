@@ -12,7 +12,7 @@ type WordmarkProps = {
  * Interim typographic wordmark.
  *
  * The supplied logo is a black on transparent raster and is invisible on
- * `--color-void`. Section 0.3 of the brief forbids recolouring it and sanctions
+ * `--color-bg`. Section 0.3 of the brief forbids recolouring it and sanctions
  * setting the wordmark in Satoshi instead, which is what this is. The lockup
  * order matches the supplied artwork: the name, then `Designs` below and lighter.
  *
@@ -27,7 +27,7 @@ export function Wordmark({ size = 'mark', descriptor = true, className }: Wordma
     >
       <span
         className={cn(
-          'text-paper font-black tracking-[-0.02em]',
+          'text-fg font-black tracking-[-0.02em]',
           size === 'mark' ? 'text-title' : 'text-mega',
         )}
       >
@@ -36,7 +36,7 @@ export function Wordmark({ size = 'mark', descriptor = true, className }: Wordma
       {descriptor && (
         <span
           className={cn(
-            'text-muted',
+            'text-fg-muted',
             size === 'mark' ? 'label' : 'text-title font-medium tracking-[0.06em]',
           )}
         >

@@ -39,7 +39,7 @@ Derived variants, written by `scripts/process-assets.py`, all from the unmodifie
 | `public/brand/wyrd-og-mark.png` | 1200 x 400 | Mark on brand paper for OG composition |
 | `public/brand/icon-16.png`, `icon-32.png`, `icon-180.png`, `icon-512.png` | as named | Favicon and touch icon set, mark contained on brand paper |
 
-The supplied mark is black on transparent and is therefore invisible on `--color-void`. It has not been recoloured, inverted, redrawn, or restretched. The header and footer set the wordmark in Satoshi as an interim treatment. See `docs/decisions/0003-brand-mark-handling.md` and the phase report.
+The supplied mark is black on transparent and is therefore invisible on `--color-bg`. It has not been recoloured, inverted, redrawn, or restretched. The header and footer set the wordmark in Satoshi as an interim treatment. See `docs/decisions/0003-brand-mark-handling.md` and the phase report.
 
 ## Client logos in the source folder
 
@@ -65,7 +65,7 @@ Derived output, written by `scripts/process-assets.py`, one ink mask per logo at
 | Seervi Business Expo | `public/logos/seervi-business-expo.webp` and `.png` | 87 x 96 |
 | Vahini Pipes | `public/logos/vahini-pipes.webp` and `.png` | 201 x 96 |
 
-Masks are tinted with `currentColor` at render time, which is how S5 moves from `--color-muted` to `--color-paper` on hover without a second file per logo. Technique and the six logo count consequence: `docs/decisions/0004-client-logo-treatment.md`.
+Masks are tinted with `currentColor` at render time, which is how S5 moves from `--color-fg-muted` to `--color-fg` on hover without a second file per logo. Technique and the six logo count consequence: `docs/decisions/0004-client-logo-treatment.md`.
 
 ## Documents found outside the source folder
 

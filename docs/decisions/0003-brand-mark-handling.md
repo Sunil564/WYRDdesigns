@@ -13,7 +13,7 @@ What was supplied: `Company logo/Logo_Design_Black final.png`, 2131 x 1036 PNG w
 Two problems.
 
 1. No vector. The mark is raster only, so it cannot become inline SVG with `currentColor`.
-2. The mark is black. The canvas is `--color-void`, `#08080A`. Contrast between black artwork and a near black canvas is effectively zero. The mark is invisible where the brief needs it most.
+2. The mark is black. The canvas is `--color-bg`, `#08080A`. Contrast between black artwork and a near black canvas is effectively zero. The mark is invisible where the brief needs it most.
 
 Auto tracing the raster to SVG was rejected: a trace of a gradient filled letterform with a soft antialiased edge is a redrawing, and it would silently change the shape of a brand mark.
 
@@ -27,8 +27,8 @@ Auto tracing the raster to SVG was rejected: a trace of a gradient filled letter
 
 - The source file is committed verbatim at `public/brand/wyrd-logo-supplied.png`.
 - `scripts/process-assets.py` exports the required raster variants from the unmodified source, at 3x their render height: `wyrd-header` at 153 x 72 for a 24px render, `wyrd-footer` at 408 x 192 for a 64px render, WebP plus PNG fallback for each. Nothing is recoloured. They are committed and unused on the dark canvas, ready for the day a light or vector version arrives.
-- The header mark and the footer wordmark are set in Satoshi, letterspaced, as `WYRD` in `--color-paper` with `Designs` in `--color-muted`, matching the lockup order of the supplied mark. Tagged `data-placeholder` and listed in `docs/placeholders.md`.
-- The icon set at 16, 32, 180, and 512 places the unmodified mark, contained with 12 percent padding, on `--color-paper`. Placing an unmodified mark on the light ground it was drawn for is not a modification, and a browser tab is not the dark canvas.
+- The header mark and the footer wordmark are set in Satoshi, letterspaced, as `WYRD` in `--color-fg` with `Designs` in `--color-fg-muted`, matching the lockup order of the supplied mark. Tagged `data-placeholder` and listed in `docs/placeholders.md`.
+- The icon set at 16, 32, 180, and 512 places the unmodified mark, contained with 12 percent padding, on `--color-fg`. Placing an unmodified mark on the light ground it was drawn for is not a modification, and a browser tab is not the dark canvas.
 - The OG mark is the same treatment at 1200 x 400.
 
 ## Consequences

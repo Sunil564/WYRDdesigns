@@ -20,14 +20,14 @@ export const metadata: Metadata = {
 }
 
 const colours = [
-  { token: '--color-void', className: 'bg-void', use: 'page canvas' },
-  { token: '--color-surface', className: 'bg-surface', use: 'cards, raised blocks' },
-  { token: '--color-surface-2', className: 'bg-surface-2', use: 'hover, inset blocks' },
-  { token: '--color-line', className: 'bg-line', use: 'hairlines, the Thread at rest' },
-  { token: '--color-paper', className: 'bg-paper', use: 'primary text' },
-  { token: '--color-muted', className: 'bg-muted', use: 'secondary text, meta' },
-  { token: '--color-signal', className: 'bg-signal', use: 'the one accent' },
-  { token: '--color-signal-dim', className: 'bg-signal-dim', use: 'accent pressed' },
+  { token: '--color-bg', className: 'bg-bg', use: 'page canvas' },
+  { token: '--color-bg-raised', className: 'bg-bg-raised', use: 'cards, raised blocks' },
+  { token: '--color-bg-sunken', className: 'bg-bg-sunken', use: 'hover, inset blocks' },
+  { token: '--color-border', className: 'bg-border', use: 'hairlines, the Thread at rest' },
+  { token: '--color-fg', className: 'bg-fg', use: 'primary text' },
+  { token: '--color-fg-muted', className: 'bg-fg-muted', use: 'secondary text, meta' },
+  { token: '--color-accent', className: 'bg-accent', use: 'the one accent' },
+  { token: '--color-accent-strong', className: 'bg-accent-strong', use: 'accent pressed' },
 ]
 
 const type = [
@@ -85,9 +85,9 @@ export default function TokensPage() {
   return (
     <main className="relative z-10">
       <Container as="header" className="pt-32 pb-16">
-        <p className="label text-signal">Internal</p>
+        <p className="label text-accent">Internal</p>
         <h1 className="text-display mt-6 font-bold">Tokens and primitives</h1>
-        <p className="measure text-lead text-muted mt-6">
+        <p className="measure text-lead text-fg-muted mt-6">
           Every token in <code>app/globals.css</code> and every primitive in{' '}
           <code>components/</code>, rendered once so a change can be looked at. Not linked from the
           site, not indexed.
@@ -98,9 +98,9 @@ export default function TokensPage() {
         <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
           {colours.map((colour) => (
             <div key={colour.token}>
-              <div className={`border-line h-24 border ${colour.className}`} />
+              <div className={`border-border h-24 border ${colour.className}`} />
               <p className="text-body mt-3">{colour.token}</p>
-              <p className="text-body text-muted">{colour.use}</p>
+              <p className="text-body text-fg-muted">{colour.use}</p>
             </div>
           ))}
         </div>
@@ -110,19 +110,19 @@ export default function TokensPage() {
         <div className="flex flex-col gap-12">
           {type.map((item) => (
             <div key={item.token}>
-              <p className="label text-muted">{item.token}</p>
+              <p className="label text-fg-muted">{item.token}</p>
               <p className={`mt-3 ${item.className}`}>{item.sample}</p>
             </div>
           ))}
           <div>
-            <p className="label text-muted">editorial, Instrument Serif italic</p>
+            <p className="label text-fg-muted">editorial, Instrument Serif italic</p>
             <p className="text-display mt-3">
               One phrase per viewport, <span className="editorial">and never more than one</span>.
             </p>
           </div>
           <div>
-            <p className="label text-muted">measure, 68ch cap</p>
-            <p className="measure text-body text-muted mt-3">
+            <p className="label text-fg-muted">measure, 68ch cap</p>
+            <p className="measure text-body text-fg-muted mt-3">
               Body copy never runs wider than sixty eight characters. Past that the eye loses the
               start of the next line and the reader slows down without knowing why. This paragraph
               is here to show the cap holding at every width, so a long block of running copy has
@@ -136,9 +136,9 @@ export default function TokensPage() {
         <div className="flex flex-col gap-4">
           {space.map((item) => (
             <div key={item.value} className="flex items-center gap-6">
-              <span className="label text-muted w-24">{item.value}</span>
-              <span className="label text-muted w-12">{item.utility}</span>
-              <span className={`bg-signal block w-full max-w-md ${item.className}`} />
+              <span className="label text-fg-muted w-24">{item.value}</span>
+              <span className="label text-fg-muted w-12">{item.utility}</span>
+              <span className={`bg-accent block w-full max-w-md ${item.className}`} />
             </div>
           ))}
         </div>
@@ -149,13 +149,13 @@ export default function TokensPage() {
           {Array.from({ length: 12 }, (_unused, index) => (
             <div
               key={index}
-              className="label border-line bg-surface text-muted flex h-24 items-end justify-center border pb-2"
+              className="label border-border bg-bg-raised text-fg-muted flex h-24 items-end justify-center border pb-2"
             >
               {index + 1}
             </div>
           ))}
         </Grid>
-        <p className="text-body text-muted mt-6">
+        <p className="text-body text-fg-muted mt-6">
           Four columns below 768px, twelve at and above. Gap matches the gutter.
         </p>
       </Block>
@@ -219,7 +219,7 @@ export default function TokensPage() {
           <Placeholder seed="tokens-mesh" variant="mesh" note="Showcase only" />
           <Placeholder seed="tokens-lines" variant="lines" note="Showcase only" />
         </div>
-        <p className="text-body text-muted mt-6">
+        <p className="text-body text-fg-muted mt-6">
           Deterministic from a string seed. Same seed, same image, every build.
         </p>
       </Block>
@@ -230,7 +230,7 @@ export default function TokensPage() {
             <Reveal key={delay} delay={delay}>
               <div className="hairline-t flex items-center justify-between py-6">
                 <span className="text-title font-bold">Enters once, {delay}ms delay</span>
-                <span className="label text-muted">60ms sibling stagger</span>
+                <span className="label text-fg-muted">60ms sibling stagger</span>
               </div>
             </Reveal>
           ))}
@@ -242,8 +242,8 @@ export default function TokensPage() {
           {motion.map((item) => (
             <div key={item.token} className="hairline-t flex flex-wrap gap-6 py-4">
               <span className="text-body w-56">{item.token}</span>
-              <span className="text-body text-muted w-72">{item.value}</span>
-              <span className="label text-muted">{item.use}</span>
+              <span className="text-body text-fg-muted w-72">{item.value}</span>
+              <span className="label text-fg-muted">{item.use}</span>
             </div>
           ))}
         </div>
@@ -252,19 +252,19 @@ export default function TokensPage() {
       <Block title="Radii and borders">
         <div className="flex flex-wrap items-end gap-8">
           <div>
-            <div className="border-line bg-surface h-24 w-40 rounded-none border" />
-            <p className="text-body text-muted mt-3">--radius-none, structural</p>
+            <div className="border-border bg-bg-raised h-24 w-40 rounded-none border" />
+            <p className="text-body text-fg-muted mt-3">--radius-none, structural</p>
           </div>
           <div>
-            <div className="rounded-input border-line bg-surface h-24 w-40 border" />
-            <p className="text-body text-muted mt-3">--radius-input, 4px</p>
+            <div className="rounded-input border-border bg-bg-raised h-24 w-40 border" />
+            <p className="text-body text-fg-muted mt-3">--radius-input, 4px</p>
           </div>
           <div>
-            <div className="rounded-pill border-line bg-surface h-12 w-40 border" />
-            <p className="text-body text-muted mt-3">--radius-pill, 999px</p>
+            <div className="rounded-pill border-border bg-bg-raised h-12 w-40 border" />
+            <p className="text-body text-fg-muted mt-3">--radius-pill, 999px</p>
           </div>
         </div>
-        <p className="text-body text-muted mt-6">
+        <p className="text-body text-fg-muted mt-6">
           No shadows anywhere. Depth is a surface value shift, void to surface to surface-2.
         </p>
       </Block>

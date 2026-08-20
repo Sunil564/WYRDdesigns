@@ -43,12 +43,12 @@ const base =
 
 const variants: Record<ButtonVariant, string> = {
   filled:
-    'rounded-pill bg-signal px-6 py-3 text-void hover:bg-signal-dim ' +
+    'rounded-pill bg-accent px-6 py-3 text-bg hover:bg-accent-strong ' +
     'text-label uppercase tracking-[0.12em] font-bold',
   outline:
-    'rounded-pill border border-line px-6 py-3 text-paper hover:border-paper hover:bg-surface-2 ' +
+    'rounded-pill border border-border px-6 py-3 text-fg hover:border-fg hover:bg-bg-sunken ' +
     'text-label uppercase tracking-[0.12em] font-medium',
-  link: 'text-paper hover:text-signal',
+  link: 'text-fg hover:text-accent',
 }
 
 function Underline() {

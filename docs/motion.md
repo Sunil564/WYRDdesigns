@@ -54,7 +54,7 @@ The organising idea from brief section 2.2, and the reason the motion system is 
 
 - A fixed position SVG overlay spanning the homepage. `pointer-events: none`, above the grain, below content.
 - The path is drawn with `stroke-dasharray` and `stroke-dashoffset`, offset driven by scroll progress with GSAP ScrollTrigger and `scrub: 1`.
-- Body stroke is `--color-line`. A 240px travelling segment of `--color-signal` follows the draw head, so the live tip glows and the drawn body sits back. Implemented as a second path with its own dash pattern rather than a gradient, because a gradient cannot follow a path head.
+- Body stroke is `--color-border`. A 240px travelling segment of `--color-accent` follows the draw head, so the live tip glows and the drawn body sits back. Implemented as a second path with its own dash pattern rather than a gradient, because a gradient cannot follow a path head.
 - At the capabilities section the path branches into four strands, one terminating at each cluster block.
 - At the contact section the four strands reconverge into one line that terminates at the button.
 - Below 1024px: a single straight vertical line, no branching. Branch geometry depends on a two column grid that does not exist on mobile.
@@ -72,7 +72,7 @@ Technical approach and the mobile fallback: ADR 0018.
 | S1 Particle field | curl noise drift in the vertex shader, cursor repulsion by inverse square, cursor uniform lerped at 0.08 | continuous while in view |
 | S2 Positioning | line by line mask reveal, 120ms stagger, italic phrase 400ms after the rest, surrounding text held at 70 percent opacity until it completes | scroll, once |
 | S3 Capabilities | Thread branches scrubbed to scroll, blocks enter with 60ms stagger and `y: 32px` | scroll, once |
-| S3 Capability hover | background `--color-surface` to `--color-surface-2` over `--dur-fast`, index digit to `--color-signal`, hairline sweeps left to right across the top edge | pointer |
+| S3 Capability hover | background `--color-bg-raised` to `--color-bg-sunken` over `--dur-fast`, index digit to `--color-accent`, hairline sweeps left to right across the top edge | pointer |
 | S3 Grid pointer | soft radial highlight follows the pointer, driven by two CSS custom properties updated on `pointermove`, not a per frame repaint | pointer |
 | S4 Work cards | staggered mask reveal, visual scales 1.12 to 1 inside a fixed frame so the frame never moves | scroll, once |
 | S4 Card hover | visual to 1.04 over `--dur-base`, title shifts right 8px | pointer |

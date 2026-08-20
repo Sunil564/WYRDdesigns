@@ -27,9 +27,9 @@ function readPalette() {
     new Color(styles.getPropertyValue(token).trim() || fallback)
 
   return {
-    line: pick('--color-line', '#26262e'),
-    muted: pick('--color-muted', '#8b8b95'),
-    signal: pick('--color-signal', '#ff521f'),
+    border: pick('--color-border', '#26262e'),
+    fgMuted: pick('--color-fg-muted', '#8b8b95'),
+    accent: pick('--color-accent', '#ff521f'),
   }
 }
 
@@ -72,9 +72,9 @@ function Field({ count }: { count: number }) {
       uSize: { value: 2.9 },
       uDrift: { value: 0.55 },
       uOpacity: { value: 0 },
-      uColourLine: { value: palette.line },
-      uColourMuted: { value: palette.muted },
-      uColourSignal: { value: palette.signal },
+      uColourBorder: { value: palette.border },
+      uColourFgMuted: { value: palette.fgMuted },
+      uColourAccent: { value: palette.accent },
     }
     // Palette is read once. It cannot change: there is one theme. ADR 0010.
   }, [])

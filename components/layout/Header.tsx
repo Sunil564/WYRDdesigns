@@ -51,7 +51,7 @@ export function Header() {
     <>
       <a
         href="#content"
-        className="label focus-visible:rounded-pill focus-visible:bg-signal focus-visible:text-void sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-4 focus-visible:left-4 focus-visible:z-60 focus-visible:px-4 focus-visible:py-3"
+        className="label focus-visible:rounded-pill focus-visible:bg-accent focus-visible:text-bg sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-4 focus-visible:left-4 focus-visible:z-60 focus-visible:px-4 focus-visible:py-3"
       >
         Skip to content
       </a>
@@ -61,7 +61,7 @@ export function Header() {
         className={cn(
           'fixed inset-x-0 top-0 z-40',
           'transition-colors duration-[var(--dur-base)] ease-[var(--ease-out)]',
-          solid ? 'border-line bg-surface border-b' : 'border-b border-transparent bg-transparent',
+          solid ? 'border-border bg-bg-raised border-b' : 'border-b border-transparent bg-transparent',
         )}
       >
         <Container className="flex h-20 items-center justify-between gap-8">
@@ -81,7 +81,7 @@ export function Header() {
                 aria-current={pathname === link.href ? 'page' : undefined}
                 className={cn(
                   'tap label transition-colors duration-[var(--dur-fast)]',
-                  pathname === link.href ? 'text-paper' : 'text-muted hover:text-paper',
+                  pathname === link.href ? 'text-fg' : 'text-fg-muted hover:text-fg',
                 )}
               >
                 {link.label}
@@ -95,7 +95,7 @@ export function Header() {
             onClick={() => setMenuOpen(true)}
             aria-label="Open menu"
             aria-expanded={menuOpen}
-            className="text-paper hover:text-signal flex size-11 items-center justify-center transition-colors duration-[var(--dur-fast)] lg:hidden"
+            className="text-fg hover:text-accent flex size-11 items-center justify-center transition-colors duration-[var(--dur-fast)] lg:hidden"
           >
             <Menu aria-hidden="true" className="size-6" />
           </button>

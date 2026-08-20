@@ -26,10 +26,10 @@ type PlaceholderProps = {
 */
 
 const PALETTE = [
-  'var(--color-surface-2)',
-  'var(--color-line)',
-  'var(--color-muted)',
-  'var(--color-signal)',
+  'var(--color-bg-sunken)',
+  'var(--color-border)',
+  'var(--color-fg-muted)',
+  'var(--color-accent)',
 ]
 
 export function Placeholder({
@@ -84,7 +84,7 @@ export function Placeholder({
   return (
     <div
       data-placeholder={note}
-      className={cn('bg-surface relative isolate overflow-hidden', className)}
+      className={cn('bg-bg-raised relative isolate overflow-hidden', className)}
       style={{ aspectRatio: `${width} / ${height}` }}
     >
       <svg
@@ -110,14 +110,14 @@ export function Placeholder({
             <path
               d={`M ${gridStep} 0 L 0 0 0 ${gridStep}`}
               fill="none"
-              stroke="var(--color-line)"
+              stroke="var(--color-border)"
               strokeWidth="1"
               opacity="0.9"
             />
           </pattern>
         </defs>
 
-        <rect width={width} height={height} fill="var(--color-surface)" />
+        <rect width={width} height={height} fill="var(--color-bg-raised)" />
 
         {blobs.map((blob) => (
           <ellipse
@@ -137,7 +137,7 @@ export function Placeholder({
             y1={0}
             x2={(line.x + line.skew) * width}
             y2={height}
-            stroke="var(--color-line)"
+            stroke="var(--color-border)"
             strokeWidth="1"
             opacity={line.opacity}
           />
@@ -152,7 +152,7 @@ export function Placeholder({
             y1={rule.y * height}
             x2={rule.to * width}
             y2={rule.y * height}
-            stroke={rule.accent ? 'var(--color-signal)' : 'var(--color-muted)'}
+            stroke={rule.accent ? 'var(--color-accent)' : 'var(--color-fg-muted)'}
             strokeWidth={rule.accent ? 2 : 1}
             opacity={rule.accent ? 0.7 : 0.45}
           />
@@ -165,7 +165,7 @@ export function Placeholder({
           width={width - 48}
           height={height - 48}
           fill="none"
-          stroke="var(--color-line)"
+          stroke="var(--color-border)"
           strokeWidth="1"
           opacity="0.8"
         />

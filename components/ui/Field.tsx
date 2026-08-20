@@ -14,9 +14,9 @@ type FieldShellProps = {
 }
 
 const control =
-  'w-full rounded-input border bg-surface px-4 py-3 text-body text-paper ' +
-  'placeholder:text-muted transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out)] ' +
-  'hover:border-muted focus:border-signal focus:outline-none'
+  'w-full rounded-input border bg-bg-raised px-4 py-3 text-body text-fg ' +
+  'placeholder:text-fg-muted transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out)] ' +
+  'hover:border-fg-muted focus:border-accent focus:outline-none'
 
 /**
  * One shell, three controls. The label, the error wiring, and the 4px radius are
@@ -37,18 +37,18 @@ export function FieldShell({
 }: FieldShellProps) {
   return (
     <div className={cn('flex flex-col gap-2', className)}>
-      <label className="label text-muted" htmlFor={id}>
+      <label className="label text-fg-muted" htmlFor={id}>
         {label}
         {required && (
-          <span aria-hidden="true" className="text-signal ml-1">
+          <span aria-hidden="true" className="text-accent ml-1">
             *
           </span>
         )}
       </label>
-      {hint && <p className="text-body text-muted">{hint}</p>}
+      {hint && <p className="text-body text-fg-muted">{hint}</p>}
       {children}
       {error && (
-        <p id={`${id}-error`} className="text-body text-signal" role="alert">
+        <p id={`${id}-error`} className="text-body text-accent" role="alert">
           {error}
         </p>
       )}
@@ -75,7 +75,7 @@ export function Field({ id, label, error, hint, required, className, ...rest }: 
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
-        className={cn(control, error ? 'border-signal' : 'border-line')}
+        className={cn(control, error ? 'border-accent' : 'border-border')}
         {...rest}
       />
     </FieldShell>
@@ -110,7 +110,7 @@ export function TextAreaField({
         rows={rest.rows ?? 5}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
-        className={cn(control, 'resize-y', error ? 'border-signal' : 'border-line')}
+        className={cn(control, 'resize-y', error ? 'border-accent' : 'border-border')}
         {...rest}
       />
     </FieldShell>
@@ -146,11 +146,11 @@ export function SelectField({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
-        className={cn(control, 'appearance-none', error ? 'border-signal' : 'border-line')}
+        className={cn(control, 'appearance-none', error ? 'border-accent' : 'border-border')}
         {...rest}
       >
         {options.map((option) => (
-          <option key={option.value} value={option.value} className="bg-surface text-paper">
+          <option key={option.value} value={option.value} className="bg-bg-raised text-fg">
             {option.label}
           </option>
         ))}

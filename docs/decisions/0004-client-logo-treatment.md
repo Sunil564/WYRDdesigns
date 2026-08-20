@@ -6,7 +6,7 @@ Phase: 0
 
 ## Context
 
-S5 of the brief requires client logos rendered monochrome at `--color-muted`, moving to `--color-paper` on hover, normalised to a consistent optical height rather than a consistent bounding box, output to `public/logos/` with a manifest at `content/clients.ts`. It also says that below eight logos the marquee is dropped for a single centred static row.
+S5 of the brief requires client logos rendered monochrome at `--color-fg-muted`, moving to `--color-fg` on hover, normalised to a consistent optical height rather than a consistent bounding box, output to `public/logos/` with a manifest at `content/clients.ts`. It also says that below eight logos the marquee is dropped for a single centred static row.
 
 Six logos were supplied, all raster, none vector. Their internals matter:
 
@@ -28,7 +28,7 @@ A greyscale CSS filter fails here. Bhavani's maroon and Seervi's navy fall to ne
 
 Each mask is trimmed to its ink bounds, scaled by a per logo optical factor, and centred on a 96px tall canvas, 3x the 32px desktop render height. The factor is the optical normalisation: a wide wordmark sits at 1.0, a square emblem sits lower, so nothing dominates the row by virtue of being square. Factors live in one list in the script.
 
-Rendering uses `mask-image` on an element whose `background-color` is `currentColor`, so the row inherits `--color-muted` and moves to `--color-paper` on hover with one CSS transition and one file per logo. WebP is the served format, PNG is committed alongside as a fallback.
+Rendering uses `mask-image` on an element whose `background-color` is `currentColor`, so the row inherits `--color-fg-muted` and moves to `--color-fg` on hover with one CSS transition and one file per logo. WebP is the served format, PNG is committed alongside as a fallback.
 
 Six logos is fewer than eight, so S5 renders a single centred static row. No marquee.
 

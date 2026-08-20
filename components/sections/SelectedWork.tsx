@@ -29,7 +29,7 @@ export function SelectedWork() {
 
       <Reveal delay={60}>
         <div className="mt-8 flex flex-wrap items-end justify-between gap-8">
-          <h2 className="text-display text-paper font-bold" data-thread-node>
+          <h2 className="text-display text-fg font-bold" data-thread-node>
             {workIntro.headline}
           </h2>
           <Button href={workIntro.link.href} variant="link">

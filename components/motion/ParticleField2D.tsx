@@ -54,9 +54,9 @@ export function ParticleField2D({ seed = 'wyrd-hero', className }: ParticleField
 
     const styles = getComputedStyle(document.documentElement)
     const palette = {
-      line: styles.getPropertyValue('--color-line').trim() || '#26262e',
-      muted: styles.getPropertyValue('--color-muted').trim() || '#8b8b95',
-      signal: styles.getPropertyValue('--color-signal').trim() || '#ff521f',
+      border: styles.getPropertyValue('--color-border').trim() || '#26262e',
+      fgMuted: styles.getPropertyValue('--color-fg-muted').trim() || '#8b8b95',
+      accent: styles.getPropertyValue('--color-accent').trim() || '#ff521f',
     }
 
     const fine = window.matchMedia('(pointer: fine)').matches
@@ -102,7 +102,7 @@ export function ParticleField2D({ seed = 'wyrd-hero', className }: ParticleField
           offsetY: 0,
           radius: 0.5 + next() * 1,
           alpha: accent ? 0.5 : 0.2 + next() * 0.3,
-          colour: accent ? palette.signal : next() > 0.5 ? palette.muted : palette.line,
+          colour: accent ? palette.accent : next() > 0.5 ? palette.fgMuted : palette.border,
           phase: next() * Math.PI * 2,
           speed: 0.15 + next() * 0.35,
         }

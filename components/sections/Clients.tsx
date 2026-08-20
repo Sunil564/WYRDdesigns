@@ -40,7 +40,7 @@ export function Clients() {
             {clients.map((client) => (
               <li
                 key={client.name}
-                className="text-muted hover:text-paper transition-colors duration-[var(--dur-base)]"
+                className="text-fg-muted hover:text-fg transition-colors duration-[var(--dur-base)]"
               >
                 {/*
                   The mask is alpha only and takes its colour from currentColor, so

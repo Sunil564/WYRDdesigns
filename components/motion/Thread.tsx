@@ -32,7 +32,7 @@ import { useReducedMotion } from '@/components/motion/useReducedMotion'
  * travelling segment.
  */
 
-/** Length of the signal coloured segment that follows the draw head, in px. */
+/** Length of the accent coloured segment that follows the draw head, in px. */
 const HEAD_LENGTH = 240
 
 type Geometry = {
@@ -174,7 +174,7 @@ export function Thread() {
   }, [remeasure])
 
   // Draw on scroll. One ScrollTrigger per path group, each scrubbed, each with its
-  // own signal coloured head segment chasing the draw position.
+  // own accent coloured head segment chasing the draw position.
   useEffect(() => {
     if (!geometry || reduced) return
     const host = hostRef.current
@@ -326,14 +326,14 @@ function ThreadGroup({
       <path
         data-thread-body
         d={d}
-        stroke="var(--color-line)"
+        stroke="var(--color-border)"
         strokeWidth="1"
         pathLength={1}
         strokeDasharray="1"
         strokeDashoffset={reduced ? 0 : 1}
       />
       {!reduced && (
-        <path data-thread-head d={d} stroke="var(--color-signal)" strokeWidth="1.5" opacity="0" />
+        <path data-thread-head d={d} stroke="var(--color-accent)" strokeWidth="1.5" opacity="0" />
       )}
     </g>
   )

@@ -8,7 +8,7 @@ Phase: 4
 
 Brief sections 2.2 and 5.3. In the old sense wyrd was a thread: spun, measured, cut. The brief makes it the structural spine of the design and motion system rather than decoration, which is what gives every other motion decision on the site a reason to exist.
 
-The requirements: a fixed SVG overlay spanning the homepage, above the grain and below content, non interactive. The path drawn with `stroke-dasharray` and `stroke-dashoffset`, driven by scroll progress with ScrollTrigger and `scrub: 1`. `--color-line` at rest with a 240px travelling segment of `--color-signal` following the draw head. Four strands at the capabilities section, one per cluster. Reconvergence into one line terminating at the contact button. A single straight vertical line below 1024px. Reduced motion renders it complete, at rest colour, undrawn.
+The requirements: a fixed SVG overlay spanning the homepage, above the grain and below content, non interactive. The path drawn with `stroke-dasharray` and `stroke-dashoffset`, driven by scroll progress with ScrollTrigger and `scrub: 1`. `--color-border` at rest with a 240px travelling segment of `--color-accent` following the draw head. Four strands at the capabilities section, one per cluster. Reconvergence into one line terminating at the contact button. A single straight vertical line below 1024px. Reduced motion renders it complete, at rest colour, undrawn.
 
 ## Decision
 
@@ -38,7 +38,7 @@ Stacking: grain is fixed at `z-1`, the Thread sits at `z-2`, every `Section` is 
 
 Each body path carries `pathLength="1"`, `stroke-dasharray="1"`, `stroke-dashoffset="1"`. That hides it with static attributes, before any JavaScript runs, so there is never a frame where a fully drawn thread flashes and then disappears. Progress then sets `strokeDashoffset` to `1 - progress` in normalised space, with no length measurement needed.
 
-The signal head does need the real length, because its window is 240 real pixels: `stroke-dasharray: 240 (total + 240)` with the offset set to `240 - drawn`, which places the visible 240px segment at `[drawn - 240, drawn]`. That is how the live tip glows while the drawn body sits back at `--color-line`. It is a second path over the first rather than a gradient, because a gradient cannot follow a path head.
+The signal head does need the real length, because its window is 240 real pixels: `stroke-dasharray: 240 (total + 240)` with the offset set to `240 - drawn`, which places the visible 240px segment at `[drawn - 240, drawn]`. That is how the live tip glows while the drawn body sits back at `--color-border`. It is a second path over the first rather than a gradient, because a gradient cannot follow a path head.
 
 ### One ScrollTrigger per path group
 
