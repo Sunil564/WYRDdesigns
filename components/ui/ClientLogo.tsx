@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import type { Client } from '@/content/clients'
 import { cn } from '@/lib/utils'
 
@@ -26,15 +25,21 @@ export function ClientLogo({ client, height = 40, className }: ClientLogoProps) 
   const width = Math.round((client.width / client.height) * height)
 
   if (!client.mono) {
+    /*
+      A plain img, not next/image. The file is a local static asset at a known size
+      that needs no resizing, no format negotiation, and no lazy loading, and the
+      Image component's client runtime measured 5kb over the wire for exactly one
+      mark in the row. Width and height are set, so the box is reserved and there is
+      no layout shift.
+    */
     return (
-      <Image
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
         src={client.file}
         alt={client.name}
         width={width}
         height={height}
         className={cn('block h-10 w-auto', className)}
-        // Six marks, all above the fold on a short page. No lazy loading games.
-        unoptimized
       />
     )
   }
