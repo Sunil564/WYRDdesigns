@@ -80,6 +80,25 @@ export function useLenis(): void {
 }
 
 /**
+ * The current scroll position, from whichever authority owns it.
+ *
+ * Not `window.scrollY`. Lenis owns the scroll, and per tick it writes its own
+ * animated value to the document and then calls `ScrollTrigger.update()`. Reading
+ * Lenis's value is therefore reading exactly the number the Thread's ScrollTriggers
+ * were updated with, which is what keeps the particle stream and the SVG geometry
+ * from disagreeing by a frame's worth of easing. There is no `scrollerProxy` in this
+ * build, so ScrollTrigger reads the document scroll that Lenis writes, and the two
+ * are the same number by construction.
+ *
+ * Falls back to the document under reduced motion, where Lenis is never
+ * constructed, and before the dynamic import lands.
+ */
+export function currentScroll(): number {
+  if (typeof window === 'undefined') return 0
+  return window.__lenis?.scroll ?? window.scrollY
+}
+
+/**
  * Scroll to a target, through Lenis when it is running and natively when it is
  * not. Used by in page anchors and by the hero's second action.
  */

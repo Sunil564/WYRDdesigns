@@ -18,6 +18,12 @@ type SceneCanvasProps = {
    * scene actually decided to draw, rather than inferring it from pixels.
    */
   pointCount?: number
+  /**
+   * Published as `data-thread-stream`, for the same reason as `pointCount`: the
+   * number of particles the Thread stream decided to draw should be readable
+   * rather than inferred from pixels.
+   */
+  streamCount?: number
   className?: string
 }
 
@@ -80,6 +86,7 @@ export function SceneCanvas({
   frameloop = 'always',
   onContextLost,
   pointCount,
+  streamCount,
   className,
 }: SceneCanvasProps) {
   const hostRef = useRef<HTMLDivElement | null>(null)
@@ -117,6 +124,7 @@ export function SceneCanvas({
       aria-hidden="true"
       data-field="webgl"
       data-field-count={pointCount}
+      data-thread-stream={streamCount}
       className={className}
       style={{ pointerEvents: 'none' }}
     >

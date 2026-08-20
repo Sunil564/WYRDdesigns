@@ -178,9 +178,6 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
     // Palette is read once. It cannot change: there is one theme. ADR 0010.
   }, [])
 
-  /** World units per CSS pixel on the z = 0 plane. */
-  const worldPerPx = size.height > 0 ? viewport.height / size.height : 1
-
   useEffect(() => {
     uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio || 1, 2)
 
@@ -193,11 +190,7 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
       and the type roughly constant, which is what the eye actually reads.
     */
     uniforms.uSize.value = BASE_SIZE * clamp(size.width / REFERENCE_WIDTH, 0.6, 1)
-    uniforms.uWorldPerPx.value = worldPerPx
-    const halfSize = uniforms.uHalfSizePx.value
-    halfSize[0] = size.width / 2
-    halfSize[1] = size.height / 2
-  }, [uniforms, size, worldPerPx])
+  }, [uniforms, size])
 
   useEffect(() => {
     const onPointerMove = (event: PointerEvent) => {
@@ -208,6 +201,7 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
         the correction that mapping was missing: the old one read the pointer in
         window coordinates against a canvas that had scrolled away.
       */
+      const worldPerPx = size.height > 0 ? viewport.height / size.height : 1
       cursor.current.targetX = (event.clientX - size.width / 2) * worldPerPx
       cursor.current.targetY = (hero.current.centre - (event.clientY + window.scrollY)) * worldPerPx
       cursor.current.targetStrength = 1
@@ -225,7 +219,7 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerleave', onPointerLeave)
     }
-  }, [hero, size.width, worldPerPx])
+  }, [hero, size.width, size.height, viewport.height])
 
   useFrame((_state, delta) => {
     const shader = material.current
@@ -245,6 +239,20 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
 
     const clamped = Math.min(delta, 0.05)
     shader.uniforms.uTime!.value += clamped
+
+    /*
+      Viewport maths in the frame loop, not in an effect. R3F's render loop is not
+      synchronised with React's passive effects, so an effect keyed on the canvas
+      size can run once against the zero it measures on the first pass and never run
+      again. That cost the Thread stream a build to find. Two divisions per frame,
+      and it cannot be stale.
+    */
+    const live = _state.size
+    const box = _state.viewport
+    shader.uniforms.uWorldPerPx!.value = live.height > 0 ? box.height / live.height : 1
+    const halfSize = shader.uniforms.uHalfSizePx!.value as [number, number]
+    halfSize[0] = live.width / 2
+    halfSize[1] = live.height / 2
 
     shader.uniforms.uScroll!.value = scroll
     shader.uniforms.uHeroCentre!.value = band.centre

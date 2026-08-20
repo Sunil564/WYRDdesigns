@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react'
 import { HeroField } from '@/components/motion/webgl/HeroFieldScene'
 import { SceneCanvas } from '@/components/motion/webgl/SceneCanvas'
+import { ThreadStream } from '@/components/motion/webgl/ThreadStreamScene'
 
 /**
  * The one canvas on the page, and every scene inside it. Brief 7b.4, ADR 0020.
@@ -25,16 +26,20 @@ import { SceneCanvas } from '@/components/motion/webgl/SceneCanvas'
  */
 export function SiteScene({ onContextLost }: { onContextLost?: () => void }) {
   const [heroPoints, setHeroPoints] = useState(0)
+  const [streamPoints, setStreamPoints] = useState(0)
   const onCount = useCallback((value: number) => setHeroPoints(value), [])
+  const onStreamCount = useCallback((value: number) => setStreamPoints(value), [])
 
   return (
     <SceneCanvas
       frameloop="always"
       onContextLost={onContextLost}
       pointCount={heroPoints}
+      streamCount={streamPoints}
       className="pointer-events-none fixed inset-0 z-[2] h-full w-full"
     >
       <HeroField onCount={onCount} />
+      <ThreadStream onCount={onStreamCount} />
     </SceneCanvas>
   )
 }
