@@ -121,11 +121,29 @@ uniform float uPixelRatio;
 uniform float uSize;
 uniform float uDrift;
 
+/*
+  The scene now lives in the one shared canvas, which is fixed to the viewport and
+  spans the whole page, so the field has to place itself in document space rather
+  than trusting the canvas box to be the hero box. See docs/decisions/0020.
+
+  uWorldPerPx  world units per CSS pixel on the z = 0 plane
+  uHalfSizePx  half the canvas, in CSS pixels
+  uHeroCentre  document y of the hero's centre, which is where the field is pinned
+  uScroll      document scroll position, in CSS pixels
+  uHeroBand    document top and bottom of the hero, which is the field's clip
+*/
+uniform float uWorldPerPx;
+uniform vec2 uHalfSizePx;
+uniform float uHeroCentre;
+uniform float uScroll;
+uniform vec2 uHeroBand;
+
 attribute float aRandom;
 attribute float aScale;
 
 varying float vRandom;
 varying float vAccent;
+varying float vClip;
 
 ${SIMPLEX_3D}
 ${CURL}
@@ -146,6 +164,25 @@ void main() {
   float dist = length(away);
   float falloff = 1.0 / (1.0 + dist * dist * 3.2);
   pos.xy += normalize(away + vec2(0.0001)) * falloff * uCursorStrength;
+
+  /*
+    Place the field in the document, then bring it back to the viewport.
+
+    The hero section used to own its canvas and clip the field with
+    overflow-hidden. One canvas per page means the canvas is fixed and the field
+    has to do both jobs itself: scroll with the page, and stop at the hero's edges.
+    Both are one line each here and neither costs a uniform update per frame beyond
+    the scroll position.
+  */
+  float docY = uHeroCentre - pos.y / uWorldPerPx;
+  float screenY = docY - uScroll;
+  pos.y = (uHalfSizePx.y - screenY) * uWorldPerPx;
+
+  // The clip that overflow-hidden used to do. A four pixel edge rather than a
+  // hard one, so a drifting point fades at the boundary instead of popping.
+  vClip =
+    smoothstep(uHeroBand.x - 4.0, uHeroBand.x + 4.0, docY) *
+    (1.0 - smoothstep(uHeroBand.y - 4.0, uHeroBand.y + 4.0, docY));
 
   vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
   gl_Position = projectionMatrix * mvPosition;
@@ -187,6 +224,7 @@ uniform float uOpacity;
 
 varying float vRandom;
 varying float vAccent;
+varying float vClip;
 
 void main() {
   float d = length(gl_PointCoord - vec2(0.5));
@@ -229,7 +267,7 @@ void main() {
   */
   float base = 0.42 + vRandom * 0.34;
   float accent = 0.44 + vRandom * 0.24;
-  float alpha = core * mix(base, accent, vAccent) * uOpacity;
+  float alpha = core * mix(base, accent, vAccent) * uOpacity * vClip;
   if (alpha < 0.002) discard;
 
   gl_FragColor = vec4(colour, alpha);

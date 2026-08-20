@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { BufferAttribute, Color, NormalBlending } from 'three'
 import type { Points, ShaderMaterial } from 'three'
-import { SceneCanvas } from '@/components/motion/webgl/SceneCanvas'
 import { heroFragmentShader, heroVertexShader } from '@/components/motion/webgl/heroField.glsl'
 import { clamp, lerp, seededRandom } from '@/lib/utils'
 
@@ -56,10 +55,52 @@ const REFERENCE_WIDTH = 1440
  */
 const BASE_SIZE = 7.0
 
+/**
+ * The hero's document box, remeasured whenever the layout can have moved.
+ *
+ * The field is pinned to the hero's centre and clipped to its edges. Both used to
+ * be free: the canvas was the hero section, so the browser did the pinning with
+ * layout and the clipping with overflow-hidden. On the shared canvas the field has
+ * to know where the hero is.
+ */
+function useHeroBand() {
+  const band = useRef({ top: 0, bottom: 0, centre: 0 })
+
+  useEffect(() => {
+    const read = () => {
+      const hero = document.querySelector('#hero')
+      if (!hero) return
+      const box = hero.getBoundingClientRect()
+      const top = box.top + window.scrollY
+      band.current = { top, bottom: top + box.height, centre: top + box.height / 2 }
+    }
+
+    read()
+    window.addEventListener('resize', read)
+
+    let observer: ResizeObserver | undefined
+    const hero = document.querySelector('#hero')
+    if (typeof ResizeObserver !== 'undefined' && hero) {
+      observer = new ResizeObserver(read)
+      observer.observe(hero)
+    }
+    // Fonts reflowing the headline changes the hero's height.
+    void document.fonts?.ready.then(read)
+
+    return () => {
+      window.removeEventListener('resize', read)
+      observer?.disconnect()
+    }
+  }, [])
+
+  return band
+}
+
 function Field({ count, onResolved }: { count: number; onResolved: (value: number) => void }) {
   const points = useRef<Points | null>(null)
   const material = useRef<ShaderMaterial | null>(null)
   const { viewport, size } = useThree()
+  const hero = useHeroBand()
 
   // Smoothed cursor in world units, plus the raw target it eases toward.
   const cursor = useRef({ x: 0, y: 0, targetX: 0, targetY: 0, strength: 0, targetStrength: 0 })
@@ -128,9 +169,17 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
       uColourBorder: { value: palette.border },
       uColourFgMuted: { value: palette.fgMuted },
       uColourAccent: { value: palette.accent },
+      uWorldPerPx: { value: 1 },
+      uHalfSizePx: { value: [0, 0] as [number, number] },
+      uHeroCentre: { value: 0 },
+      uScroll: { value: 0 },
+      uHeroBand: { value: [0, 0] as [number, number] },
     }
     // Palette is read once. It cannot change: there is one theme. ADR 0010.
   }, [])
+
+  /** World units per CSS pixel on the z = 0 plane. */
+  const worldPerPx = size.height > 0 ? viewport.height / size.height : 1
 
   useEffect(() => {
     uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio || 1, 2)
@@ -144,15 +193,23 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
       and the type roughly constant, which is what the eye actually reads.
     */
     uniforms.uSize.value = BASE_SIZE * clamp(size.width / REFERENCE_WIDTH, 0.6, 1)
-  }, [uniforms, size])
+    uniforms.uWorldPerPx.value = worldPerPx
+    const halfSize = uniforms.uHalfSizePx.value
+    halfSize[0] = size.width / 2
+    halfSize[1] = size.height / 2
+  }, [uniforms, size, worldPerPx])
 
   useEffect(() => {
     const onPointerMove = (event: PointerEvent) => {
-      // Screen pixels to world units on the z = 0 plane.
-      const nx = (event.clientX / window.innerWidth) * 2 - 1
-      const ny = -((event.clientY / window.innerHeight) * 2 - 1)
-      cursor.current.targetX = (nx * viewport.width) / 2
-      cursor.current.targetY = (ny * viewport.height) / 2
+      /*
+        Screen pixels to the field's own frame, which is centred on the hero and
+        measured in world units. At the top of the page this is the same mapping the
+        scene used when the canvas was the hero box, and further down the page it is
+        the correction that mapping was missing: the old one read the pointer in
+        window coordinates against a canvas that had scrolled away.
+      */
+      cursor.current.targetX = (event.clientX - size.width / 2) * worldPerPx
+      cursor.current.targetY = (hero.current.centre - (event.clientY + window.scrollY)) * worldPerPx
       cursor.current.targetStrength = 1
     }
 
@@ -168,14 +225,32 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerleave', onPointerLeave)
     }
-  }, [viewport.width, viewport.height])
+  }, [hero, size.width, worldPerPx])
 
   useFrame((_state, delta) => {
     const shader = material.current
+    const object = points.current
     if (!shader) return
+
+    const scroll = window.scrollY
+    const band = hero.current
+
+    /*
+      Nothing to draw once the hero is a viewport behind. The canvas stays alive for
+      the thread scene, so the field has to switch itself off rather than relying on
+      the canvas leaving the viewport, which it no longer does.
+    */
+    if (object) object.visible = scroll < band.bottom + size.height
+    if (object && !object.visible) return
 
     const clamped = Math.min(delta, 0.05)
     shader.uniforms.uTime!.value += clamped
+
+    shader.uniforms.uScroll!.value = scroll
+    shader.uniforms.uHeroCentre!.value = band.centre
+    const heroBand = shader.uniforms.uHeroBand!.value as [number, number]
+    heroBand[0] = band.top
+    heroBand[1] = band.bottom
 
     // Fade the field in over its first second rather than popping it on.
     const opacity = shader.uniforms.uOpacity!
@@ -239,16 +314,21 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
 }
 
 /**
- * The Full tier hero field. Brief 6.1 S1 layer 2 and 7b.2A.
+ * The Full tier hero field, as a scene rather than a canvas. Brief 6.1 S1 layer 2
+ * and 7b.2A.
  *
  * One `THREE.Points`, 12,000 instances, one draw call, all motion in the vertex
  * shader. Normal blending with per point alpha over the light canvas, soft circular
- * falloff, no halo and no postprocessing pass. See ADR 0017 and ADR 0019.
+ * falloff, no halo and no postprocessing pass. See ADR 0017, ADR 0019, ADR 0020.
+ *
+ * It no longer owns a canvas. Brief 7b.4 allows one `<Canvas>` per page and the
+ * Thread needs the same one, so `SiteScene` owns it and this is a scene inside it.
+ * The field places itself in document space, which is what keeps it scrolling with
+ * the hero and stopping at the hero's edges. See ADR 0020.
  */
-export function HeroFieldScene({ onContextLost }: { onContextLost?: () => void }) {
+export function HeroField({ onCount }: { onCount?: (value: number) => void }) {
   const [count, setCount] = useState(COUNT)
-  const [drawn, setDrawn] = useState(COUNT)
-  const onResolved = useCallback((value: number) => setDrawn(value), [])
+  const onResolved = useCallback((value: number) => onCount?.(value), [onCount])
 
   // The watchdog in Field fires this at most once per mount. Halving the count
   // rebuilds the geometry, which is a one off cost on a machine that has already
@@ -261,14 +341,5 @@ export function HeroFieldScene({ onContextLost }: { onContextLost?: () => void }
     return () => window.removeEventListener('wyrd:field-downshift', onDownshift)
   }, [])
 
-  return (
-    <SceneCanvas
-      frameloop="always"
-      onContextLost={onContextLost}
-      pointCount={drawn}
-      className="absolute inset-0 h-full w-full"
-    >
-      <Field count={count} onResolved={onResolved} />
-    </SceneCanvas>
-  )
+  return <Field count={count} onResolved={onResolved} />
 }
