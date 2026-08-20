@@ -101,8 +101,9 @@ export function ParticleField2D({ seed = 'wyrd-hero', className }: ParticleField
       particles = Array.from({ length: count }, (_unused, index) => {
         const x = next() * width
         const y = next() * height
-        // One in twelve carries the accent. Brief 6.1.
-        const accent = index % 12 === 0
+        // One in nine carries the accent, matching the shader field. Particle
+        // brief 1.3, which raised the ratio from the brief's one in twelve.
+        const accent = index % 9 === 0
         return {
           baseX: x,
           baseY: y,
@@ -110,10 +111,14 @@ export function ParticleField2D({ seed = 'wyrd-hero', className }: ParticleField
           y,
           offsetX: 0,
           offsetY: 0,
-          // Points read smaller against light, so the radius is up by about a
-          // third, matching the shader field.
-          radius: 0.7 + next() * 1.3,
-          alpha: accent ? 0.55 : 0.3 + next() * 0.3,
+          /*
+            Radius and alpha follow the shader field, per particle brief 1.4: the
+            Reduced tier's density logic is untouched and only its colour and size
+            move. Base radius up 17 percent from the post-4b value with the
+            variance widened, accents 15 percent larger again.
+          */
+          radius: (0.82 + next() * 1.6) * (accent ? 1.15 : 1),
+          alpha: accent ? 0.44 + next() * 0.24 : 0.42 + next() * 0.34,
           colour: accent ? palette.accent : next() > 0.5 ? palette.fgMuted : palette.border,
           phase: next() * Math.PI * 2,
           speed: 0.15 + next() * 0.35,

@@ -2,6 +2,12 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  /*
+    Verification builds go to their own directory so a production build can be
+    measured while the dev server is still running out of .next. Unset in normal
+    use, so the default is untouched.
+  */
+  distDir: process.env.NEXT_DIST_DIR ?? '.next',
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
   experimental: {

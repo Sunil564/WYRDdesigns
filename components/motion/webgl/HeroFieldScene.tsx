@@ -46,8 +46,15 @@ function readPalette() {
 const REFERENCE_AREA = 1440 * 900
 const REFERENCE_WIDTH = 1440
 
-/** Point size at the reference width, chosen by measuring ink coverage. */
-const BASE_SIZE = 6.0
+/**
+ * Point size at the reference width, chosen by measuring ink coverage.
+ *
+ * Phase 4b raised this from the ported dark value to 6.0 for the light canvas.
+ * The particle brief 1.2 asks for a further 15 to 20 percent on top of the post-4b
+ * value, not on top of the pre-4b one: 7.0 is 17 percent up from 6.0. Compounding
+ * the two increases would land near 8.4, which 4b already measured as blobs.
+ */
+const BASE_SIZE = 7.0
 
 function Field({ count, onResolved }: { count: number; onResolved: (value: number) => void }) {
   const points = useRef<Points | null>(null)
@@ -93,7 +100,12 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
       // Depth only needs to be enough for a parallax hint.
       positions[index * 3 + 2] = (random() - 0.5) * 2
       randoms[index] = random()
-      scales[index] = 0.5 + random() * 0.8
+      /*
+        Size variance, widened as the base size grew. A uniform size reads as a
+        texture rather than as a field, and the wider the base the more obvious
+        that gets. Particle brief 1.2.
+      */
+      scales[index] = 0.42 + random() * 1.0
     }
 
     return { positions, randoms, scales, drawn: scaled }
@@ -229,7 +241,7 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
 /**
  * The Full tier hero field. Brief 6.1 S1 layer 2 and 7b.2A.
  *
- * One `THREE.Points`, 14,000 instances, one draw call, all motion in the vertex
+ * One `THREE.Points`, 12,000 instances, one draw call, all motion in the vertex
  * shader. Normal blending with per point alpha over the light canvas, soft circular
  * falloff, no halo and no postprocessing pass. See ADR 0017 and ADR 0019.
  */

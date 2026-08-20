@@ -151,15 +151,29 @@ void main() {
   gl_Position = projectionMatrix * mvPosition;
 
   vRandom = aRandom;
-  // Roughly one in twelve carries the accent. Brief 7b.2A.
-  vAccent = step(0.917, aRandom);
+  /*
+    Roughly one in nine carries the accent. Brief 7b.2A set one in twelve, which
+    Phase 4b carried over unchanged. Orange on white is louder than orange on
+    black, so the ratio that read as sparse on the dark canvas reads as sparse
+    here too rather than as busy: the loudness went into contrast, not into
+    apparent count. Raised per the particle brief 1.3.
 
-  // Perspective correct size, capped so a near particle cannot become a disc.
-  // Dark points on a light ground read smaller than light points on a dark one, so
-  // the base size is up and the accent no longer gets extra size on top: it is
-  // already the loudest thing in the field.
-  float size = uSize * aScale * uPixelRatio;
-  gl_PointSize = clamp(size * (3.0 / -mvPosition.z), 1.0, 10.0);
+    The threshold is a plain comparison against the same per point random the
+    colour mix uses, so the distribution is whatever the seeded generator gave and
+    is stable across reloads. Nothing clusters and nothing sits in one depth plane.
+  */
+  vAccent = step(0.889, aRandom);
+
+  /*
+    Perspective correct size, capped so a near particle cannot become a disc.
+
+    Accent points run about 15 percent larger than the field so they are the
+    points the eye catches first. The cap is above the largest point a 2x display
+    can produce at the widest variance, so the variance is not flattened at the
+    top by the clamp.
+  */
+  float size = uSize * aScale * uPixelRatio * mix(1.0, 1.15, vAccent);
+  gl_PointSize = clamp(size * (3.0 / -mvPosition.z), 1.0, 13.0);
 }
 `
 
@@ -189,14 +203,33 @@ void main() {
   vec3 colour = mix(uColourBorder, uColourFgMuted, smoothstep(0.2, 0.9, vRandom));
   colour = mix(colour, uColourAccent, vAccent);
 
-  // 30 to 60 percent alpha, per Phase 4b section 5. With normal blending the alpha
-  // is the whole story: a dark point on white is only as present as its alpha, and
-  // the additive trick that carried the dark build does nothing here.
-  //
-  // Accent points sit back a little. Orange at full field alpha on white reads as
-  // scattered confetti rather than as flecks in the weave, which is the kind of
-  // thing only the tuning pass catches.
-  float alpha = core * (0.3 + vRandom * 0.3) * mix(1.0, 0.78, vAccent) * uOpacity;
+  /*
+    With normal blending the alpha is the whole story: a dark point on white is
+    only as present as its alpha, and the additive trick that carried the dark
+    build does nothing here.
+
+    The floor is up from 30 percent to 42 percent, per the particle brief 1.2. On
+    white, higher alpha means darker and heavier, which is the intent. The dimmest
+    point in the field now reads as present rather than as something you find by
+    looking for it.
+
+    Accent points get a floor of their own rather than a multiplier off the field.
+    Phase 4b damped them to 78 percent of field alpha, the particle brief 1.3 asks
+    for a higher floor instead, and the tuning pass says the honest answer is in
+    between and closer to the brief.
+
+    Measured, because the brief says to check at every step. At a 58 percent floor,
+    with the ratio at one in nine and the size up 15 percent, orange covered 0.32
+    percent of a text free patch against 0.07 percent before: four and a half times
+    the accent for a ratio change of a third. It read as confetti in exactly the way
+    section 1.3 warns about, because the three increases compound. The floor is 44
+    percent, which measures 0.18 percent coverage, still well clear of the damped
+    value and still the first thing the eye finds, since hue does that work and
+    alpha does not have to.
+  */
+  float base = 0.42 + vRandom * 0.34;
+  float accent = 0.44 + vRandom * 0.24;
+  float alpha = core * mix(base, accent, vAccent) * uOpacity;
   if (alpha < 0.002) discard;
 
   gl_FragColor = vec4(colour, alpha);
