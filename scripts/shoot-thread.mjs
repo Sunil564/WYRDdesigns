@@ -20,8 +20,16 @@
 
 import { chromium } from 'playwright'
 import { mkdir, writeFile } from 'node:fs/promises'
+import { assertBuildFresh } from './build-fresh.mjs'
 
 const BASE = process.env.SHOOT_BASE ?? 'http://localhost:3000'
+
+/*
+  Refuse to measure a build older than the source. The harness serves a prebuilt
+  directory with no HMR, so without this it will quietly report on code that is not
+  the code under test. See scripts/build-fresh.mjs.
+*/
+assertBuildFresh({ base: BASE })
 const OUT = 'build-logs/screens'
 const args = process.argv.slice(2)
 const value = (name, fallback) => {
