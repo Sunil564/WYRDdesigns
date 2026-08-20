@@ -69,6 +69,10 @@ There is no `scrollerProxy` in this build, so the two are the same number by con
 
 Density is particles per pixel of path, not a total, so a taller page gets more particles rather than a sparser thread. The trunk carries the full figure and the four branches and four strands carry a fraction of it, so one thread dividing into four reads as one thread dividing rather than as four new threads.
 
+The figure itself is set from the route as measured, not chosen. Trunk length plus the weighted branch total is 6,669px of effective path at 1024 and 7,637px at 1920, so the whole route costs the density times that. At 1.5 every width from 1024 up lands between 10,003 and 11,454 points, mid band for the brief's 8,000 to 12,000, with room on both sides for the page to grow.
+
+It was 2.2 first, which is 16,181 points at 1440 against a 16,000 ceiling, and the ceiling was thinning every path to fit. So the number that shipped for two builds was not a density decision at all, it was a cap. Both limits now announce themselves: leaving the band logs the count and the density to replace it with, and reaching the ceiling throws in development and warns before thinning in production. A limit that rewrites geometry without saying so is the same failure as a uniform that never reaches the GPU, and it costs the same to find.
+
 ## Consequences
 
 - The Thread is the fourth WebGL use on the site. Brief 7b.2's list of three is now a list of four, and this record is the argument 7b.2 requires.

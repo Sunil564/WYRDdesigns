@@ -57,8 +57,16 @@ export const HEAD_LENGTH = 240
  * Particles per pixel of trunk at any width, chosen so the trunk reads as a
  * continuous stream rather than a dotted line. Density is per pixel of path, not a
  * total, so a taller page gets more particles rather than a sparser thread.
+ *
+ * The value is set from the route as measured, not guessed. Trunk plus a weighted
+ * branch total is 6,669px at 1024 and 7,637px at 1920, so the whole route costs
+ * `density * that`, which puts every width from 1024 up between 10,000 and 11,500
+ * points at 1.5. That is mid band for `POINT_BAND` with room on both sides for the
+ * page to grow. At the 2.2 this started at, the natural count was 16,181 at 1440 and
+ * `MAX_POINTS` was quietly thinning it, which is why the band is now asserted below
+ * rather than hoped for.
  */
-const TRUNK_DENSITY = 2.2
+const TRUNK_DENSITY = 1.5
 
 /**
  * Branch and strand density, as a fraction of the trunk. Four branches at rather
@@ -73,7 +81,22 @@ const BRANCH_DENSITY = 0.28
  */
 const SPREAD = 1.7
 
-/** Hard ceiling, whatever the page height. Nothing is allowed to run away. */
+/**
+ * The particle brief 2.3 band for the whole route, at full density and any width.
+ * A count outside it is a drift signal, not something to absorb: it means the page
+ * has grown or the density is wrong, and either way the number to change is
+ * `TRUNK_DENSITY`. Checked at full density only, since the Reduced tier is a third
+ * of it by design.
+ */
+const POINT_BAND = { min: 8000, max: 12000 }
+
+/**
+ * Hard ceiling, whatever the page height. Nothing is allowed to run away.
+ *
+ * A ceiling that silently rewrites the geometry under you is a trap: the thread was
+ * shipped at 16,000 points for two builds looking like a deliberate number when it
+ * was the cap engaging. So both this and the band above announce themselves.
+ */
 const MAX_POINTS = 16000
 
 function boxOf(element: Element, scrollY: number) {
@@ -279,9 +302,40 @@ export function samplePaths(
     total += count
   }
 
-  // If the page is tall enough to blow the ceiling, thin every path by the same
-  // factor rather than truncating the last one, which would end the thread early.
+  /*
+    Neither of the two limits below is allowed to pass unremarked.
+
+    The band is the brief's, and leaving it means the route changed size. That is a
+    real event and the fix is a density change, so it is reported with the number to
+    change and the number to change it to. Full density only: the Reduced tier is
+    deliberately a third of the band.
+  */
+  if (density === 1 && (total < POINT_BAND.min || total > POINT_BAND.max)) {
+    const suggestion = ((TRUNK_DENSITY * ((POINT_BAND.min + POINT_BAND.max) / 2)) / total).toFixed(2)
+    console.error(
+      `[thread] ${total} points is outside the ${POINT_BAND.min} to ${POINT_BAND.max} band. ` +
+        `The route has changed length. Set TRUNK_DENSITY to about ${suggestion} in ` +
+        `components/motion/threadGeometry.ts, do not leave the cap to absorb it.`,
+    )
+  }
+
+  /*
+    The ceiling is a runaway guard, not a tuning knob. Reaching it means the geometry
+    the renderer draws is no longer the geometry the density asked for, so in
+    development it stops the page rather than thinning: a wrong thread that looks
+    plausible costs more to find than one that refuses to draw. Production still
+    thins, because a shipped page degrading is better than a shipped page erroring,
+    but it says so first.
+  */
   if (total > MAX_POINTS) {
+    const message =
+      `[thread] ${total} points exceeds the ${MAX_POINTS} ceiling. Thinning would ` +
+      `change the geometry without saying so. Lower TRUNK_DENSITY instead.`
+    if (process.env.NODE_ENV !== 'production') throw new Error(message)
+    console.error(message)
+
+    // Thin every path by the same factor rather than truncating the last one, which
+    // would end the thread early.
     const factor = MAX_POINTS / total
     total = 0
     for (let group = 0; group < groupCount; group += 1) {

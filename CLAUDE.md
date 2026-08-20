@@ -63,6 +63,20 @@ Never `import * as THREE`. Never import all of drei. Import individual modules.
 
 Do not install: a UI kit, a component library, a CMS, jQuery, a carousel library, a particle library (tsparticles and equivalents are banned, WebGL replaces them), or any animation library beyond GSAP, Motion, and Three.js. Substituting anything in this stack requires an ADR explaining why.
 
+## WebGL uniforms
+
+A ShaderMaterial holds a CLONE of the uniforms object it was constructed with.
+Writing `uniforms.foo.value = x` against the object you passed in updates a holder
+the renderer never reads, and the uniform stays at its initial value forever,
+silently. Array-valued uniforms appear to work because the array itself is shared by
+reference. This cost 90 minutes of blind debugging in the thread stream, and had been
+silently halving hero point size on 2x displays since Phase 3.
+
+Every animated uniform writes through `material.current.uniforms`. Static placement
+rides `object.matrixWorld`, not uniforms.
+
+Phase 5 adds two more WebGL scenes. This applies to both.
+
 ## Commits
 
 Conventional commits. One commit per meaningful unit, not one per phase. Commit before starting risky work so there is an undo point.
