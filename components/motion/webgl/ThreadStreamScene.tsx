@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { BufferAttribute, Color, NormalBlending } from 'three'
 import type { Points, ShaderMaterial } from 'three'
-import { subscribeThread, threadState } from '@/components/motion/threadStore'
+import { MAX_GROUPS, subscribeThread, threadState } from '@/components/motion/threadStore'
 import type { ThreadStreamData } from '@/components/motion/threadStore'
 import { currentScroll } from '@/components/motion/useLenis'
 import {
@@ -54,6 +54,17 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
       uSize: { value: BASE_SIZE },
       uOpacity: { value: 0 },
       uColourRest: { value: pick('--color-fg-muted') },
+      // The head is the hero field's accent, the same token, because the stream is
+      // meant to read as having come out of the field. Particle brief 2.1.
+      uColourHead: { value: pick('--color-accent') },
+      /*
+        Reveal progress and head window, per path. Allocated at the uniform array
+        size rather than at the route's path count so the buffers outlive a resample:
+        a wider layout can change how many paths there are, and a uniform array whose
+        length changed would need the program recompiled.
+      */
+      uProgress: { value: new Float32Array(MAX_GROUPS) },
+      uHeadFraction: { value: new Float32Array(MAX_GROUPS) },
     }
   }, [])
 
@@ -116,6 +127,29 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
       1,
       (live.uOpacity!.value as number) + Math.min(delta, 0.05) * 1.4,
     )
+
+    /*
+      The reveal, copied rather than derived.
+
+      `threadState().progress` is the array the one ScrollTrigger per path writes in
+      its `onUpdate`, alongside the same path's `stroke-dashoffset`. Copying it here
+      means the stream renders the number the line was drawn with, on the frame it was
+      drawn with it. Nothing here eases, smooths, or lerps toward it: the scrub lives
+      in the ScrollTrigger, where the SVG's copy of it also lives, so there is no
+      second easing to fall out of step on a fast scroll or a reversal.
+
+      Sixteen floats a frame, no buffer upload. The alternative, a per particle
+      attribute, would be eleven thousand writes and a re-upload for the same effect.
+
+      The head window is per sample set rather than per frame, but it is copied here
+      too rather than set once in an effect. That is the uniform staleness rule in
+      CLAUDE.md applied as a habit rather than as a special case: the only writes to
+      this material happen in this block, through this object, so there is nowhere for
+      a stale holder to hide.
+    */
+    const store = threadState()
+    ;(live.uProgress!.value as Float32Array).set(store.progress)
+    ;(live.uHeadFraction!.value as Float32Array).set(data.samples.headFraction)
   })
 
   if (!data) return null
