@@ -4,8 +4,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { BufferAttribute, Color, NormalBlending } from 'three'
 import type { Points, ShaderMaterial } from 'three'
-import { MAX_GROUPS, subscribeThread, threadState } from '@/components/motion/threadStore'
+import { subscribeThread, threadState } from '@/components/motion/threadStore'
 import type { ThreadStreamData } from '@/components/motion/threadStore'
+import { HEAD_LENGTH } from '@/components/motion/threadGeometry'
 import { currentScroll } from '@/components/motion/useLenis'
 import {
   threadFragmentShader,
@@ -18,6 +19,17 @@ import {
  * doing that with a colour four times darker, so the points are small.
  */
 const BASE_SIZE = 2.0
+
+/**
+ * Where the reveal line sits, as a fraction of viewport height from the top.
+ *
+ * The brief asks for 60 to 70 percent. Two thirds puts the head band in the lower
+ * third, which is where a reader's eye already is on the way down, and leaves 240px of
+ * head above the line comfortably on screen at every viewport height this site
+ * supports. Because the line is derived from scroll every frame, this fraction is the
+ * only thing that decides where the head appears, and it cannot drift.
+ */
+const REVEAL_OFFSET = 2 / 3
 
 /**
  * The Thread as a particle stream. Particle brief part 2, ADR 0020.
@@ -57,14 +69,10 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
       // The head is the hero field's accent, the same token, because the stream is
       // meant to read as having come out of the field. Particle brief 2.1.
       uColourHead: { value: pick('--color-accent') },
-      /*
-        Reveal progress and head window, per path. Allocated at the uniform array
-        size rather than at the route's path count so the buffers outlive a resample:
-        a wider layout can change how many paths there are, and a uniform array whose
-        length changed would need the program recompiled.
-      */
-      uProgress: { value: new Float32Array(MAX_GROUPS) },
-      uHeadFraction: { value: new Float32Array(MAX_GROUPS) },
+      // The reveal line in document pixels, written every frame, and the depth of the
+      // head band above it. One scalar each, where step 5 carried an array per path.
+      uRevealLine: { value: 0 },
+      uHeadLength: { value: HEAD_LENGTH },
     }
   }, [])
 
@@ -129,27 +137,25 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
     )
 
     /*
-      The reveal, copied rather than derived.
+      The reveal line, from the same scroll that just placed the object.
 
-      `threadState().progress` is the array the one ScrollTrigger per path writes in
-      its `onUpdate`, alongside the same path's `stroke-dashoffset`. Copying it here
-      means the stream renders the number the line was drawn with, on the frame it was
-      drawn with it. Nothing here eases, smooths, or lerps toward it: the scrub lives
-      in the ScrollTrigger, where the SVG's copy of it also lives, so there is no
-      second easing to fall out of step on a fast scroll or a reversal.
+      `scroll` above is the number Lenis wrote to the document before calling
+      `ScrollTrigger.update()`, so it is the same number the SVG carrier's
+      `stroke-dashoffset` was computed from. Deriving the line from it here, rather than
+      reading scroll a second time or routing the value through the store, is what keeps
+      one scroll source: the placement and the reveal use one value in one frame, so
+      `uRevealLine - scroll` is exactly `height * REVEAL_OFFSET` on every frame and the
+      line is stationary on screen by construction.
 
-      Sixteen floats a frame, no buffer upload. The alternative, a per particle
-      attribute, would be eleven thousand writes and a re-upload for the same effect.
+      Routing it through the ScrollTrigger's own eased progress was the other option and
+      is worse. That value lags the scroll by design, which is what made the old head
+      feel drawn, but a lagging reveal line is a line that slides up and down the
+      viewport while you scroll. The brief is explicit that nothing on the render side
+      eases toward the line, and this is why.
 
-      The head window is per sample set rather than per frame, but it is copied here
-      too rather than set once in an effect. That is the uniform staleness rule in
-      CLAUDE.md applied as a habit rather than as a special case: the only writes to
-      this material happen in this block, through this object, so there is nowhere for
-      a stale holder to hide.
+      Two floats a frame, no buffer upload, no per path array, no dynamic indexing.
     */
-    const store = threadState()
-    ;(live.uProgress!.value as Float32Array).set(store.progress)
-    ;(live.uHeadFraction!.value as Float32Array).set(data.samples.headFraction)
+    live.uRevealLine!.value = scroll + size.height * REVEAL_OFFSET
   })
 
   if (!data) return null
@@ -164,6 +170,14 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
           attach="attributes-position"
           object={new BufferAttribute(samples.positions, 3)}
         />
+        {/*
+          Carried, and read by nothing right now. The Y based reveal needs neither, but
+          `aAlong` is a particle's position along its own strand and `aGroup` is which
+          strand, and both are wanted for the hero handoff in step 8, which has to assign
+          a field particle to a place on the route. The brief is explicit about keeping
+          `aAlong`. Forty four kilobytes of buffer for eleven thousand points, uploaded
+          once per resample.
+        */}
         <primitive attach="attributes-aAlong" object={new BufferAttribute(samples.along, 1)} />
         <primitive attach="attributes-aGroup" object={new BufferAttribute(samples.group, 1)} />
         <primitive attach="attributes-aRandom" object={new BufferAttribute(samples.random, 1)} />

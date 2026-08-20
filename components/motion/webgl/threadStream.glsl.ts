@@ -1,5 +1,3 @@
-import { MAX_GROUPS } from '@/components/motion/threadStore'
-
 /**
  * Thread particle stream shaders. Particle brief part 2.
  *
@@ -15,9 +13,12 @@ import { MAX_GROUPS } from '@/components/motion/threadStore'
  * There is no cursor interaction and no noise field to integrate, so this is a much
  * cheaper shader than the hero field's.
  *
- * Reveal and head, particle brief 2.4, work entirely off two per group uniform arrays
- * and the `aAlong` attribute the sampler already wrote. Nothing is recomputed per
- * frame on the CPU and no buffer is re-uploaded: scroll changes sixteen floats.
+ * Reveal and head are driven by document Y against a single scalar, not by arc length
+ * against per path progress. The reveal line sits at a fixed fraction of the viewport,
+ * so it is stationary on screen and the head band cannot leave it. See ADR 0020.
+ *
+ * Nothing is recomputed per frame on the CPU and no buffer is re-uploaded: a scroll
+ * frame changes two floats.
  */
 
 /**
@@ -34,25 +35,20 @@ uniform float uPixelRatio;
 uniform float uSize;
 
 /*
-  Reveal progress and head window, one entry per sampled path, indexed by aGroup.
+  The reveal line, in document pixels, and the head band's depth above it.
 
-  Per group rather than per particle because that is what the route is: nine paths,
-  each with its own ScrollTrigger, each drawn over its own stretch of scroll. The
-  numbers here are the same numbers the SVG carrier's stroke-dashoffset gets, written
-  in the same onUpdate, which is what criterion 8 asks for. There is no second source
-  of truth and no interpolation between them, so they cannot drift apart on a fast
-  scroll or a reversal.
+  One scalar for the whole stream, where step 5 had a uniform array per path. The line
+  is derived from the same Lenis scroll value that places the object, in the same frame,
+  so revealLine minus scroll is a constant and the line is pinned in viewport space by
+  construction rather than by tuning. There is nothing to keep in step because there is
+  only one number.
 
-  A uniform array indexed by an attribute is dynamic indexing, which ESSL 1.00 allows
-  for non-sampler uniforms. It is read once here in the vertex shader and the result
-  travels to the fragment shader as a varying, so it costs one indexed fetch per
-  particle rather than one per fragment.
+  Both are document pixels, which is the space the positions arrive in, so the reveal
+  test is a comparison in the same units as the geometry.
 */
-uniform float uProgress[${MAX_GROUPS}];
-uniform float uHeadFraction[${MAX_GROUPS}];
+uniform float uRevealLine;
+uniform float uHeadLength;
 
-attribute float aAlong;
-attribute float aGroup;
 attribute float aRandom;
 
 varying float vRandom;
@@ -61,22 +57,26 @@ varying float vHead;
 void main() {
   vRandom = aRandom;
 
-  int group = int(aGroup + 0.5);
-  float progress = uProgress[group];
-  float headFraction = uHeadFraction[group];
-
   /*
-    The reveal is a hard threshold, not a fade.
+    Reveal by document Y.
 
-    aAlong is the particle's normalised position along its own path and progress is
-    where the draw head is, so the test is the brief's sentence exactly: visible only
-    at or below current progress. A hard edge is right here for the reason a soft one
-    is right nowhere on this stream: the particles are already discrete, so the tip is
-    wherever the last visible particle happens to be and there is nothing to alias.
-    Softening it would only make the head's leading edge translucent, which fights the
-    head cluster sitting on top of it.
+    position.y is already the particle's document Y, so this needs no new attribute.
+    Revealed means at or above the line, and above is a smaller Y because document Y
+    grows downward, which is what makes this a step of position.y against the line
+    rather than the other way round.
+
+    Why Y rather than arc length, which is what step 5 shipped: the two diverge wherever
+    the path is not vertical. The branch fan spends a lot of arc length crossing very
+    little page, so an arc length head slows in Y while the scroll does not, and it
+    drifts off the top of the viewport. Y cannot do that. It also makes the four
+    branches reveal together, because they occupy one Y range, which is the behaviour
+    the split wants anyway.
+
+    Still a hard threshold, not a fade. The particles are discrete, so the leading edge
+    is wherever the last revealed particle is and there is nothing to alias. Softening
+    it would only make the head's own edge translucent underneath the head cluster.
   */
-  float revealed = step(aAlong, progress);
+  float revealed = step(position.y, uRevealLine);
 
   /*
     Undrawn particles leave the clip volume rather than being drawn transparent.
@@ -94,26 +94,23 @@ void main() {
   }
 
   /*
-    The head window is [progress - headFraction, progress], the same 240px the SVG
-    head's dash window covered, expressed as a fraction of this path's own length so
-    a short branch gets the same real head as the long trunk.
+    The head band is the 240px of document Y immediately above the line, brightest at
+    the line itself. Squared so the weight crowds toward the front: the brief asks for
+    a cluster, and a linear ramp over 240px reads as a long accent smear instead.
 
-    Squared so the weight concentrates near the tip. The brief asks for a cluster, and
-    a linear ramp over 240px reads as a long accent smear instead: the particles need
-    to crowd toward the head, not shade evenly back from it.
+    One band in page space rather than one window per path, which is the whole point of
+    the change. Every particle within 240px above the line is in the head, whichever
+    path it belongs to, so the four branches carry one head across all four at the same
+    height instead of four heads at four different depths.
+
+    The two guards step 5 needed are both gone, and neither is missed. There is no
+    "path has not started", because a particle below the line is simply not revealed.
+    There is no "path has finished" either: when the line descends past the end of the
+    route the last particles fall out of the band on their own, over 240px, so the head
+    fades out instead of parking at the end point.
   */
-  float head = clamp((aAlong - (progress - headFraction)) / max(headFraction, 1e-5), 0.0, 1.0);
+  float head = clamp(1.0 - (uRevealLine - position.y) / max(uHeadLength, 1e-5), 0.0, 1.0);
   head *= head;
-
-  /*
-    No head on a path that has not started, and none on one that has finished.
-
-    Nine paths each parking a permanent accent blob at its own end point is what the
-    SVG version avoided by dropping the head's opacity outside 0.001 to 0.999. Same
-    two bounds, but the upper one is a ramp rather than a step, because a particle
-    head that vanished in one frame at the end of every path would read as a blink.
-  */
-  head *= step(0.001, progress) * (1.0 - smoothstep(0.985, 1.0, progress));
   vHead = head;
 
   // position is in document pixels. The object's matrix carries the scroll, the

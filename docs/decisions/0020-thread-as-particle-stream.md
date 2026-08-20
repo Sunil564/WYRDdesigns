@@ -73,10 +73,42 @@ The figure itself is set from the route as measured, not chosen. Trunk length pl
 
 It was 2.2 first, which is 16,181 points at 1440 against a 16,000 ceiling, and the ceiling was thinning every path to fit. So the number that shipped for two builds was not a density decision at all, it was a cap. Both limits now announce themselves: leaving the band logs the count and the density to replace it with, and reaching the ceiling throws in development and warns before thinning in production. A limit that rewrites geometry without saying so is the same failure as a uniform that never reaches the GPU, and it costs the same to find.
 
+## 6. The reveal is driven by document Y, not by arc length
+
+Step 5 revealed a particle when its normalised position along its own path was at or below that path's scroll progress, one uniform array entry per path. That is the obvious reading of "same scrub as the current stroke-dashoffset", and it is wrong for a route that is not vertical.
+
+Arc length and document Y diverge wherever the path turns. The branch fan spends a lot of arc length crossing very little page, so an arc length head slows in Y while the scroll does not, and the head drifts off the top of the viewport. The route also has a near horizontal convergence run at the bottom, which has the same problem in reverse.
+
+So the reveal line is now a single scalar in document pixels, and a particle is revealed when its own document Y is at or above it. The line sits at two thirds of viewport height, derived every frame from the same Lenis scroll value that places the object, in the same frame. That makes `revealLine - scroll` a constant, so the line is stationary on screen by construction rather than by tuning, and the head band cannot leave the viewport. Measured: the head's front edge sits within 2px of the line at every scroll position where the stream is not painted over, in both directions.
+
+Three things fell out of the change rather than being designed:
+
+- **The four branches reveal together.** They occupy one Y range, so one head crosses all four at the same height. Measured at the reveal front, the fan carries 149 to 180 inked pixels against the trunk's 118 to 129, with peak deviation 139 to 158 against the trunk's 156 to 164. One thread dividing, not four new ones.
+- **Two guards became unnecessary.** Step 5 needed an explicit "path has not started" and "path has finished" test, because nine paths each parked an accent blob at their own end point. Neither exists now: a particle below the line is simply not revealed, and when the line descends past the end of the route the last particles fall out of the head band on their own.
+- **The per path uniform arrays are gone**, along with the dynamic array indexing by attribute. A scroll frame writes two floats.
+
+What was given up: the scrub. The old head lagged the scroll by a beat, which is what made the line feel drawn rather than clipped. A lagging reveal line is a line that slides up and down the viewport, so the lag had to go. The reveal is now instantaneous with scroll, which is what the brief asks for and why it also forbids any easing on the render side.
+
+`aAlong` and `aGroup` are still sampled and still uploaded, read by nothing. The handoff in step 8 has to assign a hero particle to a place on the route, and that is what they are for.
+
+## 7. The Thread passes behind opaque content, by decision
+
+Operator decision, taken with the evidence below in front of it: the stream passes behind the four dark cluster cards by design. Criteria 11, 12 and 16 of the particle brief are amended accordingly, and the inverse block crossing applies to the full width inverse sections only.
+
+The evidence. The stream host is `z-2`, the slot ADR 0019 established, and that record's layering holds for an inverse `Section`, which paints its dark ground as a sibling layer at `z-1`: measured at the contact call to action, 687 of the stream's 1,294 pixels there sit over dark ground, so the stream does cross it. It does not hold anywhere content carries its own background inside a `z-10` section. Confirmed by computed stacking:
+
+```
+[data-thread-branch-point]   section z=10        bg rgb(247,246,244)
+[data-thread-branch-target]  section z=10        bg rgb(10,10,12)
+[data-inverse-band]          no z above 2        does not occlude
+```
+
+Two things worth recording plainly. First, this is not new and not caused by the particle work: the pre-particle hairline baseline in `build-logs/thread-before-full.txt` reports contrast 0 and coverage 0 percent at the branch, clusters and strands stops. The SVG stroke was equally invisible there. Second, it is wider than the four cluster cards. The branch point panel, the work grid placeholder panels and any other `z-10` section with a background occlude it too, so the Thread is visible over bare page ground and nowhere else. A future decision to change that is a layering change to those components, not a change to the stream.
+
 ## Consequences
 
 - The Thread is the fourth WebGL use on the site. Brief 7b.2's list of three is now a list of four, and this record is the argument 7b.2 requires.
 - The reveal stays on the same ScrollTrigger per path that drew the stroke. Progress is written into a shared typed array rather than React state, because it changes sixty times a second and must never cause a render.
 - The Static tier keeps the SVG stroke, complete and unanimated, with the two path crossing solution from ADR 0019 intact. Nothing about that tier changes.
 - Verification reads counts from the DOM rather than inferring them from pixels: `data-field-count` for the hero field and `data-thread-stream` for the stream.
-- What is not decided yet: the inverse block crossing, the Reduced tier's 2D overlay, and whether below 1024 gets a stream or keeps the stroke. Those are the steps that follow, and each adds its section here.
+- What is not decided yet: the inverse block crossing for the full width sections, the Reduced tier's 2D overlay, which must reproduce the Y based reveal on the CPU, and whether below 1024 gets a stream or keeps the stroke. Those are the steps that follow, and each adds its section here.
