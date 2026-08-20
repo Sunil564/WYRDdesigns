@@ -34,31 +34,51 @@ type PlaceholderProps = {
   carries `data-placeholder` with its note, so a grep finds all of them.
 */
 
+type Blob = {
+  colour: string
+  /** Each tint carries its own alpha range. One global range cannot serve both a
+   *  near canvas tint, which needs to be almost opaque to register, and an ink
+   *  tint, which turns into a smudge above about 20 percent. */
+  alpha: [number, number]
+}
+
 type ColourSet = {
   base: string
-  blobs: string[]
+  blobs: Blob[]
   accent: string
+  accentAlpha: number
   grid: string
+  gridOpacity: number
   rule: string
+  ruleOpacity: number
   frame: string
-  /** Blob opacity range. Tints on a light ground have to be stronger to read. */
-  blobAlpha: [number, number]
 }
 
 const SETS: Record<PlaceholderContext, ColourSet> = {
   /*
-    Light. The panel sits at --bg-raised rather than pure white, because a visual
-    that is the same value as the canvas is not a visual. Tints step down from
-    there through --bg-sunken and --border, with one sparing accent.
+    Light. The panel sits at --bg-raised, because a visual at the same value as the
+    canvas is not a visual.
+
+    The tuning pass mattered more here than anywhere else in this phase. A direct
+    port of the dark generation put --fg-muted blobs at 50 to 85 percent over a
+    light panel, which read as exactly the out of focus photograph a placeholder must
+    not look like. Ink now appears only at low alpha for depth, the near canvas tints
+    do the volume, and the structure carries the composition.
   */
   light: {
     base: 'var(--color-bg-raised)',
-    blobs: ['var(--color-bg-sunken)', 'var(--color-border)', 'var(--color-fg-muted)'],
+    blobs: [
+      { colour: 'var(--color-border)', alpha: [0.75, 1] },
+      { colour: 'var(--color-bg-sunken)', alpha: [0.85, 1] },
+      { colour: 'var(--color-fg-muted)', alpha: [0.09, 0.16] },
+    ],
     accent: 'var(--color-accent)',
-    grid: 'var(--color-border)',
+    accentAlpha: 0.14,
+    grid: 'var(--color-fg-muted)',
+    gridOpacity: 0.16,
     rule: 'var(--color-fg-muted)',
+    ruleOpacity: 0.5,
     frame: 'var(--color-border)',
-    blobAlpha: [0.5, 0.85],
   },
   /*
     Inverse. The original dark generation, kept for placeholders that sit inside a
@@ -67,15 +87,17 @@ const SETS: Record<PlaceholderContext, ColourSet> = {
   inverse: {
     base: 'var(--color-bg-inverse)',
     blobs: [
-      'var(--color-border-inverse)',
-      'var(--color-fg-inverse-muted)',
-      'var(--color-border-inverse)',
+      { colour: 'var(--color-border-inverse)', alpha: [0.4, 0.7] },
+      { colour: 'var(--color-fg-inverse-muted)', alpha: [0.16, 0.3] },
+      { colour: 'var(--color-border-inverse)', alpha: [0.4, 0.7] },
     ],
     accent: 'var(--color-accent-on-inverse)',
+    accentAlpha: 0.18,
     grid: 'var(--color-border-inverse)',
+    gridOpacity: 0.9,
     rule: 'var(--color-fg-inverse-muted)',
+    ruleOpacity: 0.45,
     frame: 'var(--color-border-inverse)',
-    blobAlpha: [0.32, 0.62],
   },
 }
 
@@ -89,27 +111,27 @@ export function Placeholder({
 }: PlaceholderProps) {
   const set = SETS[context]
   const inverse = context === 'inverse'
-  const fallbackBlob = set.blobs[0] ?? 'var(--color-border)'
+  const fallbackBlob = set.blobs[0]!
   const random = seededRandom(`${seed}:${variant}`)
   const width = 1200
   const height = Math.round(width / aspect)
 
   // Soft blobs. The accent appears at most once per visual, on a coin flip, so a
   // row of placeholders does not read as three orange smudges.
-  const blobCount = 3 + Math.floor(random() * 2)
+  const blobCount = 4 + Math.floor(random() * 2)
   const accentIndex = random() > 0.5 ? Math.floor(random() * blobCount) : -1
-  const [alphaFloor, alphaCeiling] = set.blobAlpha
   const blobs = Array.from({ length: blobCount }, (_unused, index) => {
     const isAccent = index === accentIndex
-    const colourIndex = Math.floor(random() * set.blobs.length)
+    const tint = set.blobs[Math.floor(random() * set.blobs.length)] ?? fallbackBlob
+    const [alphaFloor, alphaCeiling] = tint.alpha
     return {
       id: `${seed}-${variant}-${context}-${index}`,
       cx: 0.1 + random() * 0.8,
       cy: 0.1 + random() * 0.8,
-      r: 0.28 + random() * 0.34,
-      colour: isAccent ? set.accent : (set.blobs[colourIndex] ?? fallbackBlob),
+      r: 0.26 + random() * 0.32,
+      colour: isAccent ? set.accent : tint.colour,
       // The accent is always the quietest thing in the frame.
-      opacity: isAccent ? 0.16 : alphaFloor + random() * (alphaCeiling - alphaFloor),
+      opacity: isAccent ? set.accentAlpha : alphaFloor + random() * (alphaCeiling - alphaFloor),
     }
   })
 
@@ -167,7 +189,7 @@ export function Placeholder({
               fill="none"
               stroke={set.grid}
               strokeWidth="1"
-              opacity="0.9"
+              opacity={set.gridOpacity}
             />
           </pattern>
         </defs>
@@ -194,7 +216,10 @@ export function Placeholder({
             y2={height}
             stroke={set.grid}
             strokeWidth="1"
-            opacity={line.opacity}
+            // The diagonals carry the whole composition in this variant, so on a
+            // light ground they sit back to about half strength: at full strength
+            // they read as a scribble over the tints rather than a ruled field.
+            opacity={line.opacity * (inverse ? 1 : 0.45)}
           />
         ))}
 
@@ -209,7 +234,7 @@ export function Placeholder({
             y2={rule.y * height}
             stroke={rule.accent ? set.accent : set.rule}
             strokeWidth={rule.accent ? 2 : 1}
-            opacity={rule.accent ? 0.8 : 0.45}
+            opacity={rule.accent ? 0.85 : set.ruleOpacity}
           />
         ))}
 

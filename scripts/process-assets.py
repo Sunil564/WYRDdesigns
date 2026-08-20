@@ -25,22 +25,42 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOGO_OUT = os.path.join(ROOT, "public", "logos")
 BRAND_OUT = os.path.join(ROOT, "public", "brand")
 
-PAPER = (242, 239, 233, 255)
+# The canvas the icons and the OG mark sit on. Phase 4b moved this from the old
+# paper value to pure white, matching --color-bg.
+CANVAS = (255, 255, 255, 255)
 
 # Canvas height for every client logo mask, 3x the 32px desktop render height.
 MASK_H = 96
 
-# name, source file, optical scale factor. Squarer emblems get scaled down so
-# they read at the same visual weight as a wide wordmark, which is optical
-# normalisation rather than bounding box normalisation.
+# name, source file, optical scale factor, survives monochroming.
+#
+# The optical factor scales squarer emblems down so they read at the same visual
+# weight as a wide wordmark, which is optical normalisation rather than bounding
+# box normalisation.
+#
+# `mono` is False for a mark that does not survive being reduced to one colour.
+# SITEO is five colour blocks with the letters knocked out in white. On the dark
+# canvas that worked. On white, the third block maps to a mean alpha of 22 out of
+# 255, so the T inside it is a white letter on a near white block and stops being
+# readable. Phase 4b section 8 says such a mark goes in its original form and gets
+# listed in docs/BLOCKERS.md, which is what happens.
 CLIENTS = [
-    ("Bhavani Sarees", "Bhavani logo.png", 1.00),
-    ("G Monisa", "G-Monisa.png", 0.94),
-    ("Maharaja", "Maharaja_Logo.png", 0.92),
-    ("SITEO", "SITEO LOGO.jpeg", 0.74),
-    ("Seervi Business Expo", "Seervi EXPO - Copy.png", 1.00),
-    ("Vahini Pipes", "Vaihini.png", 0.86),
+    ("Bhavani Sarees", "Bhavani logo.png", 1.00, True),
+    ("G Monisa", "G-Monisa.png", 0.94, True),
+    ("Maharaja", "Maharaja_Logo.png", 0.92, True),
+    ("SITEO", "SITEO LOGO.jpeg", 0.74, False),
+    ("Seervi Business Expo", "Seervi EXPO - Copy.png", 1.00, True),
+    ("Vahini Pipes", "Vaihini.png", 0.86, True),
 ]
+
+
+# Gamma applied to the mask alpha. Phase 4b section 8.
+#
+# On the dark canvas any ink lightened the ground, so a mid tone at 30 percent alpha
+# read fine. On white, 30 percent of --fg-muted is #C5C5C8 and the mark washes out.
+# A gamma below 1 lifts the mid tones without touching either end, so the knockouts
+# stay knockouts and the solid areas stay solid.
+INK_GAMMA = 0.55
 
 
 def to_ink_mask(im):
@@ -61,6 +81,8 @@ def to_ink_mask(im):
             # leaving a grey haze around the artwork.
             if ink < 0.08:
                 ink = 0.0
+            else:
+                ink = ink ** INK_GAMMA
             op[x, y] = (255, 255, 255, int(round(ink * (a / 255.0) * 255)))
     return out
 
@@ -87,27 +109,56 @@ def slug(name):
     return name.lower().replace(" ", "-")
 
 
+def flatten_on_canvas(im):
+    """Composite onto white, for a mark that has to keep its own colours."""
+    flat = Image.new("RGBA", im.size, CANVAS)
+    flat.paste(im, (0, 0), im)
+    return flat.convert("RGB")
+
+
 def process_clients():
     os.makedirs(LOGO_OUT, exist_ok=True)
     manifest = []
-    for name, filename, factor in CLIENTS:
+    for name, filename, factor, mono in CLIENTS:
         src = os.path.join(CLIENT_SRC, filename)
         im = Image.open(src)
         mask = fit_to_canvas(trim(to_ink_mask(im)), factor)
         base = slug(name)
         mask.save(os.path.join(LOGO_OUT, base + ".webp"), "WEBP", lossless=True, quality=100)
         mask.save(os.path.join(LOGO_OUT, base + ".png"), "PNG", optimize=True)
-        manifest.append(
-            {
-                "name": name,
-                "slug": base,
-                "file": "/logos/" + base + ".webp",
-                "width": mask.width,
-                "height": mask.height,
-                "source": filename,
-            }
-        )
-        print("logo  %-24s %4dx%-4d  from %s" % (base, mask.width, mask.height, filename))
+
+        entry = {
+            "name": name,
+            "slug": base,
+            "file": "/logos/" + base + ".webp",
+            "width": mask.width,
+            "height": mask.height,
+            "source": filename,
+            "mono": mono,
+        }
+
+        if not mono:
+            # The original artwork, trimmed and flattened onto the canvas colour,
+            # at the same optical height as every mask in the row.
+            source = Image.open(src).convert("RGBA")
+            trimmed = trim(to_ink_mask(source))
+            box = trimmed.getbbox()
+            colour = source.crop(source.getbbox() if source.mode == "RGBA" else box)
+            target_h = MASK_H
+            ratio = target_h / colour.height
+            colour = colour.resize(
+                (max(1, int(round(colour.width * ratio))), target_h), Image.LANCZOS
+            )
+            flat = flatten_on_canvas(colour)
+            flat.save(os.path.join(LOGO_OUT, base + "-original.webp"), "WEBP", quality=92)
+            entry["file"] = "/logos/" + base + "-original.webp"
+            entry["width"] = flat.width
+            entry["height"] = flat.height
+            print("logo  %-24s %4dx%-4d  ORIGINAL, does not survive mono" % (base, flat.width, flat.height))
+        else:
+            print("logo  %-24s %4dx%-4d  from %s" % (base, mask.width, mask.height, filename))
+
+        manifest.append(entry)
     with open(os.path.join(LOGO_OUT, "manifest.json"), "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
         f.write("\n")
@@ -136,7 +187,7 @@ def process_brand():
         print("brand wyrd-%-8s %4dx%-4d" % (label, w, h))
 
     # OG mark, paper on transparent is wrong for OG so it sits on paper.
-    og = Image.new("RGBA", (1200, 400), PAPER)
+    og = Image.new("RGBA", (1200, 400), CANVAS)
     m = im.copy()
     m.thumbnail((900, 280), Image.LANCZOS)
     og.paste(m, ((1200 - m.width) // 2, (400 - m.height) // 2), m)
@@ -145,7 +196,7 @@ def process_brand():
 
     # Icon set. Unmodified mark, contained on the paper colour it was drawn for.
     for size in (16, 32, 180, 512):
-        icon = Image.new("RGBA", (size, size), PAPER)
+        icon = Image.new("RGBA", (size, size), CANVAS)
         pad = max(1, int(round(size * 0.12)))
         m = im.copy()
         m.thumbnail((size - pad * 2, size - pad * 2), Image.LANCZOS)

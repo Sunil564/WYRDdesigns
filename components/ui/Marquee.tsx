@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { ClientLogo } from '@/components/ui/ClientLogo'
 import type { Client } from '@/content/clients'
 
 type MarqueeProps = {
@@ -68,17 +69,11 @@ export function Marquee({ items, duration = 40 }: MarqueeProps) {
               <span
                 key={`${client.name}-${index}`}
                 className="text-fg-muted hover:text-fg transition-colors duration-[var(--dur-base)]"
+                // The duplicate half is decorative: the accessible name is on the
+                // first copy only, so a screen reader hears each client once.
+                aria-hidden={index >= row.length ? true : undefined}
               >
-                <span
-                  role="img"
-                  aria-label={index < row.length ? client.name : undefined}
-                  aria-hidden={index >= row.length ? true : undefined}
-                  className="logo-mask block h-10"
-                  style={{
-                    width: `${(client.width / client.height) * 40}px`,
-                    maskImage: `url(${client.file})`,
-                  }}
-                />
+                <ClientLogo client={client} />
               </span>
             ))}
           </div>

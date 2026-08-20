@@ -60,7 +60,22 @@ Unblocks by: naming which section each belongs to, and confirming the licence.
 
 Blocks: nothing.
 
-### 8. Resend API key
+### 8. SITEO has no single colour version
+
+The SITEO mark is five colour blocks with the letters knocked out in white. On the
+old dark canvas it monochromed cleanly. On the light canvas the third block reduces
+to a mean alpha of 22 out of 255, so the `T` inside it becomes a white letter on a
+near white block and stops being readable.
+
+Per Phase 4b section 8, that mark now renders in its original colours while every
+other logo in the row is monochrome. It is the only colour thing in that row.
+
+Unblocks by: asking SITEO for a single colour or reversed version of their mark, or
+confirming they are happy for the full colour mark to be used.
+
+Blocks: nothing. The row renders and every mark is legible.
+
+### 9. Resend API key
 
 Phase 5 sends the contact form through Resend to `hello@wyrddesigns.in`. `RESEND_API_KEY` and a verified sending domain are needed for real delivery.
 

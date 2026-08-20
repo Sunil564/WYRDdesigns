@@ -553,7 +553,12 @@
   flex-direction: column;
   gap: 3rem;
   overflow: hidden;
-  /* Fade the edges out so logos do not hard cut at the viewport edge. */
+  /*
+    Fade the edges so logos do not hard cut at the viewport edge. A mask rather than
+    a colour gradient, so the fade goes to whatever the canvas actually is. Phase 4b
+    section 8 asks for the old dark value to stop being baked in here, and the way to
+    guarantee that is to never name a colour at all.
+  */
   mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
 }
 

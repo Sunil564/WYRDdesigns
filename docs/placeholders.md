@@ -14,7 +14,7 @@ Kept current at the end of every phase. Updated through Phase 4.
 |---|---|---|---|
 | Header mark | `components/layout/Header.tsx` | `WYRD` set in Satoshi, letterspaced, paper with `Designs` in muted | The real mark, once a vector and a dark background variant exist. The supplied PNG is black on transparent and invisible on `--color-bg`. See ADR 0003 and BLOCKERS item 2. |
 | Footer wordmark | `components/layout/Footer.tsx` | Same treatment at display scale | Same |
-| Favicon 16 and 32 | `public/brand/icon-16.png`, `icon-32.png` | The supplied wordmark contained on brand paper. Legible as a shape, not as letters, at 16px | A square single glyph mark |
+| Favicon 16 and 32 | `public/brand/icon-16.png`, `icon-32.png` | The supplied wordmark contained on white, regenerated for the light canvas in Phase 4b. Legible as a shape, not as letters, at 16px | A square single glyph mark |
 
 ## Home
 
@@ -26,12 +26,14 @@ Kept current at the end of every phase. Updated through Phase 4.
 
 Each S4 card also carries a visible `Pending clearance` tag, because the project itself is a placeholder and not only its visual. The tag disappears when the entry in `content/projects.ts` sets `placeholder: false`.
 
+All three are generated in the light context: a `--bg-raised` panel with tints of `--bg-sunken` and `--border`, one sparing accent, and the dark grain. A placeholder inside a dark block takes `context="inverse"` and generates from the inverse tokens instead. The context is an explicit prop, never inferred from the parent.
+
 ## Work
 
 | Where | Component | What is there now | What replaces it |
 |---|---|---|---|
 | `/work` grid cards | `Placeholder` | One generated visual per project entry | Real project visuals |
-| `/work/[slug]` hero and body visuals | `Placeholder` | Generated visuals at the aspect ratios in the template | Real project visuals |
+| `/work/[slug]` hero and body visuals | `Placeholder` | Generated visuals at the aspect ratios in the template. The hero frame is a dark block per Phase 4b section 4, so its placeholder takes `context="inverse"` | Real project visuals |
 
 ## Content
 

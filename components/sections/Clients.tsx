@@ -1,4 +1,5 @@
 import { Section } from '@/components/layout/Section'
+import { ClientLogo } from '@/components/ui/ClientLogo'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Marquee } from '@/components/ui/Marquee'
 import { Reveal } from '@/components/ui/Reveal'
@@ -42,20 +43,7 @@ export function Clients() {
                 key={client.name}
                 className="text-fg-muted hover:text-fg transition-colors duration-[var(--dur-base)]"
               >
-                {/*
-                  The mask is alpha only and takes its colour from currentColor, so
-                  hover is one transition and one file. The real company name is the
-                  accessible name.
-                */}
-                <span
-                  role="img"
-                  aria-label={client.name}
-                  className="logo-mask block h-10"
-                  style={{
-                    width: `${(client.width / client.height) * 40}px`,
-                    maskImage: `url(${client.file})`,
-                  }}
-                />
+                <ClientLogo client={client} />
               </li>
             ))}
           </ul>
