@@ -145,7 +145,7 @@ export function MobileMenu({ open, onClose }: MobileMenuProps) {
               <Link
                 href={cta.href}
                 onClick={onClose}
-                className="label accent-surface rounded-pill inline-flex min-h-11 items-center px-6 py-3 font-bold"
+                className="label accent-fill rounded-pill inline-flex min-h-11 items-center px-6 py-3 font-bold"
               >
                 {cta.label}
               </Link>

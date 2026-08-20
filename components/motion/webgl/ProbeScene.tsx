@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { Mesh } from 'three'
 import { SceneCanvas } from '@/components/motion/webgl/SceneCanvas'
@@ -18,6 +18,12 @@ import { SceneCanvas } from '@/components/motion/webgl/SceneCanvas'
  */
 function Probe() {
   const mesh = useRef<Mesh | null>(null)
+  // The hairline token, read rather than copied, so this dev scene cannot hold a
+  // stale palette value either.
+  const colour = useMemo(
+    () => getComputedStyle(document.documentElement).getPropertyValue('--color-border').trim(),
+    [],
+  )
 
   useFrame((_state, delta) => {
     if (!mesh.current) return
@@ -28,7 +34,7 @@ function Probe() {
   return (
     <mesh ref={mesh}>
       <icosahedronGeometry args={[1.6, 1]} />
-      <meshBasicMaterial color="#26262e" wireframe />
+      <meshBasicMaterial color={colour} wireframe />
     </mesh>
   )
 }

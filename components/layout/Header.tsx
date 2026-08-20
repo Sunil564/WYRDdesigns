@@ -51,7 +51,7 @@ export function Header() {
     <>
       <a
         href="#content"
-        className="label focus-visible:rounded-pill focus-visible:accent-surface sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-4 focus-visible:left-4 focus-visible:z-60 focus-visible:px-4 focus-visible:py-3"
+        className="label focus-visible:rounded-pill focus-visible:accent-fill sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-4 focus-visible:left-4 focus-visible:z-60 focus-visible:px-4 focus-visible:py-3"
       >
         Skip to content
       </a>

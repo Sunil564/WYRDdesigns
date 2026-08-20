@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 
 type EyebrowProps = {
   children: ReactNode
-  /** A signal coloured tick before the label. Used once per section, not per block. */
+  /** An accent coloured tick before the label. Used once per section, not per block. */
   marker?: boolean
   className?: string
 }

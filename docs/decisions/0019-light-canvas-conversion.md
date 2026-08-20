@@ -64,7 +64,7 @@ Measured on a flat patch of canvas rather than eyeballed in a compressed screens
 
 ### 5. The accent is restricted, and the filled button moved
 
-Phase 4b 3.3 says filled accent buttons use `--accent` with `#FFFFFF` text, and asks for that pair to be verified. Verified: 3.24:1. Legal for large text, and every filled button on this site has a 13px uppercase label, which is not large text. So `accent-surface` fills with `--accent-strong`, where white is 5.08:1.
+Phase 4b 3.3 says filled accent buttons use `--accent` with `#FFFFFF` text, and asks for that pair to be verified. Verified: 3.24:1. Legal for large text, and every filled button on this site has a 13px uppercase label, which is not large text. So `accent-fill` fills with `--accent-strong`, where white is 5.08:1.
 
 Every accent usage in the codebase was audited against the rule in the same commit as the palette swap, not deferred: buttons, chips, field errors and asterisks, process indexes, the cursor label, and link hovers all moved to `--accent-strong`. The accent stays where it is a graphic: eyebrow rules, the process line, the Thread head, the particle field. The focus ring moved to `--accent-strong` too, because `--accent` measures exactly 3.00:1 against a `--bg-raised` form field.
 

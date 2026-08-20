@@ -7,7 +7,7 @@ derived assets into public/. Deterministic: re-running produces identical output
 Client logos are converted to single channel masks. Opacity per pixel is
 darkness multiplied by source alpha, so dark artwork becomes ink and knocked
 out white letterforms stay transparent. The mask is tinted at render time with
-currentColor, which is how the marquee moves from muted to paper on hover
+currentColor, which is how the row moves from --fg-muted to --fg on hover
 without shipping two files per logo.
 
 Run: python scripts/process-assets.py
@@ -26,7 +26,7 @@ LOGO_OUT = os.path.join(ROOT, "public", "logos")
 BRAND_OUT = os.path.join(ROOT, "public", "brand")
 
 # The canvas the icons and the OG mark sit on. Phase 4b moved this from the old
-# paper value to pure white, matching --color-bg.
+# off white value to pure white, matching --color-bg.
 CANVAS = (255, 255, 255, 255)
 
 # Canvas height for every client logo mask, 3x the 32px desktop render height.
@@ -169,7 +169,7 @@ def process_brand():
     """
     Brand mark variants. The supplied mark is black on transparent, so it is
     never recoloured here. Raster variants are exported as supplied, and the
-    icon set places the unmodified mark on the brand paper colour, which is the
+    icon set places the unmodified mark on the canvas colour, which is the
     background it was drawn for. See docs/decisions/0003.
     """
     os.makedirs(BRAND_OUT, exist_ok=True)
@@ -186,7 +186,7 @@ def process_brand():
         v.save(os.path.join(BRAND_OUT, "wyrd-%s.png" % label), "PNG", optimize=True)
         print("brand wyrd-%-8s %4dx%-4d" % (label, w, h))
 
-    # OG mark, paper on transparent is wrong for OG so it sits on paper.
+    # OG mark. Transparent is wrong for OG, so it sits on the canvas colour.
     og = Image.new("RGBA", (1200, 400), CANVAS)
     m = im.copy()
     m.thumbnail((900, 280), Image.LANCZOS)
@@ -194,7 +194,7 @@ def process_brand():
     og.convert("RGB").save(os.path.join(BRAND_OUT, "wyrd-og-mark.png"), "PNG", optimize=True)
     print("brand wyrd-og-mark      1200x400")
 
-    # Icon set. Unmodified mark, contained on the paper colour it was drawn for.
+    # Icon set. Unmodified mark, contained on the light ground it was drawn for.
     for size in (16, 32, 180, 512):
         icon = Image.new("RGBA", (size, size), CANVAS)
         pad = max(1, int(round(size * 0.12)))

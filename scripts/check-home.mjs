@@ -181,7 +181,7 @@ for (const width of [1024, 1440, 1920, 2560]) {
   record(
     `the Thread branches into four and draws through the page at ${width}px`,
     after.count === 9 && drawn >= 5 && before.every((offset) => offset >= 0.99),
-    `${after.count} paths, ${drawn} drawn past halfway, ${after.heads} signal heads`,
+    `${after.count} paths, ${drawn} drawn past halfway, ${after.heads} accent heads`,
   )
   await context.close()
 }
@@ -284,7 +284,7 @@ for (const width of [375, 768, 1023]) {
   })
 
   record(
-    'S3 hover lifts surface to surface-2, sweeps the hairline, and turns the index signal',
+    'S3 hover lifts the dark card a step, sweeps the hairline, and turns the index accent',
     restBackground !== hoverBackground &&
       sweep !== null &&
       !/matrix\(0,/.test(sweep ?? '') &&

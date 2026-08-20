@@ -78,7 +78,7 @@ Computed on the actual token values, not sampled from one automated check on one
 Four consequences that constrain components:
 
 1. **The accent is restricted.** `#FF521F` is 3.24:1 on white. Legal for large text and non text graphics, illegal for body copy, labels, meta, and small links. Those use `--color-accent-strong`.
-2. **Filled accent surfaces use `--accent-strong` with white text.** Phase 4b 3.3 specifies white on `--accent` and asks for the pair to be verified. Verified, it is 3.24:1 and fails AA for a 13px label. The `accent-surface` utility therefore fills with `--accent-strong`, where white is 5.08:1. Inside an inverse block the bright accent is correct, because near black on it is 6.10:1, which is what `accent-surface-inverse` does.
+2. **Filled accent surfaces use `--accent-strong` with white text.** Phase 4b 3.3 specifies white on `--accent` and asks for the pair to be verified. Verified, it is 3.24:1 and fails AA for a 13px label. The `accent-fill` utility therefore fills with `--accent-strong`, where white is 5.08:1. Inside an inverse block the bright accent is correct, because near black on it is 6.10:1, which is what `accent-fill-inverse` does.
 3. **The focus ring is `--accent-strong`, not `--accent`.** `--accent` measures 3.00:1 against `--bg-raised`, exactly the floor and no margin against a form field. `--accent-strong` has headroom on white, on raised, and on the dark ground.
 4. `--color-fg-muted` holds AA on all three light surfaces. There is no headroom for a fourth darker light surface, and there is not going to be one.
 

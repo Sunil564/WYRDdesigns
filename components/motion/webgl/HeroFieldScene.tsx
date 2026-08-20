@@ -26,13 +26,19 @@ const CURSOR_LERP = 0.08
 
 function readPalette() {
   const styles = getComputedStyle(document.documentElement)
-  const pick = (token: string, fallback: string) =>
-    new Color(styles.getPropertyValue(token).trim() || fallback)
+  /*
+    No literal fallbacks. They used to hold the dark palette, went stale the moment
+    the canvas changed, and were dead code either way since this scene only mounts
+    after the stylesheet has applied. An unresolvable token now falls back to the
+    body's own resolved colour, which is a token value rather than a copy of one.
+  */
+  const fallback = getComputedStyle(document.body).color
+  const pick = (token: string) => new Color(styles.getPropertyValue(token).trim() || fallback)
 
   return {
-    border: pick('--color-border', '#26262e'),
-    fgMuted: pick('--color-fg-muted', '#8b8b95'),
-    accent: pick('--color-accent', '#ff521f'),
+    border: pick('--color-border'),
+    fgMuted: pick('--color-fg-muted'),
+    accent: pick('--color-accent'),
   }
 }
 

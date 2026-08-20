@@ -82,7 +82,7 @@ export function MagneticButton({
         <Link
           href={href}
           data-thread-converge
-          className="label accent-surface-inverse rounded-pill inline-flex min-h-11 items-center px-8 py-4 font-bold"
+          className="label accent-fill-inverse rounded-pill inline-flex min-h-11 items-center px-8 py-4 font-bold"
         >
           <motion.span style={{ x: labelX, y: labelY }} className="inline-block">
             {children}

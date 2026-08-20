@@ -53,10 +53,13 @@ export function ParticleField2D({ seed = 'wyrd-hero', className }: ParticleField
     if (!context) return
 
     const styles = getComputedStyle(document.documentElement)
+    // No literal fallbacks, same reasoning as the shader field: they went stale when
+    // the canvas changed and could never fire anyway.
+    const fallback = getComputedStyle(document.body).color
     const palette = {
-      border: styles.getPropertyValue('--color-border').trim() || '#26262e',
-      fgMuted: styles.getPropertyValue('--color-fg-muted').trim() || '#8b8b95',
-      accent: styles.getPropertyValue('--color-accent').trim() || '#ff521f',
+      border: styles.getPropertyValue('--color-border').trim() || fallback,
+      fgMuted: styles.getPropertyValue('--color-fg-muted').trim() || fallback,
+      accent: styles.getPropertyValue('--color-accent').trim() || fallback,
     }
 
     const fine = window.matchMedia('(pointer: fine)').matches

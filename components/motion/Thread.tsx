@@ -262,7 +262,7 @@ export function Thread() {
               if (inverseBody) inverseBody.style.strokeDashoffset = String(1 - state.progress)
               if (head) {
                 // The visible window sits at [drawn - HEAD_LENGTH, drawn], so the
-                // signal segment travels with the live tip and the body sits back.
+                // accent segment travels with the live tip and the body sits back.
                 head.style.strokeDashoffset = String(HEAD_LENGTH - drawn)
                 head.style.opacity = state.progress > 0.001 && state.progress < 0.999 ? '1' : '0'
               }
@@ -327,7 +327,8 @@ export function Thread() {
             </clipPath>
 
             <mask id="wyrd-thread-light" maskUnits="userSpaceOnUse">
-              <rect x={0} y={0} width={geometry.width} height={geometry.height} fill="#fff" />
+              {/* White and black here are mask luminance, opaque and cut out, not colours. */}
+              <rect x={0} y={0} width={geometry.width} height={geometry.height} fill="white" />
               {geometry.bands.map((band, index) => (
                 <rect
                   key={`band-mask-${index}`}
@@ -335,7 +336,7 @@ export function Thread() {
                   y={band.top}
                   width={geometry.width}
                   height={Math.max(0, band.bottom - band.top)}
-                  fill="#000"
+                  fill="black"
                 />
               ))}
             </mask>
@@ -426,7 +427,7 @@ function ThreadGroup({
       )}
 
       {/*
-        The accent head needs no twin: #FF521F measures 3.24:1 on white, which is
+        The accent head needs no twin: the accent measures 3.24:1 on white, which is
         fine for a graphic, and 6.10:1 on the dark ground. One colour, both grounds.
       */}
       {!reduced && (

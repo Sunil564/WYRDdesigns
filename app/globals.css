@@ -371,7 +371,7 @@
 }
 
 /*
-  Filled accent surface.
+  Filled accent.
 
   Phase 4b 3.3 says filled accent buttons use the accent with white text, and asks
   for that pair to be verified. Verified: #FFFFFF on #FF521F is 3.24:1, legal for
@@ -379,27 +379,27 @@
   --color-accent-strong, where white measures 5.08:1 and clears AA at any size.
   Recorded in docs/decisions/0019.
 */
-@utility accent-surface {
+@utility accent-fill {
   background-color: var(--color-accent-strong);
   color: var(--color-bg);
   transition: background-color var(--dur-fast) var(--ease-out);
 }
 
-.accent-surface:hover {
+.accent-fill:hover {
   background-color: color-mix(in oklab, var(--color-accent-strong) 86%, var(--color-fg));
 }
 
 /*
-  The same surface inside an inverse block. There the bright accent is correct:
+  The same fill inside an inverse block. There the bright accent is correct:
   near black on #FF521F measures 6.10:1.
 */
-@utility accent-surface-inverse {
+@utility accent-fill-inverse {
   background-color: var(--color-accent-on-inverse);
   color: var(--color-bg-inverse);
   transition: background-color var(--dur-fast) var(--ease-out);
 }
 
-.accent-surface-inverse:hover {
+.accent-fill-inverse:hover {
   background-color: color-mix(
     in oklab,
     var(--color-accent-on-inverse) 88%,

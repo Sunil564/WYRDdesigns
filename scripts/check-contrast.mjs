@@ -155,7 +155,9 @@ for (const route of ROUTES) {
 
 await browser.close()
 
-console.log(`${checked} rendered text elements measured across ${ROUTES.length} routes at ${WIDTHS.join(', ')}px`)
+console.log(
+  `${checked} rendered text elements measured across ${ROUTES.length} routes at ${WIDTHS.join(', ')}px`,
+)
 console.log(`${pairs.size} distinct colour, size and weight combinations\n`)
 
 const sorted = Array.from(pairs.values()).sort((a, b) => a.ratio - b.ratio)

@@ -25,11 +25,11 @@ export type ButtonProps = AnchorProps | NativeButtonProps
 /*
   Three variants, and no fourth without a reason.
 
-  filled  signal background, void label. Void on signal is 6.17:1 and passes AA
-          at every size. A paper label on signal is 2.82:1 and fails, so the
-          label colour here is load bearing, not stylistic. See
-          docs/design-system.md section 1.
-  outline line border, paper label. Secondary actions.
+  filled  the accent-fill utility: --accent-strong with a white label, 5.08:1.
+          White on the brighter --accent is 3.24:1 and fails AA for a 13px label,
+          which is why the fill is the stronger value. Load bearing, not stylistic.
+          See docs/design-system.md section 1.3.
+  outline hairline border, --fg label. Secondary actions.
   link    text with an underline that draws in from the left on hover and focus.
           The underline is a scaled pseudo element, so it animates on transform
           and never on width.
@@ -43,7 +43,7 @@ const base =
 
 const variants: Record<ButtonVariant, string> = {
   filled:
-    'accent-surface rounded-pill px-6 py-3 ' + 'text-label uppercase tracking-[0.12em] font-bold',
+    'accent-fill rounded-pill px-6 py-3 ' + 'text-label uppercase tracking-[0.12em] font-bold',
   outline:
     'rounded-pill border border-border px-6 py-3 text-fg hover:border-fg hover:bg-bg-sunken ' +
     'text-label uppercase tracking-[0.12em] font-medium',

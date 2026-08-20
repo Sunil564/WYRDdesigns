@@ -342,7 +342,7 @@ export default function TokensPage() {
           </div>
         </div>
         <p className="text-body text-fg-muted mt-6">
-          No shadows anywhere. Depth is a surface value shift, void to surface to surface-2.
+          No shadows anywhere. Depth is a surface value shift, bg to bg-raised to bg-sunken.
         </p>
       </Block>
     </main>
