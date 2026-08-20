@@ -394,7 +394,11 @@
 }
 
 .accent-surface-inverse:hover {
-  background-color: color-mix(in oklab, var(--color-accent-on-inverse) 88%, var(--color-fg-inverse));
+  background-color: color-mix(
+    in oklab,
+    var(--color-accent-on-inverse) 88%,
+    var(--color-fg-inverse)
+  );
 }
 
 /*
@@ -446,9 +450,14 @@
   transition: background-color var(--dur-fast) var(--ease-out);
 }
 
+/*
+  The blocks are inverse, so the hover lifts a step off the dark ground rather than
+  moving to --bg-sunken, which is a light token. Mixed from tokens rather than
+  introducing a hex value for one state.
+*/
 .capability-block:hover,
 .capability-block:focus-within {
-  background-color: var(--color-bg-sunken);
+  background-color: color-mix(in oklab, var(--color-bg-inverse) 88%, var(--color-fg-inverse));
 }
 
 /* The hairline that sweeps left to right across the top edge on hover. */
@@ -456,8 +465,9 @@
   position: absolute;
   inset-inline: 0;
   top: 0;
+  z-index: 1;
   height: 1px;
-  background-color: var(--color-accent);
+  background-color: var(--color-accent-on-inverse);
   transform: scaleX(0);
   transform-origin: left center;
   transition: transform var(--dur-base) var(--ease-out);

@@ -5,12 +5,16 @@ import { Reveal } from '@/components/ui/Reveal'
 import type { Cluster } from '@/content/services'
 
 /**
- * The 2x2 cluster grid. Brief 6.1 S3.
+ * The 2x2 cluster grid. Brief 6.1 S3, inverted in Phase 4b section 4.
  *
- * Hover: the block background lifts from `--color-bg-raised` to `--color-bg-sunken`,
- * the index digit goes to `--color-accent`, and a hairline sweeps left to right
- * across the top edge. No scale transform, no shadow. All of it is CSS on
- * `:hover` and `:focus-within`, so there is no JavaScript on the hover path.
+ * These four are dark cards on a white canvas. They are the section that most
+ * benefits from the contrast, and it gives the four strands of the Thread somewhere
+ * with weight to land.
+ *
+ * Hover: the block lifts a step off `--bg-inverse`, the index digit goes to
+ * `--accent-on-inverse`, and a hairline sweeps left to right across the top edge.
+ * No scale transform, no shadow. All of it is CSS on `:hover` and `:focus-within`,
+ * so there is no JavaScript on the hover path.
  *
  * The pointer highlight is a soft radial that follows the cursor across the grid.
  * It writes two CSS custom properties on `pointermove` and lets the compositor
@@ -55,23 +59,26 @@ export function CapabilityGrid({ clusters }: { clusters: Cluster[] }) {
         <Reveal key={cluster.slug} delay={index * 60}>
           <article
             data-thread-branch-target={cluster.slug}
-            className="capability-block group border-border bg-bg-raised relative flex h-full flex-col border p-8 md:p-12"
+            className="capability-block group border-border-inverse bg-bg-inverse relative flex h-full flex-col overflow-hidden border p-8 md:p-12"
           >
+            {/* The light grain, so a dark card carries texture rather than flat ink. */}
+            <span aria-hidden="true" className="grain-inverse" />
+
             {/* The hairline that sweeps the top edge on hover. */}
             <span aria-hidden="true" className="capability-sweep" />
 
-            <p className="label text-fg-muted group-hover:text-accent transition-colors duration-[var(--dur-fast)]">
+            <p className="label text-fg-inverse-muted group-hover:text-accent-on-inverse relative transition-colors duration-[var(--dur-fast)]">
               {cluster.index}
             </p>
 
-            <h3 className="text-title text-fg mt-8 font-bold">{cluster.name}</h3>
-            <p className="measure text-lead text-fg-muted mt-4">{cluster.line}</p>
+            <h3 className="text-title text-fg-inverse relative mt-8 font-bold">{cluster.name}</h3>
+            <p className="measure text-lead text-fg-inverse-muted relative mt-4">{cluster.line}</p>
 
-            <ul className="mt-10 flex flex-col gap-4">
+            <ul className="relative mt-10 flex flex-col gap-4">
               {cluster.services.map((service) => (
-                <li key={service.name} className="hairline-t pt-4">
-                  <p className="text-body text-fg">{service.name}</p>
-                  <p className="measure text-body text-fg-muted mt-1">{service.line}</p>
+                <li key={service.name} className="border-border-inverse border-t pt-4">
+                  <p className="text-body text-fg-inverse">{service.name}</p>
+                  <p className="measure text-body text-fg-inverse-muted mt-1">{service.line}</p>
                 </li>
               ))}
             </ul>

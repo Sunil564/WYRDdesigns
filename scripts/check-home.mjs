@@ -71,8 +71,11 @@ async function walk(page, step = 600, settle = 220) {
   await page.goto(`${BASE}/`, { waitUntil: 'load' })
   await page.waitForTimeout(2500)
 
+  // Any depth, not `main > section`. An inverse section is wrapped one level deeper
+  // so its dark ground can sit below the Thread, which is a layering detail rather
+  // than a change to the page's structure. Phase 4b step 6.
   const order = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('main > section')).map((section) => section.id),
+    Array.from(document.querySelectorAll('main section[id]')).map((section) => section.id),
   )
   const expected = [
     'hero',
@@ -381,7 +384,7 @@ for (const width of [375, 768, 1023]) {
       path.getAttribute('stroke-dashoffset'),
     ),
     heads: document.querySelectorAll('[data-thread-head]').length,
-    sections: document.querySelectorAll('main > section').length,
+    sections: document.querySelectorAll('main section[id]').length,
   }))
 
   record(

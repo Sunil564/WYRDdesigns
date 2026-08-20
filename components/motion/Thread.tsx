@@ -302,10 +302,16 @@ export function Thread() {
           className="absolute inset-0 h-full w-full"
         >
           {/*
-            One clip region covering every dark block. The inverse coloured copy of
-            each path is clipped to it, so each path is drawn twice and only the
-            correct half of each pair is ever visible. Blend modes were the other
-            option and they lose: see docs/decisions/0019.
+            Each path is drawn twice, once per ground, and each copy is limited to
+            the stretch of page where its colour is correct.
+
+            The inverse copy is clipped to the dark bands. The light copy is masked
+            so the bands are cut out of it, which a clipPath cannot express, since
+            clipping is additive and this needs a subtraction. Without the mask the
+            light hairline stays visible inside the dark block at 17:1 and the
+            inverse copy underneath it is pointless.
+
+            Blend modes were the other option and they lose: see docs/decisions/0019.
           */}
           <defs>
             <clipPath id="wyrd-thread-inverse">
@@ -319,6 +325,20 @@ export function Thread() {
                 />
               ))}
             </clipPath>
+
+            <mask id="wyrd-thread-light" maskUnits="userSpaceOnUse">
+              <rect x={0} y={0} width={geometry.width} height={geometry.height} fill="#fff" />
+              {geometry.bands.map((band, index) => (
+                <rect
+                  key={`band-mask-${index}`}
+                  x={0}
+                  y={band.top}
+                  width={geometry.width}
+                  height={Math.max(0, band.bottom - band.top)}
+                  fill="#000"
+                />
+              ))}
+            </mask>
           </defs>
 
           <ThreadGroup
@@ -385,6 +405,7 @@ function ThreadGroup({
         pathLength={1}
         strokeDasharray="1"
         strokeDashoffset={reduced ? 0 : 1}
+        mask={hasBands ? 'url(#wyrd-thread-light)' : undefined}
       />
       {/*
         The same path in the inverse hairline colour, clipped to the dark blocks.

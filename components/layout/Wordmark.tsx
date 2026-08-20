@@ -3,6 +3,12 @@ import { cn } from '@/lib/utils'
 type WordmarkProps = {
   /** `mark` is the header lockup, `display` is the oversized footer treatment. */
   size?: 'mark' | 'display'
+  /**
+   * Which token set to read. Explicit, never inferred from a parent, because the
+   * same wordmark sits on the white header and on the dark footer.
+   * Phase 4b criterion 12.
+   */
+  variant?: 'light' | 'inverse'
   /** The `Designs` half. Off in tight spaces where `WYRD` alone is unambiguous. */
   descriptor?: boolean
   className?: string
@@ -19,7 +25,12 @@ type WordmarkProps = {
  * Tagged `data-placeholder`, listed in docs/placeholders.md, and replaced the day
  * a vector and a dark background variant arrive. See ADR 0003.
  */
-export function Wordmark({ size = 'mark', descriptor = true, className }: WordmarkProps) {
+export function Wordmark({
+  size = 'mark',
+  variant = 'light',
+  descriptor = true,
+  className,
+}: WordmarkProps) {
   return (
     <span
       data-placeholder="Interim typographic wordmark, pending a vector mark with a dark background variant"
@@ -27,7 +38,8 @@ export function Wordmark({ size = 'mark', descriptor = true, className }: Wordma
     >
       <span
         className={cn(
-          'text-fg font-black tracking-[-0.02em]',
+          'font-black tracking-[-0.02em]',
+          variant === 'inverse' ? 'text-fg-inverse' : 'text-fg',
           size === 'mark' ? 'text-title' : 'text-mega',
         )}
       >
@@ -36,7 +48,7 @@ export function Wordmark({ size = 'mark', descriptor = true, className }: Wordma
       {descriptor && (
         <span
           className={cn(
-            'text-fg-muted',
+            variant === 'inverse' ? 'text-fg-inverse-muted' : 'text-fg-muted',
             size === 'mark' ? 'label' : 'text-title font-medium tracking-[0.06em]',
           )}
         >
