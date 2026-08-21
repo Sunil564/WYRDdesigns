@@ -83,17 +83,27 @@ Unblocks by: a Resend account, a verified domain, and the key in the Vercel proj
 
 Blocks: end to end delivery verification in Phase 5. The form, validation, and error states are testable without it.
 
-### 10. Frame rate on real hardware is unverified
+### 10. Lighthouse has never been run, on any route
+
+Not once, in any phase. Every score the build plan sets a number for is unverified: Accessibility 100 on every route, which is plan criterion 613 and Phase 5 criterion 2, and both Performance budgets, mobile Reduced tier at 90 or above and desktop Full tier at 85 or above, from plan section 602 and 603.
+
+What has been measured instead, per route, is the set of things a harness can assert directly: one `h1`, one of each landmark, a title and description that are not the defaults, every keyboard stop rendered and carrying a visible focus ring, every interactive target 44px tall, no horizontal scroll from 320 to 2560, every rendered text and background pair against WCAG AA contrast ratios, and JS transferred against both tier ceilings. Those overlap with a good part of what Lighthouse's accessibility audit checks and with none of what its performance audit checks. They are not a substitute and have never been reported as one.
+
+Unblocks by: adding `lighthouse` as a devDependency and running it against the verification server on 3100. Playwright's Chromium is already installed and can be launched with `--remote-debugging-port`, which is the endpoint Lighthouse drives, so no second browser is needed. The one thing this environment cannot give is a trustworthy Performance number: it is a headless software renderer with no GPU, and the same page here measures 16.7 to 24.7ms median frame time across runs. Accessibility, Best Practices and SEO are device independent and would be real. Performance has to come from a real device, which is item 11.
+
+Blocks: closing Phase 5 criterion 2 and plan criteria 1, 2 and 10. Nothing ships differently because of it.
+
+### 11. Frame rate on real hardware is unverified
 
 Particle brief criterion 21 asks for 60fps while scrolling the full page on a mid-range laptop, and never below 30fps on any Full tier device. Neither figure has been measured on hardware.
 
 Everything in this build was measured headless with no GPU, where the same sweep reads 16.7 to 24.7ms median depending on viewport and run. Those numbers say the work got cheaper as counts came down, which is real, and they say nothing about whether a 2021 laptop holds 60fps.
 
-Unblocks by: running the page on a real device. `scripts/check-hero.mjs` already reports an fps figure and asserts only the 30fps floor, which passes headless and is not the criterion.
+Unblocks by: running the page on a real device, which is also what item 10's Performance half needs. `scripts/check-hero.mjs` already reports an fps figure and asserts only the 30fps floor, which passes headless and is not the criterion.
 
 Blocks: closing criterion 21. Nothing ships differently because of it.
 
-### 11. Two rendering judgements need a real display
+### 12. Two rendering judgements need a real display
 
 Both were reported at the time and neither is a fault, but both are judgements a headless screenshot cannot settle.
 

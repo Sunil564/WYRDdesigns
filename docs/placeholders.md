@@ -33,7 +33,9 @@ All three are generated in the light context: a `--bg-raised` panel with tints o
 | Where | Component | What is there now | What replaces it |
 |---|---|---|---|
 | `/work` grid cards | `Placeholder` | One generated visual per project entry, three today, at 4:5. The grid is exactly as long as `content/projects.ts` and is never padded | Real project visuals |
-| `/work/[slug]` hero and body visuals | `Placeholder` | Generated visuals at the aspect ratios in the template. The hero frame is a dark block per Phase 4b section 4, so its placeholder takes `context="inverse"` | Real project visuals |
+| `/work/[slug]` hero visual | `Placeholder` | One generated visual at 21:9. The hero frame is a dark block per Phase 4b section 4, so it takes `context="inverse"` and generates from the inverse tokens | The real project hero |
+| `/work/[slug]` body visuals | `Placeholder` | Three generated visuals, alternating full bleed 21:9 and inset 16:10. Three rather than the brief's three to five because every one is a placeholder and five empty frames read as a longer apology than three | Real project imagery, and then the count follows the imagery rather than this constant |
+| `/work/[slug]` body captions | none | Nothing. A caption on a placeholder visual would be invented copy about a project nobody has described | Real captions, written from the project |
 
 ## Content
 
