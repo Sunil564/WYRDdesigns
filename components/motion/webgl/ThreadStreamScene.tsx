@@ -14,11 +14,26 @@ import {
 } from '@/components/motion/webgl/threadStream.glsl'
 
 /**
- * Base point size in CSS pixels, before the per particle variance. Tuned against the
- * old hairline: the stream has to carry the weight a 1px line carried, and it is
- * doing that with a colour four times darker, so the points are small.
+ * Base point size in CSS pixels, before the per particle variance.
+ *
+ * Was 2.0, tuned against the old SVG hairline so the stream carried the weight a 1px line
+ * carried. That reference is gone: the amending brief replaces the tight line with a
+ * spiral trail, and spreading the same particles over a 16px radius thins the apparent
+ * line, so they have to be heavier to hold the same presence. 50 percent up, per the
+ * brief. Criterion 10 of the parent brief is superseded rather than failed, and ADR 0020
+ * records why.
  */
-const BASE_SIZE = 2.0
+const BASE_SIZE = 3.0
+
+/**
+ * Maximum distance a particle rides from the path centre, in CSS pixels. Amending brief.
+ *
+ * Section 2.4 of the parent brief specified 1 to 3px of perpendicular offset, which is
+ * the same mechanism turned down until it reads as a pinstripe. 16px is inside the brief's
+ * 12 to 20 range, and the radius hash squares itself in the shader so most particles ride
+ * well inside it.
+ */
+const SPIRAL_RADIUS = 16
 
 /**
  * Where the reveal line sits, as a fraction of viewport height from the top.
@@ -89,6 +104,9 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
       uDisperseTop: { value: 0 },
       uDisperseBottom: { value: 1 },
       uDisperseSpread: { value: new Float32Array([0, 0]) },
+      uSpiralRadius: { value: SPIRAL_RADIUS },
+      // The trail rotates at rest, so this scene now needs a clock where it did not.
+      uTime: { value: 0 },
       // The reveal line in document pixels, written every frame, and the depth of the
       // head band above it. One scalar each, where step 5 carried an array per path.
       uRevealLine: { value: 0 },
@@ -151,6 +169,9 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
     */
     const live = shader.uniforms
     live.uPixelRatio!.value = Math.min(window.devicePixelRatio || 1, 2)
+    // Clamped like the fade in below, so a long frame or a backgrounded tab cannot jump
+    // the trail through a quarter turn on the frame it comes back.
+    live.uTime!.value = (live.uTime!.value as number) + Math.min(delta, 0.05)
     live.uOpacity!.value = Math.min(
       1,
       (live.uOpacity!.value as number) + Math.min(delta, 0.05) * 1.4,
@@ -217,11 +238,20 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
           `aAlong` is a particle's position along its own strand and `aGroup` is which
           strand, and both are wanted for the hero handoff in step 8, which has to assign
           a field particle to a place on the route. The brief is explicit about keeping
-          `aAlong`. Forty four kilobytes of buffer for eleven thousand points, uploaded
-          once per resample.
+          `aAlong`.
         */}
         <primitive attach="attributes-aAlong" object={new BufferAttribute(samples.along, 1)} />
         <primitive attach="attributes-aGroup" object={new BufferAttribute(samples.group, 1)} />
+        {/*
+          Read by the spiral: arc length gives the phase a rate in real pixels rather than
+          per normalised path, and the normal gives it a direction to swing along. Both
+          come straight out of the sampler, which already walked the curve to get them.
+        */}
+        <primitive
+          attach="attributes-aDistance"
+          object={new BufferAttribute(samples.distance, 1)}
+        />
+        <primitive attach="attributes-aNormal" object={new BufferAttribute(samples.normals, 2)} />
         <primitive attach="attributes-aRandom" object={new BufferAttribute(samples.random, 1)} />
       </bufferGeometry>
       <shaderMaterial

@@ -175,6 +175,32 @@ Kept from the arc attempt because they stand without it: the density tripwire, w
 
 **What it looks like, which is the part that had to be judged rather than measured.** It reads as dispersion. The shape has structure, a tight strand entering at the top, a wide bloom at the row, a re-gather below, and structure is what separates motion from noise on a light ground. Two things are weaker than that. The clouds are centred on the strand columns rather than on the row, so the two middle logos have open space behind them and the row is flanked rather than surrounded. And the head's faint accent tail leaves a scatter of pink specks near the outer marks, which is the least clean element in the section. All six marks stay legible, and nothing sits on a mark closely enough to read as dirt: `build-logs/screens/itemC-dirt-check-left.png` and `itemC-dirt-check-right.png` are the close crops that judgement is made on.
 
+## 11. The spiral trail, and criterion 10 superseded
+
+Amending brief. Section 2.4's 1 to 3px perpendicular offset is the same mechanism turned down until it read as a pinstripe; this is it turned up, with rotation.
+
+Position swings on `cos(phase)` along the path normal, size and alpha on `sin(phase)`, ninety degrees apart. The separation is the whole effect: in phase, a particle is largest at its widest excursion, which reads as a flat wobble. Out of phase it is largest as it crosses the centre line, which is what a particle on a helix does. `z` is 0 by construction so there is no real depth to draw, and the swell is the entire illusion of it.
+
+Phase advances on a new `aDistance` attribute, arc length in pixels from the start of the particle's own path, rather than on `aAlong`. `aAlong` is normalised and the paths run from 1,252 to 5,236px, so one rotation per unit of `aAlong` would spin four times faster on the trunk than on a strand. Wavelength is 350px, radius 16px, and two independent hashes off `aRandom` decide phase and radius separately. The radius hash is squared so the distribution crowds toward the core: uniform radii read as a hollow tube, because the outer band has more circumference to fill and the cosine projection piles up at the extremes as well.
+
+Base point size goes from 2.0 to 3.0. **Criterion 10 of the parent brief is SUPERSEDED, not failed.** It measured the stream against the pre particle SVG hairline, and that reference no longer exists: the brief that set it asked for a stream carrying a 1px line's weight, and this one asks for a loose trail spread over a 16px radius. The two cannot both be satisfied, and the operator has chosen the trail. The measurement that replaces it is whether the trail holds presence, which is a judgement rather than a ratio.
+
+**The brief's "start static" does not work, for a structural reason rather than a tuning one.** Phase is randomised per particle across the full circumference, which is what the brief asks for and is right, because without it the trail is one thin corkscrew instead of a volume. But a randomised static helix is indistinguishable from a randomly spread tube: there is no coherent sinusoid to see and nothing is moving, so there is no rotation to read. Raising the size modulation from 0.45 to 0.8 changed the still image very little, which confirmed it. So the time term the brief offers as optional is not optional, and the trail rotates at rest at 0.785 rad/s, one turn per eight seconds. Verified as motion rather than by eye: in a 64 by 320 crop of one strand at rest, 1,786 pixels changed over two seconds against 1,253 inked at any instant, so particles are moving to substantially new positions.
+
+**What it looks like, in the brief's own terms: in a still frame I see a fuzzy line, not a spiral trail.** Individual particles are visible and their sizes clearly vary, but nothing reads as rotating around a centre, and the reason is the paragraph above. The rotation exists only as motion, so a screenshot cannot show it and neither can I judge from one whether it reads as a trail or as busy. That needs a real display.
+
+**Composition with the dispersion.** Both offsets stack on the same particles inside the client logo band, so the spiral radius drops to 30 percent where the dispersion ramp is at full, and the trail resolves into the cloud instead of adding to it. Confirmed by looking: the cloud keeps a clean lens shape.
+
+**The head did not need damping, and has it anyway.** Undamped, the accent measured 23px wide and still read as a head, unlike the dispersion, which scattered it across 300px. Damped to 25 percent it measures 11px at the same ink. Kept because it sharpens the contrast between a tight arriving head and a spread trail behind it, which is a choice rather than a fix, and it is recorded as one.
+
+**The inverse band edge is softened by one pixel.** The band test reads undisplaced Y for consistency with the reveal, per the brief, so a particle can be drawn on the far side of the edge from the ground its colour was chosen for. Measured with the sentinel injection, exactly 1 inverse coloured pixel is drawn above the edge, 4px past it, against 3,350 below. Real, and a single pixel.
+
+**Density is unchanged and was not raised.** Counts stay 10,003, 11,032 and 11,454. The trail is thinner per unit width by construction, and it does not read as sparse at 3.0px points.
+
+**The wider trail reaches four text runs it did not before**, at 19px rather than 3px of reach: a cluster index, the header's own button label, and two capability lines. All four sit behind an opaque ancestor that paints above `z-2`, so none of them is text the trail can actually be seen against. Nothing visible is newly crossed.
+
+Frame time over the standard 900 to 7000 sweep measures 22.7ms median and 29.2ms at p95, against 20.7 and 27 before this change and 23.3 earlier in the build. Within noise on a headless software renderer.
+
 ## Consequences
 
 - The Thread is the fourth WebGL use on the site. Brief 7b.2's list of three is now a list of four, and this record is the argument 7b.2 requires.

@@ -336,8 +336,15 @@ export type ThreadSamples = {
   positions: Float32Array
   /** Unit normal to the path at that point, xy per point. Idle motion runs along it. */
   normals: Float32Array
-  /** Normalised position along its own path, 0 to 1. The reveal compares against this. */
+  /** Normalised position along its own path, 0 to 1. Carried for the step 8 handoff. */
   along: Float32Array
+  /**
+   * Arc length in pixels from the start of its own path. The spiral's phase advances on
+   * this rather than on `along`, because `along` is normalised and the paths run from
+   * 1,252px to 5,236px, so one rotation per unit of `along` would be four times faster on
+   * the trunk than on a strand.
+   */
+  distance: Float32Array
   /** Which path this point belongs to, as an index into `paths`. */
   group: Float32Array
   /** Per point random, stable for a given layout. Size, alpha, and phase read it. */
@@ -426,6 +433,7 @@ export function samplePaths(
   const positions = new Float32Array(total * 3)
   const normals = new Float32Array(total * 2)
   const along = new Float32Array(total)
+  const distance = new Float32Array(total)
   const group = new Float32Array(total)
   const random = new Float32Array(total)
 
@@ -477,6 +485,7 @@ export function samplePaths(
       normals[cursor * 2] = normalX
       normals[cursor * 2 + 1] = normalY
       along[cursor] = (step + 0.5) / count
+      distance[cursor] = ((step + 0.5) / count) * length
       group[cursor] = index
       random[cursor] = next()
       cursor += 1
@@ -488,6 +497,7 @@ export function samplePaths(
     positions,
     normals,
     along,
+    distance,
     group,
     random,
     groupCount,

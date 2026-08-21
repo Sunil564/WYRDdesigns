@@ -91,7 +91,7 @@ Until it is, the Reduced tier renders no Thread at all: the SVG carrier paths ar
 
 Recorded here because the acceptance harness hid it. `check-home.mjs` asserted the Thread by reading `stroke-dashoffset` off those invisible paths, so it passed on the tier that draws nothing, and there was no Reduced tier Thread criterion at all. The Thread criteria now assert on pixels and `the Thread paints at 1440px on the reduced tier` fails, which is the correct reading and the only failure in 35.
 
-Unblocks by: step 9 of `HERO-PARTICLES-AND-THREAD.md`, which also covers the Reduced tier's own handling of the inverse band crossing on the CPU. Two behaviours built for the Full tier since have to be reproduced there and are noted now rather than rediscovered: the document Y reveal line rather than arc length progress, and the dispersion through the client logo band, both tested per particle on the CPU against the same ranges the shader reads. See ADR 0020 sections 6 and 10.
+Unblocks by: step 9 of `HERO-PARTICLES-AND-THREAD.md`, which also covers the Reduced tier's own handling of the inverse band crossing on the CPU. Two behaviours built for the Full tier since have to be reproduced there and are noted now rather than rediscovered: the document Y reveal line rather than arc length progress, the dispersion through the client logo band, and the spiral trail with its rest rotation, all tested per particle on the CPU against the same ranges and constants the shader reads. See ADR 0020 sections 6, 10 and 11.
 
 Blocks: nothing shipping. It is a tier degradation, and the tier is already the degraded one. See ADR 0020.
 

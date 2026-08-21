@@ -52,6 +52,42 @@ const HEAD_SIZE_GAIN = 1.6
  */
 const HEAD_DISPERSE_DAMP = 0.14
 
+/**
+ * The spiral trail. Amending brief, superseding section 2.4's 1 to 3px idle offset.
+ *
+ * `SPIRAL_WAVELENGTH` is the arc length of one full rotation. The brief's 300 to 400px:
+ * faster reads as noise, slower reads as a bend rather than a rotation.
+ *
+ * `SPIRAL_DEPTH` is how far size and alpha swing either side of their base value as a
+ * particle rotates. This is the term that sells the rotation, not the radius. The geometry
+ * is flat and z is 0 by construction, so there is no real depth to draw; a particle
+ * swelling and brightening as it swings toward the viewer is the whole illusion.
+ *
+ * `SPIRAL_IN_CLOUD` and `SPIRAL_HEAD_DAMP` are the two places the trail has to stand down.
+ * Inside the client logo band the dispersion is already displacing the same particles, so
+ * the trail collapses toward its core and resolves into the cloud instead of adding to it.
+ * At the head it collapses for the reason the dispersion does: a spiralled head stops
+ * reading as a head.
+ */
+const SPIRAL_WAVELENGTH = 350.0
+
+/**
+ * Radians per second the whole trail rotates at rest.
+ *
+ * The brief says to start static and add this only if it looks inert. It looks inert, and
+ * the reason is structural rather than a tuning miss: phase is randomised per particle
+ * across the full circumference, so there is no coherent sinusoid to see, and with nothing
+ * moving a randomised static helix is indistinguishable from a randomly spread tube. The
+ * cue that reads as rotation is the motion itself.
+ *
+ * One rotation per eight seconds. Slow enough that it is not a spin, fast enough that a
+ * particle visibly travels while the page is still.
+ */
+const SPIRAL_SPIN = 0.785
+const SPIRAL_DEPTH = 0.8
+const SPIRAL_IN_CLOUD = 0.3
+const SPIRAL_HEAD_DAMP = 0.25
+
 export const threadVertexShader = /* glsl */ `
 uniform float uPixelRatio;
 uniform float uSize;
@@ -100,11 +136,20 @@ uniform float uDisperseTop;
 uniform float uDisperseBottom;
 uniform vec2 uDisperseSpread;
 
+uniform float uSpiralRadius;
+uniform float uTime;
+
 attribute float aRandom;
+/** Arc length from the start of this particle's own path, in pixels. */
+attribute float aDistance;
+/** Unit normal to the path here. The spiral swings along it. */
+attribute vec2 aNormal;
 
 varying float vRandom;
 varying float vHead;
 varying float vInverse;
+/** sin(phase): where this particle is in its rotation, -1 away, +1 toward the viewer. */
+varying float vDepth;
 
 void main() {
   vRandom = aRandom;
@@ -224,7 +269,45 @@ void main() {
     let a particle that has drifted upward reveal before its neighbours, so the leading
     edge would fray and the head would smear instead of holding as a head.
   */
-  vec3 drawn = position + vec3(offset, 0.0);
+  /*
+    The spiral trail.
+
+    Position swings on cosine along the path normal, size and alpha on sine, ninety degrees
+    apart. That quarter turn of separation is the whole effect: in phase, the two produce a
+    particle that is biggest at its widest excursion, which reads as a flat wobble. Out of
+    phase, it is biggest as it crosses the centre line moving toward the viewer, which is
+    what a particle on a helix actually does.
+
+    Two independent hashes off aRandom. The phase hash spreads particles around the full
+    circumference, so the trail is a volume rather than one thin corkscrew. The radius hash
+    decides how far out each particle rides, and is squared so the distribution crowds
+    toward the core: uniform radii read as a hollow tube, because the outer band has more
+    circumference to fill and the cosine projection piles up at the extremes as well.
+  */
+  float phaseHash = fract(sin(aRandom * 78.233 + 1.3) * 43758.5453);
+  float phase =
+    (aDistance / ${SPIRAL_WAVELENGTH.toFixed(1)}) * 6.2831853 +
+    phaseHash * 6.2831853 +
+    uTime * ${SPIRAL_SPIN.toFixed(3)};
+
+  float radiusHash = fract(sin(aRandom * 45.164 + 9.7) * 24634.6345);
+  float radius = uSpiralRadius * radiusHash * radiusHash;
+
+  // Stand down inside the cloud, and at the head, for the reasons at the constants.
+  radius *= mix(1.0, ${SPIRAL_IN_CLOUD.toFixed(2)}, ramp);
+  radius *= mix(1.0, ${SPIRAL_HEAD_DAMP.toFixed(2)}, head);
+
+  float swing = cos(phase);
+  vDepth = sin(phase);
+  vec2 spiral = aNormal * swing * radius;
+
+  /*
+    Displaced for drawing only, and both offsets stack here. The reveal test, the head
+    window and the inverse band test above all read position.y untouched, and they have to:
+    feeding a displaced Y into the reveal would let a particle that has drifted upward
+    reveal before its neighbours, so the leading edge would fray and the head would smear.
+  */
+  vec3 drawn = position + vec3(offset + spiral, 0.0);
   gl_Position = projectionMatrix * modelViewMatrix * vec4(drawn, 1.0);
 
   /*
@@ -234,6 +317,8 @@ void main() {
     perspective term to apply either.
   */
   float size = uSize * uPixelRatio * (0.72 + aRandom * 0.56);
+  // Swelling toward the viewer, ninety degrees out of phase with the swing.
+  size *= 1.0 + ${SPIRAL_DEPTH.toFixed(2)} * vDepth;
   gl_PointSize = size * mix(1.0, ${HEAD_SIZE_GAIN.toFixed(2)}, head);
 }
 `
@@ -250,6 +335,7 @@ uniform float uOpacity;
 varying float vRandom;
 varying float vHead;
 varying float vInverse;
+varying float vDepth;
 
 void main() {
   float d = length(gl_PointCoord - vec2(0.5));
@@ -276,7 +362,13 @@ void main() {
   */
   float headAlpha = 0.86 + vRandom * 0.14;
 
+  /*
+    Alpha rides the same sine the size does, so a particle brightens as it swings toward
+    the viewer. Without this the trail is a spread of uniform dots and reads as a fuzzy
+    band rather than as rotation.
+  */
   float alpha = core * mix(restAlpha, headAlpha, vHead) * uOpacity;
+  alpha *= 1.0 + ${SPIRAL_DEPTH.toFixed(2)} * vDepth;
   if (alpha < 0.002) discard;
 
   /*
