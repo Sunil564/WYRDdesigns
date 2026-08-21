@@ -2,6 +2,8 @@
 
 Nothing here halts the build. Each item is a real world fact the build cannot invent, with the exact consequence of it staying unresolved.
 
+**Numbers here are permanent identifiers, never reused and never renumbered.** Code comments and ADRs cite them by number, so closing item 3 does not turn item 4 into item 3, and a resolved item keeps its number in the Resolved section below. This rule exists because it was already broken once: item 14 was the footer 404s, was resolved, and its number was immediately reused for a new item, which left `app/privacy/page.tsx` pointing at the wrong entry. Gaps in the sequence are correct.
+
 ## Open
 
 ### 1. Production domain not registered
@@ -20,13 +22,6 @@ Unblocks by: supplying an SVG, AI, EPS, or PDF of the mark, plus a variant inten
 
 Blocks: nothing. The site ships with a typographic wordmark until then. See ADR 0003.
 
-### 3. `Vaihini.png` spelling
-
-The artwork reads `Vahini PIPES`. The filename reads `Vaihini`. The site uses `Vahini Pipes`, from the artwork.
-
-Unblocks by: one word from the operator.
-
-Blocks: nothing. A wrong client name is a wrong fact, so it is tracked rather than assumed correct.
 
 ### 4. Client logo clearance
 
@@ -127,7 +122,7 @@ Unblocks by: an operator decision on upgrading Next, taken as its own piece of w
 Blocks: nothing today. `sharp` is used at build time for image optimisation and is not in the request path of any route this build ships.
 
 
-### 14. The USD budget brackets have no source
+### 15. The USD budget brackets have no source
 
 Decision needed, not a defect. Nothing about them is wrong today, and they are the only figures on `/contact` with no document behind them.
 
@@ -142,9 +137,18 @@ Blocks: nothing shipping. `scripts/check-contact.mjs` allows the current figures
 
 ## Resolved
 
-### The footer linked to two routes that did not exist
+### 3. `Vaihini.png` spelling
 
-Was item 14. `content/site.ts` gave `legalNav` a Privacy and a Terms entry, the footer rendered both on every page, and both returned 404. It was the only place on the site where a visible link was known to fail, and it surfaced while removing an expired 404 mask from `scripts/check-hero.mjs` rather than by looking at the footer.
+The artwork read `Vahini PIPES` and the supplied filename read `Vaihini`. The site used `Vahini Pipes`, taken from the artwork rather than from the filename, and tracked the discrepancy rather than assuming the choice was right.
+
+Confirmed correct by the operator. `Vahini Pipes` is the real company name, it is what `content/clients.ts` and `public/logos/manifest.json` already carry, and it is what renders. No code change was needed to close this, only the confirmation.
+
+The filename keeps its original spelling in `manifest.json` under `source`, because it is the name of a supplied file and renaming a source asset to match a decision about a different field would lose the link back to what was handed over.
+
+
+### 14. The footer linked to two routes that did not exist
+
+`content/site.ts` gave `legalNav` a Privacy and a Terms entry, the footer rendered both on every page, and both returned 404. It was the only place on the site where a visible link was known to fail, and it surfaced while removing an expired 404 mask from `scripts/check-hero.mjs` rather than by looking at the footer.
 
 Resolved by building both routes with holding text rather than by deleting the links. `/privacy` and `/terms` render through one shared `LegalPage` layout and take their prose from `content/legal/privacy.mdx` and `terms.mdx`, so supplying the real documents is a change to two `.mdx` files and one flag. Both pages say on the page that they are not the published document, state no date or period they cannot support, and give the direct address. `scripts/check-legal.mjs` follows the footer's own links and asserts all of it, 25 of 25.
 
@@ -153,7 +157,7 @@ Still open: the documents themselves. Neither can be written by this build.
 
 ### Reduced tier rendered no Thread
 
-Was item 10. Section 2.3 of the particle brief gave the Reduced tier a 2D canvas overlay and it was never built, so on that tier nothing drew the route: the WebGL scene is not mounted, the SVG carrier sat at `opacity: 0`, and there was no overlay to take its place. Because `useRenderTier` returns Reduced for any coarse pointer before any capability test, that was every phone and every tablet without reduced motion enabled.
+Deliberately unnumbered. This was item 10 while it was open, and its number was reused for the Lighthouse entry when it closed, which is the same mistake the rule at the top of this file now forbids. Rather than renumber the Lighthouse item and break the ADR that cites it, this one keeps no number and is found by its title. Section 2.3 of the particle brief gave the Reduced tier a 2D canvas overlay and it was never built, so on that tier nothing drew the route: the WebGL scene is not mounted, the SVG carrier sat at `opacity: 0`, and there was no overlay to take its place. Because `useRenderTier` returns Reduced for any coarse pointer before any capability test, that was every phone and every tablet without reduced motion enabled.
 
 Resolved by decision rather than by build. The overlay was scoped and rejected as disproportionate: it would have meant a second implementation of the reveal, the head, the inverse band switch, the dispersion, the spiral, the text dimming and the handoff, each free to drift from the shader's version with nothing comparing them, on the one tier that exists to stay light. The Reduced tier renders the SVG hairline complete instead, exactly as Static does. Measured on an emulated phone and tablet: tier `reduced`, SVG opacity 1, zero Three.js requests, no console output. See ADR 0020 section 16.
 

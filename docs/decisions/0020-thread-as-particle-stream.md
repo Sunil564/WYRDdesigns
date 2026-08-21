@@ -379,7 +379,7 @@ So the Reduced tier renders the SVG hairline, complete, exactly as the Static ti
 
 One thing fixed in passing that was pure waste. `streaming` included the Reduced tier, so the sampler ran its eleven thousand `getPointAtLength` calls there and published the result to a renderer that was never mounted. Full tier only now. `REDUCED_DENSITY` went with it, a constant that existed solely for the overlay.
 
-BLOCKERS item 10 is closed as resolved by decision rather than by build.
+The Reduced tier Thread entry in `docs/BLOCKERS.md` is closed as resolved by decision rather than by build. Cited by title rather than by number: it was item 10 when this was written, and that number now belongs to the Lighthouse entry.
 
 ## 17. The harness no longer forces a tier
 
