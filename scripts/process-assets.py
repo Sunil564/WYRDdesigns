@@ -215,16 +215,18 @@ def process_brand():
     # mask-image, and a CSS mask reads the alpha channel, which this file already carries.
     # One request, already in cache by the time the sheen paints.
 
-    # OG mark. Transparent is wrong for OG, so it sits on the canvas colour.
-    og = Image.new("RGBA", (1200, 400), CANVAS)
+    # OG card. 1200 by 630, which is the 1.91:1 every card reader crops to. This was
+    # 1200 by 400 and unreferenced by anything: at 3:1 it letterboxes badly in a feed.
+    # Transparent is wrong for OG, so the mark sits on the canvas colour it was drawn for.
+    og = Image.new("RGBA", (1200, 630), CANVAS)
     m = im.copy()
-    m.thumbnail((900, 280), Image.LANCZOS)
-    og.paste(m, ((1200 - m.width) // 2, (400 - m.height) // 2), m)
-    og.convert("RGB").save(os.path.join(BRAND_OUT, "wyrd-og-mark.png"), "PNG", optimize=True)
-    print("brand wyrd-og-mark      1200x400")
+    m.thumbnail((820, 390), Image.LANCZOS)
+    og.paste(m, ((1200 - m.width) // 2, (630 - m.height) // 2), m)
+    og.convert("RGB").save(os.path.join(BRAND_OUT, "wyrd-og.png"), "PNG", optimize=True)
+    print("brand wyrd-og           1200x630")
 
     # Icon set. Unmodified mark, contained on the light ground it was drawn for.
-    for size in (16, 32, 180, 512):
+    for size in (16, 32, 180, 192, 512):
         icon = Image.new("RGBA", (size, size), CANVAS)
         pad = max(1, int(round(size * 0.12)))
         m = im.copy()

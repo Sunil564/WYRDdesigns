@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { SceneLayer } from '@/components/motion/SceneLayer'
 import { Thread } from '@/components/motion/Thread'
 import { Capabilities } from '@/components/sections/Capabilities'
@@ -8,6 +9,15 @@ import { Positioning } from '@/components/sections/Positioning'
 import { Process } from '@/components/sections/Process'
 import { SelectedWork } from '@/components/sections/SelectedWork'
 import { StudioStrip } from '@/components/sections/StudioStrip'
+
+/*
+  The homepage declared no canonical while every other route did, so any query string on it,
+  a campaign parameter or a share tag, was a separate URL to a crawler. Title and description
+  are inherited from the root: this is the page the defaults were written for.
+*/
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+}
 
 /**
  * The homepage. Nine sections, in the brief's order, and the Thread running through
