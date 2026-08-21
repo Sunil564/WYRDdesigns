@@ -14,22 +14,31 @@ Unblocks by: registering the domain and setting `NEXT_PUBLIC_SITE_URL` in the Ve
 
 Blocks: Phase 7 deploy to a production domain. Nothing earlier.
 
-### 2. No vector or light variant of the WYRD mark
+### 2. No vector mark, no dark variant, no square glyph
 
-The supplied mark is a black on transparent PNG. It is invisible on `--color-bg`, and it is not this build's place to recolour a brand mark. The header and footer therefore set the wordmark in Satoshi as an interim treatment, tagged `data-placeholder`.
+**Partially resolved.** The supplied raster is now in use on every light ground: the header, the favicon set at 16, 32, 180 and 512, and the OG mark. It had been sitting unused in `public/brand/` since Phase 0 because ADR 0003 shelved it for a dark canvas that Phase 4b replaced. See ADR 0023.
 
-Unblocks by: supplying an SVG, AI, EPS, or PDF of the mark, plus a variant intended for dark backgrounds. Ideally also a square single glyph mark for a 16px favicon.
+Three things are still missing, and they are separate asks:
 
-Blocks: nothing. The site ships with a typographic wordmark until then. See ADR 0003.
+- **A vector.** Every size shipped is a resample of a 2101px raster. Adequate for a 40px header at 3x, not adequate for anything larger, and the footer's closing treatment renders around 665px tall at 2560px, which no crop of this file can serve.
+- **A variant drawn for a dark background.** Measured against `--color-bg-inverse`, the artwork's darkest ink is 1.06:1 and the Y's gradient reaches about 1.4:1. Rendered and looked at, it is a ghost with `Designs` gone entirely. Section 0.3 forbids recolouring a supplied mark, so the header's `inverse` branch and the footer both keep the typographic fallback until a real variant exists.
+- **A square single glyph.** The lockup is 2.124 aspect. Letterboxed into a favicon it leaves the mark small: legible as a shape at 32px, rough at 16px.
+
+Unblocks by: supplying an SVG, AI, EPS or PDF of the mark, a variant for dark grounds, and ideally a square glyph. Any one of the three is independently useful.
+
+Blocks: nothing. The site ships the raster on light grounds and type on dark ones.
 
 
 ### 4. Client logo clearance
 
-`docs/brand.md` says named case studies are pending clearance and that the site uses capability proof, not logos. Six client logos were supplied in the source folder anyway, and the brief specifies a logo section. The logos render. See ADR 0002 section 6.
+**Not affected by the WYRD mark being supplied, and still open.** This item is about the six *client* marks, Bhavani Sarees, G Monisa, Maharaja, SITEO, Seervi Business Expo and Vahini Pipes, not about WYRD's own. `docs/brand.md` says named case studies are pending clearance and that the site uses capability proof rather than logos. Six client logos were supplied anyway and the brief specifies a logo section, so they render. See ADR 0002 section 6.
 
-Unblocks by: confirming the six logos are cleared for display. If not, deleting the entries in `content/clients.ts` removes the section.
+What is still needed is one sentence from the operator confirming the six are cleared for display. Nothing about the WYRD mark answers it.
 
-Blocks: nothing.
+Unblocks by: that confirmation. If clearance has not been given, deleting the entries in `content/clients.ts` removes the section, and the row disappears on its own at zero.
+
+Blocks: nothing shipping, but it is the only place on the site that publishes another company's property.
+
 
 ### 5. No real project data
 

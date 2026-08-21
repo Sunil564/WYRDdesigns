@@ -12,7 +12,8 @@ Kept current at the end of every phase. Updated through Phase 4.
 
 | Where | Path | What is there now | What replaces it |
 |---|---|---|---|
-| Header mark | `components/layout/Header.tsx` | `WYRD` set in Satoshi, letterspaced, paper with `Designs` in muted | The real mark, once a vector and a dark background variant exist. The supplied PNG is black on transparent and invisible on `--color-bg`. See ADR 0003 and BLOCKERS item 2. |
+| Header mark | `components/layout/Wordmark.tsx` | **No longer a placeholder.** The supplied mark renders, 32px tall on mobile and 40px from `sm` up, WebP with a PNG fallback at 3x. See ADR 0023 | A vector, so sizes above the header stop being resamples of a 2101px raster |
+| Wordmark on dark grounds | `components/layout/Wordmark.tsx` | `WYRD` set in Satoshi with `Designs` in muted inverse. The supplied artwork measures 1.06:1 on `--color-bg-inverse` and section 0.3 forbids recolouring it | A mark drawn for a dark background. See BLOCKERS item 2 |
 | Footer wordmark | `components/layout/Footer.tsx` | Same treatment at display scale | Same |
 | Favicon 16 and 32 | `public/brand/icon-16.png`, `icon-32.png` | The supplied wordmark contained on white, regenerated for the light canvas in Phase 4b. Legible as a shape, not as letters, at 16px | A square single glyph mark |
 

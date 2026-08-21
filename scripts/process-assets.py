@@ -176,9 +176,18 @@ def process_brand():
     im = trim(Image.open(BRAND_SRC).convert("RGBA"))
     print("brand supplied trimmed to %dx%d" % im.size)
 
-    # Header mark and footer wordmark, 3x the largest rendered size.
-    # Header renders at 24px tall, footer wordmark at 64px tall.
-    for label, render_h in (("header", 24), ("footer", 64)):
+    # 3x the largest rendered size, per section 0.3.
+    #
+    # The header renders the mark at 40px tall on desktop and 32px on mobile, so 120px is 3x
+    # the largest. 40 was chosen by looking: at 32px the word "Designs" inside the lockup is
+    # cramped, at 40px it reads, and the mark is 85px wide there, which sits inside an 80px
+    # header bar with room either side.
+    #
+    # "footer" is exported and deliberately unused. The footer's closing mark is a 26vw
+    # typographic treatment in the inverse hairline colour, which this artwork cannot replace:
+    # it is black on a near black ground at about 1.06:1, and at 26vw a 2560px viewport would
+    # need roughly 7700px of raster for 3x from a 2101px source. See ADR 0023.
+    for label, render_h in (("header", 40), ("footer", 64)):
         h = render_h * 3
         w = int(round(im.width * (h / im.height)))
         v = im.resize((w, h), Image.LANCZOS)
