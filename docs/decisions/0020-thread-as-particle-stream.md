@@ -145,6 +145,30 @@ One thing the brief expects that does not visibly happen: the head does not chan
 
 No blend mode on the canvas. The footer needs nothing: the route terminates at the contact button, inside the band's upper half.
 
+## 10. The client logo loop, and why it only works at one width
+
+Built as two arcs enclosing the client logo set, per item C of the amending brief, with one clause of C.2 not implemented and one C.3 concern to answer.
+
+**Not implemented: the single split point.** C.2 asks for a split point above the logo set and a rejoin below, both on the section's centre line, so the two arcs sweep down and meet. The route does not arrive here as one line. It arrives as four strands in two columns, at x 372 and 1068 at 1440, and both columns run inside the logo box horizontally, so today they pass behind the marks. There is nothing to split. So each column bows outward around the set and rejoins itself below. That keeps the arcs attached to the route at both ends, and it conserves weight without a density change because no path is added, which is the outcome C.2's density clause asks for by another route.
+
+**Three of item C's premises do not hold**, all measured rather than assumed. There is no marquee: six logos against a threshold of eight, so the section renders one static centred row, which `check-home` already asserts. There is no edge mask on it, so nothing can be cut off mid stroke. And the row is one row, not two moving in opposite directions.
+
+**The logo set is 751 by 40 at every width**, because the row's width is intrinsic to the six marks rather than a fraction of the layout. The strand columns move outward with the viewport and the logo box does not, so the bow each arc has to make shrinks as the viewport grows:
+
+| width | marks box | strand columns | bow needed | reads as |
+|---|---|---|---|---|
+| 1024 | 137 to 888 | 268, 756 | 191px | one wide ellipse around the set |
+| 1440 | 345 to 1096 | 372, 1068 | 87px | two brackets beside the set |
+| 1920 | 585 to 1336 | 612, 1308 | 87px | two brackets beside the set |
+
+**So the C.3 answer is: it works at 1024 and it does not work at 1440 or 1920.** At 1024 the two lobes are wide enough that they and the row read as a single enclosure. At 1440 and above each lobe is 87px wide and 152px tall, so it is taller than it is wide, and with 700px of open space and four unenclosed logos between them the two read as ornaments beside a logo row rather than as the thread doing something. That is not a tuning problem, it is the aspect ratio: an arc that encloses a 751 by 40 box from a start point only 27px inside its edge cannot be wider than it is tall.
+
+Clearance is measured from the marks box and not from the host, which is a flex row spanning the content column: measuring the host put the arcs at x -12, off the left edge at two of three widths. Closest approach of any arc to a mark, at mark height, is 52px at 1024 and 56px at 1440 and 1920. No horizontal overflow at any width.
+
+The loop is not inside an inverse band at any width, so the standard rest colour applies and step 6's band test does not touch it.
+
+Point counts after the added arc length: 10,487, 11,209 and 11,632, all inside the brief's band. The first attempt at this ran to 12,132 and 12,554 and the density tripwire from section 5 caught it, which is the first time that guard has earned its place.
+
 ## Consequences
 
 - The Thread is the fourth WebGL use on the site. Brief 7b.2's list of three is now a list of four, and this record is the argument 7b.2 requires.

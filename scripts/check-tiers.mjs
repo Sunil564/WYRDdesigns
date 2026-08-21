@@ -12,6 +12,7 @@
 
 import { chromium } from 'playwright'
 import { assertBuildFresh } from './build-fresh.mjs'
+import { canvasDetail, drawsAField, read2dCanvas } from './canvas-pixels.mjs'
 
 const BASE = process.env.SHOOT_BASE ?? 'http://localhost:3000'
 
@@ -213,10 +214,17 @@ record(
     if (webgl) return 'webgl'
     return 'none'
   })
+  /*
+    "Not a black rectangle" is a claim about pixels, and this used to read data-tier and
+    an element's existence, so a canvas filled solid black passed it. The fallback canvas
+    is asked what it drew: a field paints a little alpha and almost no opaque pixels, a
+    filled rectangle paints opaque everywhere.
+  */
+  const fallbackInk = await read2dCanvas(page, '[data-field="2d"]')
   record(
     'context loss falls back to the reduced tier, not a black rectangle',
-    afterLoss === 'reduced' && canvasAfterLoss === '2d',
-    `data-tier=${afterLoss} canvas=${canvasAfterLoss}`,
+    afterLoss === 'reduced' && canvasAfterLoss === '2d' && drawsAField(fallbackInk),
+    `data-tier=${afterLoss} canvas=${canvasAfterLoss}, ${canvasDetail(fallbackInk)}`,
   )
 
   // Ten mount and unmount cycles, watching live WebGL contexts and JS heap.

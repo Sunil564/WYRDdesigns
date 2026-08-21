@@ -91,6 +91,15 @@ diffing two screenshots taken milliseconds apart charges every other animation o
 page to the thing you hid: that method reported 789 Thread pixels on a tier that draws no
 Thread. Compare space, not time.
 
+To verify a colour switch between two visually similar values, inject a sentinel colour
+into the token before the page's scripts read it, then measure for that colour. Two greys
+cannot be distinguished at pixel level. Green against grey can. Used in step 6 to prove
+the inverse band switch.
+
+A 2D canvas can be asked what it drew. `getImageData` on its own context returns the
+renderer's pixels with no text, grain, or neighbouring element in them, and alpha
+separates "mounted and drawing nothing" from "filled solid" from "a sparse field".
+
 ## Commits
 
 Conventional commits. One commit per meaningful unit, not one per phase. Commit before starting risky work so there is an undo point.

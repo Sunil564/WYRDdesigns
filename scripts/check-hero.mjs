@@ -12,6 +12,7 @@
 
 import { chromium } from 'playwright'
 import { assertBuildFresh } from './build-fresh.mjs'
+import { canvasDetail, drawsAField, read2dCanvas } from './canvas-pixels.mjs'
 
 const BASE = process.env.SHOOT_BASE ?? 'http://localhost:3000'
 
@@ -247,10 +248,15 @@ async function open(tier, viewport, options = {}) {
     two: Boolean(document.querySelector('[data-field="2d"]')),
     webgl: Boolean(document.querySelector('[data-field="webgl"]')),
   }))
+  /*
+    Pixels, not element presence. This said "renders" and checked that a canvas existed,
+    which a canvas drawing nothing also satisfies. The canvas is asked what it drew.
+  */
+  const twoInk = await read2dCanvas(page, '[data-field="2d"]')
   record(
     'the reduced tier renders the 2D canvas fallback',
-    kind.two && !kind.webgl,
-    JSON.stringify(kind),
+    kind.two && !kind.webgl && drawsAField(twoInk),
+    `${JSON.stringify(kind)}, ${canvasDetail(twoInk)}`,
   )
   record(
     'no unexpected console errors on the reduced tier',

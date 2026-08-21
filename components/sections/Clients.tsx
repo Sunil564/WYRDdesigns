@@ -29,7 +29,7 @@ export function Clients() {
       </Reveal>
 
       {useMarquee ? (
-        <div className="mt-16" data-thread-node>
+        <div className="mt-16" data-thread-node data-thread-loop>
           <Marquee items={clients} />
         </div>
       ) : (
@@ -37,6 +37,7 @@ export function Clients() {
           <ul
             className="mt-16 flex flex-wrap items-center justify-center gap-x-16 gap-y-12"
             data-thread-node
+            data-thread-loop
           >
             {clients.map((client) => (
               <li
