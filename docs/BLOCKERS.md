@@ -147,6 +147,20 @@ Two ways to resolve, both the operator's:
 
 Blocks: nothing shipping. `scripts/check-contact.mjs` allows the current figures explicitly in its digit allowlist, so changing them fails that criterion until the allowlist is updated too, which is the intended coupling.
 
+### 16. The Full tier page transition is the plain one
+
+Decision needed, not a defect. Section 7b.2C specifies a WebGL dissolve for the Full tier: the outgoing page rendered to a render target and dissolved through a noise threshold. What ships is an opacity transition, the same on every tier.
+
+It is not built because it needs the outgoing page as a texture, and browsers do not expose a way to rasterise a live DOM tree into a WebGL render target. A DOM to canvas library would be a large new runtime dependency of the kind `CLAUDE.md` exists to prevent, and an SVG `foreignObject` snapshot taints the canvas and drops external resources, so the fonts and the client logos would be missing from the snapshot the effect is made of.
+
+The View Transitions API does natively what 7b.2C describes, including animating through a mask, and is the right modern answer to that specification. It is Chromium only for now and sits behind `experimental.viewTransition` in Next 15.
+
+The Reduced tier's specified 24px Y offset is also not implemented, and cannot be while the WebGL canvas lives inside the routed tree: a transform on the transition wrapper would re-anchor that `fixed` canvas and drag the hero field and the Thread on every navigation to the homepage.
+
+Unblocks by: a decision on View Transitions, taken deliberately with the plain crossfade as the fallback. ADR 0022 has the full reasoning.
+
+Blocks: nothing. The transition that ships works on every tier and is asserted by `scripts/check-transitions.mjs`.
+
 ## Resolved
 
 ### 3. `Vaihini.png` spelling
