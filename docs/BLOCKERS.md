@@ -116,15 +116,22 @@ Unblocks by: looking at both on a physical screen at full brightness. If the fie
 
 Blocks: nothing. See ADR 0020 sections 11 and 14.
 
-### 13. A high severity advisory in a transitive dependency
+### 13. Advisories whose only fix is a Next major
 
-`npm audit` reports three high severity findings, all the same one: `sharp` below 0.35.0 inherits libvips vulnerabilities CVE-2026-33327, CVE-2026-33328, CVE-2026-35590 and CVE-2026-35591. `sharp` arrives through `next`, not through anything this build chose, and it was already present before Phase 5. It surfaced here because installing Resend ran the audit.
+Assessed in full in ADR 0021, not upgraded. `next` stays at 15.5.23.
 
-`npm audit fix --force` resolves it by installing `next@16.3.1`, which is a major version bump across the whole application and not a decision to take inside a route commit.
+Two chains reach `next`, and neither is exploitable in this deployment:
 
-Unblocks by: an operator decision on upgrading Next, taken as its own piece of work with the full harness run afterwards.
+- **`sharp@0.34.5`**, four inherited libvips CVEs. The advisory carries no CVSS vector, which is worth knowing before reading "high". sharp backs the `/_next/image` endpoint, which is request time rather than build time and is live: measured, it returns 200 on a local asset and 400 on both a remote URL and a path traversal. Nothing here uses `next/image`, and with no `images.remotePatterns` configured the optimizer will decode only files we committed. The CVEs need malformed image data and nobody can supply any.
+- **`postcss`**, four advisories needing attacker controlled CSS. Two versions are in the tree and the one that processes our stylesheet, `postcss@8.5.26` under `@tailwindcss/postcss`, is above every affected range. Next's bundled 8.4.31 is the vulnerable one. There is no path by which a stranger supplies CSS to this build.
 
-Blocks: nothing today. `sharp` is used at build time for image optimisation and is not in the request path of any route this build ships.
+**What would change the sharp conclusion:** adding `images.remotePatterns` to `next.config.ts`. That single line turns a closed input into an open one.
+
+Also recorded here because it was introduced by this build rather than inherited: installing `lighthouse` as a devDependency brought `extract-zip` at high severity via `@puppeteer/browsers`, and fifteen moderate `@opentelemetry` advisories via `@sentry/node`. Development only, none ships. That is the cost of the Lighthouse harness.
+
+Unblocks by: an operator decision to upgrade, taken as its own piece of work. ADR 0021 recommends a deployed preview first, so Performance and real device behaviour become measurable, because the upgrade swaps webpack for Turbopack and Performance is precisely what the suite cannot verify. That ordering also closes items 10 and 11.
+
+Blocks: nothing. Neither advisory is reachable with attacker controlled input.
 
 
 ### 15. The USD budget brackets have no source
