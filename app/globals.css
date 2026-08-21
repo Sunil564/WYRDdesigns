@@ -234,6 +234,38 @@
   }
 
   /*
+    A headline that will be split, whether or not it ever is.
+
+    SplitText wraps every character in an `inline-block` span, and an inline-block
+    boundary ends the shaping run, so kerning pairs do not apply across it. The
+    headline therefore rendered unkerned while split and kerned again on revert, and
+    the line reflowed under the reader. Measured at 1440px: the `W` held at x=164
+    while the `e` of `We` jumped 6.41px left the frame the split reverted, on both
+    lines, with the last character of line one moving 9.98px.
+
+    Turning kerning off permanently makes the two states metrically identical. Same
+    measurement after: the `e` moves 0.02px and the last character 0.23px, which is
+    inline-block subpixel rounding rather than reflow.
+
+    It is on the element rather than on `h1` globally because only this headline is
+    ever split, and it applies to every visitor rather than only the ones who see the
+    animation. Reduced motion, late hydration and no JavaScript all render the same
+    headline as the animated path, which the alternative fix could not offer: leaving
+    the split in place permanently would have kerned the headline for reduced-motion
+    visitors and unkerned it for everyone else.
+
+    Ligatures go with it. The current copy has no `fi` or `fl` pair, so this changes
+    nothing today, and it stops a future copy edit reintroducing the same class of
+    shift by a different route.
+
+    Tracking is compensated below. See --text-mega--letter-spacing for the base.
+  */
+  .split-headline {
+    font-kerning: none;
+    font-variant-ligatures: none;
+  }
+
+  /*
     SplitText line and character wrappers. The line mask is what makes characters
     rise out of a hard edge rather than fade up out of nothing.
   */
@@ -479,6 +511,27 @@
 @media (prefers-reduced-motion: reduce) {
   .wordmark-sheen {
     display: none;
+  }
+}
+
+/*
+  Tracking compensation for the unkerned headline. See .split-headline in the base layer
+  for why kerning is off at all.
+
+  Unkerned, the two lines measure 9.76px and 10.17px wider, which is 0.95 and 1.40 percent.
+  This recovers the width, not the look: almost all of the extra is the single `We` pair, and
+  tracking cannot be pair-specific, so it takes 0.004em off every gap to offset one. It is
+  worth doing because the width is what decides where the headline wraps, and an extra 10px
+  can move a word to the next line at some viewport. The `We` gap itself remains, and that is
+  the accepted cost of the two states being metrically identical.
+
+  In the utilities layer rather than base because `text-mega` also sets `letter-spacing`, and
+  a base rule loses to a utility on layer order however specific it is. This was written in
+  base first and measured as having no effect at all.
+*/
+@layer utilities {
+  .split-headline {
+    letter-spacing: calc(var(--text-mega--letter-spacing) - 0.004em);
   }
 }
 

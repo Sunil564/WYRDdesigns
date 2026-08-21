@@ -37,6 +37,11 @@ type SplitHeadlineProps = {
  *    fallback metrics and then having the real face load is how a split headline
  *    causes layout shift.
  *
+ * The host carries `split-headline`, which turns kerning off permanently so the split and
+ * unsplit states are metrically identical. Without it the headline reflowed the frame the
+ * split reverted: an inline-block boundary ends the shaping run, so kerning pairs stop
+ * applying, and `We` rendered 6.41px wider while animating. See the rule in globals.css.
+ *
  * Under reduced motion nothing is split and nothing moves.
  */
 const ENTRANCE_WINDOW = 2000
@@ -151,7 +156,7 @@ export function SplitHeadline({
   }, [delay, onReveal, reduced])
 
   return (
-    <h1 ref={hostRef} className={cn(className)}>
+    <h1 ref={hostRef} className={cn('split-headline', className)}>
       {lines.map((line) => (
         <span key={line} data-headline-line className={cn('block', lineClassName)}>
           {line}
