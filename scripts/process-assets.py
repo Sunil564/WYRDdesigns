@@ -184,11 +184,7 @@ def process_brand():
     # cramped, at 40px it reads, and the mark is 85px wide there, which sits inside an 80px
     # header bar with room either side.
     #
-    # "footer" is exported and deliberately unused. The footer's closing mark is a 26vw
-    # typographic treatment in the inverse hairline colour, which this artwork cannot replace:
-    # it is black on a near black ground at about 1.06:1, and at 26vw a 2560px viewport would
-    # need roughly 7700px of raster for 3x from a 2101px source. See ADR 0023.
-    for label, render_h in (("header", 40), ("footer", 64)):
+    for label, render_h in (("header", 40),):
         h = render_h * 3
         w = int(round(im.width * (h / im.height)))
         v = im.resize((w, h), Image.LANCZOS)
@@ -208,6 +204,16 @@ def process_brand():
     v.save(os.path.join(BRAND_OUT, "wyrd-inverse.webp"), "WEBP", lossless=True, quality=100)
     v.save(os.path.join(BRAND_OUT, "wyrd-inverse.png"), "PNG", optimize=True)
     print("brand wyrd-inverse      %4dx%-4d" % (w, h))
+
+    # The footer's closing watermark, at the source's own resolution so it is only ever
+    # downscaled. This one is large on the page, so unlike every other export it is not cut
+    # to 3x of a known render size: 2101px is simply all there is. See ADR 0026.
+    white.save(os.path.join(BRAND_OUT, "wyrd-watermark.webp"), "WEBP", lossless=True, quality=100)
+    print("brand wyrd-watermark    %4dx%-4d" % white.size)
+
+    # No separate mask file. The sheen that sweeps across this mark is clipped with
+    # mask-image, and a CSS mask reads the alpha channel, which this file already carries.
+    # One request, already in cache by the time the sheen paints.
 
     # OG mark. Transparent is wrong for OG, so it sits on the canvas colour.
     og = Image.new("RGBA", (1200, 400), CANVAS)

@@ -27,7 +27,7 @@ It is used unmodified. Not redrawn, not recoloured, not restretched, per section
 | Header | `--color-bg-raised` | The mark, 32px tall on mobile and 40px from `sm` up |
 | Favicon set, 16 / 32 / 180 / 512 | white | The mark, contained, generated since Phase 0 |
 | OG mark, 1200 by 400 | white | The mark, contained, generated since Phase 0 |
-| Footer closing treatment | `--color-bg-inverse` | Unchanged. Still type. See below |
+| Footer closing treatment | `--color-bg-inverse` | Was type. Now the white artwork, see ADR 0026 |
 
 Exported at 3x the largest render by `scripts/process-assets.py`: `wyrd-header.webp` and `.png` at 255 by 120, which is 3x of 40. WebP with a PNG fallback through `<picture>`, intrinsic width and height on the `img` so the box is reserved before the file loads and the header cannot shift.
 
@@ -48,7 +48,7 @@ Measured, ink against ground, WCAG contrast:
 
 Rendered and looked at, at `build-logs/screens/logo-on-both-grounds.png`: on the inverse ground the mark is a ghost. The gradient Y is faintly visible because it is not quite black, and `Designs` disappears entirely. That is not a contrast problem to tune. Section 0.3 forbids recolouring a supplied mark, so the options were type or nothing, and the operator is told rather than shown a silently inverted logo.
 
-The footer's closing treatment is additionally impossible for a second, independent reason. It is `clamp(6rem, 26vw, 26rem)` type in the inverse hairline colour, so at a 2560px viewport it renders around 665px tall and full bleed wide. Three times that from a 2101px source is not available, and it would be black on near black even if it were. The `wyrd-footer` export stays in the pipeline, unused, rather than being deleted, because the day a dark variant arrives it is the asset that surface needs.
+The footer's closing treatment is additionally impossible for a second, independent reason. It is `clamp(6rem, 26vw, 26rem)` type in the inverse hairline colour, and it would be black on near black whatever its size. **The size claim originally made here was wrong and ADR 0026 corrects it:** this stated the treatment renders around 665px tall at 2560px, which ignores the clamp ceiling. 26rem caps it at 416px. A figure that was never rendered was used to rule the artwork out, and it stood through two ADRs. The `wyrd-footer` export was kept in the pipeline against the day a dark variant arrived. It arrived, and that surface took the white artwork at a different size, so the export was deleted in ADR 0026 having never rendered once.
 
 `Wordmark`'s `inverse` branch keeps the typographic fallback and keeps its `data-placeholder` tag. The `light` branch no longer carries one, because it is no longer standing in for anything.
 

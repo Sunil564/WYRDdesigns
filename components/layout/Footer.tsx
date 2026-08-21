@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Container } from '@/components/layout/Container'
 import { Wordmark } from '@/components/layout/Wordmark'
+import { WordmarkClose } from '@/components/layout/WordmarkClose'
 import { legalNav, nav, site, socials } from '@/content/site'
 
 /**
@@ -111,14 +112,8 @@ export function Footer() {
         </div>
       </Container>
 
-      {/*
-        The closing wordmark. Set at viewport width and clipped by the page edge.
-        Decorative, so it is hidden from assistive technology: the name is already
-        in the footer copy above and in the header.
-      */}
-      <div aria-hidden="true" className="pointer-events-none select-none">
-        <p className="wordmark-close">WYRD</p>
-      </div>
+      {/* The closing mark, clipped by the page edge. See WordmarkClose. */}
+      <WordmarkClose />
     </footer>
   )
 }

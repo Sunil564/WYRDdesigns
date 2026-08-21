@@ -366,16 +366,120 @@
   mix-blend-mode: screen;
 }
 
+/*
+  The footer's closing mark: the supplied white artwork at a hairline value, with a highlight
+  that sweeps across it and stops.
+
+  This was the word set in Satoshi at clamp(6rem, 26vw, 26rem) until the white variant was
+  supplied. The artwork is not recoloured to reach the hairline value, it is the unmodified
+  file at 9 percent opacity, which over --color-bg-inverse resolves to within a level or two
+  of --color-border-inverse, the colour the type used.
+
+  Sized by width rather than height, because a 2.124 aspect lockup and a single line of caps
+  do not share a sensible height. Capped at 72rem so the 2101px source is only ever scaled
+  down. See ADR 0026 for what that costs against the 3x rule in section 0.3.
+*/
 @utility wordmark-close {
-  font-size: clamp(6rem, 26vw, 26rem);
-  line-height: 1;
-  font-weight: 900;
-  letter-spacing: -0.04em;
-  /* The footer is an inverse block, so the closing mark is a hairline value on it. */
-  color: var(--color-border-inverse);
-  margin-bottom: -0.18em;
-  text-align: center;
+  position: relative;
+  width: min(88vw, 72rem);
+  margin-inline: auto;
+  /*
+    Whole, not bled off the page edge like the type it replaced. That clip worked on a single
+    line of caps and does not work here: `Designs` sits inside the lockup, the artwork has no
+    clean row to cut at, and any bleed deep enough to read as deliberate takes half a word
+    with it. Measured: the ink is one continuous band from row 0 to row 988 of 989.
+  */
+  margin-bottom: 0;
+  aspect-ratio: 2101 / 989;
+  /* Contains the sheen, which is narrower than the mark and travels past both edges. */
+  overflow: hidden;
+  /*
+    The mask sits here, on the element that never moves, rather than on the sheen. The sheen
+    is animated with a transform, and a mask on a transformed element travels with it: the
+    first version of this animated mask-position to compensate and measured a peak of 39 out
+    of 255 against a 32 baseline, which is to say it painted almost nothing. Static mask,
+    moving child, and the transform stays on the compositor.
+
+    The artwork's own alpha is the mask, so this is the same file the img below already
+    loaded and costs no second request.
+  */
+  -webkit-mask-image: url('/brand/wyrd-watermark.webp');
+  mask-image: url('/brand/wyrd-watermark.webp');
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.wordmark-close img {
   width: 100%;
+  height: 100%;
+  /*
+    9 percent of white on #0A0A0C lands on #232325, against the #24242A the typographic
+    version used. Measured, not guessed.
+  */
+  opacity: 0.09;
+}
+
+/*
+  The sheen. A narrow bright band on a slower, wider glow, sweeping left to right and then
+  holding off screen for most of the cycle so it reads as an occasional catch of light rather
+  than a loop. Clipped to the mark by the parent's mask, so it cannot escape the silhouette.
+*/
+.wordmark-sheen {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 30%;
+  /*
+    Zero alpha white at both ends rather than `transparent`. `transparent` is
+    premultiplied black, so a gradient running to it darkens as it fades and leaves a visible
+    step where the band begins. Measured as a hard diagonal edge across the mark before this
+    changed. Every stop is the same hue, only the alpha moves.
+  */
+  background: linear-gradient(
+    104deg,
+    rgb(255 255 255 / 0) 0%,
+    rgb(255 255 255 / 0.03) 22%,
+    rgb(255 255 255 / 0.13) 38%,
+    rgb(255 255 255 / 0.5) 50%,
+    rgb(255 255 255 / 0.13) 62%,
+    rgb(255 255 255 / 0.03) 78%,
+    rgb(255 255 255 / 0) 100%
+  );
+  transform: translate3d(-150%, 0, 0);
+  animation: wordmark-sheen 9s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  will-change: transform;
+}
+
+.wordmark-close[data-sheen='paused'] .wordmark-sheen {
+  animation-play-state: paused;
+}
+
+/*
+  The band is 30 percent of the mark, so clearing the far edge takes 100/30 of its own width
+  plus the 150 it starts back by. It then holds there for the rest of the cycle.
+*/
+@keyframes wordmark-sheen {
+  0% {
+    transform: translate3d(-150%, 0, 0);
+  }
+  40% {
+    transform: translate3d(483%, 0, 0);
+  }
+  100% {
+    transform: translate3d(483%, 0, 0);
+  }
+}
+
+/*
+  Reduced motion gets the mark and no sweep. Not a dimmed version and not a still frame of
+  the highlight: the highlight is the motion, so without motion there is simply the mark.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .wordmark-sheen {
+    display: none;
+  }
 }
 
 /*

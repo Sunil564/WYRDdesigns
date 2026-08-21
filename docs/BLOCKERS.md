@@ -22,7 +22,7 @@ The supplied black raster remains in use on every light ground: the header, the 
 
 Two things are still missing, and they are separate asks:
 
-- **A vector.** Every size shipped is a resample of a 2101px raster, now two of them. Adequate for a 40px mark at 3x, not adequate for anything larger, and the footer's closing watermark renders around 665px tall at 2560px, which no crop of either file can serve. That watermark stays typographic for this reason and because it is decorative and `aria-hidden`.
+- **A vector.** Every size shipped is a resample of a 2101px raster, now two of them. Adequate for a 40px mark at 3x. The binding case is the footer's closing mark, which renders 1152 by 542 at 1440px: a 1.82x downscale, the largest render on the site, and the one surface a vector would visibly improve. It is not a defect at that size, it is simply the ceiling. See ADR 0026.
 - **A square single glyph.** The lockup is 2.124 aspect. Letterboxed into a favicon it leaves the mark small: legible as a shape at 32px, rough at 16px.
 
 Unblocks by: supplying an SVG, AI, EPS or PDF of the mark, and ideally a square glyph. Either is independently useful.

@@ -37,7 +37,7 @@ Derived variants, written by `scripts/process-assets.py`, all from the unmodifie
 | `public/brand/wyrd-logo-white-supplied.png` | 2500 x 1152 | The white variant, supplied 2026-08-21, committed verbatim. Trims to the same 2101 x 989 as the black one |
 | `docs/logo-colour-reference.png` | 560 x 308 | Colour reference, supplied 2026-08-21. Not an asset: it is a crop with a baked white background. The accent blues are sampled from it, see ADR 0025 |
 | `public/brand/wyrd-header.webp` and `.png` | 153 x 72 | Header mark at 3x its 24px render height |
-| `public/brand/wyrd-footer.webp` and `.png` | 408 x 192 | Footer wordmark at 3x its 64px render height |
+| `public/brand/wyrd-watermark.webp` | 2101 x 989 | The white artwork at source resolution, for the footer's closing mark. Its alpha also serves as the mask for the sheen, so there is no separate mask file |
 | `public/brand/wyrd-og-mark.png` | 1200 x 400 | Mark on brand paper for OG composition |
 | `public/brand/icon-16.png`, `icon-32.png`, `icon-180.png`, `icon-512.png` | as named | Favicon and touch icon set, mark contained on brand paper |
 

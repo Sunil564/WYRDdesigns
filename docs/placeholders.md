@@ -14,7 +14,7 @@ Kept current at the end of every phase. Updated through Phase 4.
 |---|---|---|---|
 | Header mark | `components/layout/Wordmark.tsx` | **No longer a placeholder.** The supplied mark renders, 32px tall on mobile and 40px from `sm` up, WebP with a PNG fallback at 3x. See ADR 0023 | A vector, so sizes above the header stop being resamples of a 2101px raster |
 | Wordmark on dark grounds | `components/layout/Wordmark.tsx` | **No longer a placeholder.** The supplied white variant renders at the same 40px as the header mark, 19.78:1 on `--color-bg-inverse`. See ADR 0025 | A vector, same as the header |
-| Footer closing watermark | `components/layout/Footer.tsx` | `WYRD` at 26vw in the inverse hairline colour. Decorative and `aria-hidden`, and deliberately typographic: at 2560px it renders around 665px tall, which needs roughly 7700px of raster for 3x from a 2101px source | A vector. Until then this is a design choice rather than a stand-in |
+| Footer closing mark | `components/layout/WordmarkClose.tsx` | **No longer a placeholder.** The supplied white artwork at 9 percent opacity, with a highlight that sweeps across it. 1.82x downscale from source at 1440px. See ADR 0026 | A vector. This is the largest render on the site and the surface one would most improve |
 | Favicon 16 and 32 | `public/brand/icon-16.png`, `icon-32.png` | The supplied wordmark contained on white, regenerated for the light canvas in Phase 4b. Legible as a shape, not as letters, at 16px | A square single glyph mark |
 
 ## Home
