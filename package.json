@@ -19,7 +19,9 @@
     "check:hero": "node scripts/check-hero.mjs",
     "shoot": "node scripts/shoot.mjs",
     "assets": "python scripts/process-assets.py",
-    "verify": "npm run check:dashes && npm run typecheck && npm run lint && npm run build"
+    "verify": "npm run check:dashes && npm run typecheck && npm run lint && npm run build",
+    "check:audit": "node scripts/check-audit.mjs",
+    "check:lighthouse": "node scripts/check-lighthouse.mjs"
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.1",

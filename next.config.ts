@@ -19,6 +19,21 @@ const nextConfig: NextConfig = {
   eslint: {
     dirs: ['app', 'components', 'content', 'lib', 'scripts'],
   },
+
+  /*
+    There is deliberately no `images` block, and adding `remotePatterns` here is not the small
+    change it looks like.
+
+    `/_next/image` ships and is publicly reachable whether or not anything uses `next/image`.
+    With no `remotePatterns` it refuses every URL that is not one of our own committed files,
+    which is the only reason the `sharp` advisories in `docs/BLOCKERS.md` item 13 are not
+    exposure: the libvips CVEs need malformed image data and nobody can supply any. Measured,
+    a remote URL returns 400 before any decoding happens.
+
+    Adding `remotePatterns` turns that closed input into an open one and hands strangers a
+    decoder. If a remote image is genuinely needed, read ADR 0021 first, keep the pattern as
+    narrow as the one host it is for, and never widen it to a wildcard.
+  */
 }
 
 /*

@@ -77,6 +77,14 @@ rides `object.matrixWorld`, not uniforms.
 
 Phase 5 adds two more WebGL scenes. This applies to both.
 
+## Image optimisation
+
+Never add `images.remotePatterns` to `next.config.ts` without reading ADR 0021. `/_next/image`
+ships and is publicly reachable whether or not anything uses `next/image`, and with no remote
+patterns configured it refuses every input except our own committed files. That refusal is the
+only thing standing between the `sharp` libvips advisories and a decoder anyone can feed. If a
+remote image is genuinely needed, scope the pattern to the one host and never use a wildcard.
+
 ## Verification
 
 Assert on pixels, or on the renderer's own report of what it drew. Never on a sibling

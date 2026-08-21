@@ -81,30 +81,31 @@ Unblocks by: creating a Resend account, adding `RESEND_API_KEY` to the Vercel pr
 Blocks: the form actually delivering. Nothing else. Every other path on `/contact` works without it.
 
 
-### 10. Lighthouse Performance is unverified
 
-**Half of this is now closed.** Lighthouse runs on every route, in `scripts/check-lighthouse.mjs`, as a devDependency driving Playwright's own Chromium against the verification server. Accessibility and Best Practices are device independent, so they are real numbers here.
+### 11. Sustained frame rate on real hardware is unverified
 
-Accessibility is **100 on all seven routes**, which is plan criterion 10 and Phase 5 criterion 2, closed. It was not 100 when first measured: the homepage scored 96 and `/work` 98, and three real defects had to be fixed first. Those are in the commit that added this.
+**Not closed by the Lighthouse run, and worth being precise about why.** Lighthouse scores page
+load: first paint, largest paint, blocking time, layout shift, speed index. Plan criterion 21
+is a different measurement, holding 60fps while scrolling the full page on a mid range laptop
+and never dropping below 30fps on any Full tier device. No Lighthouse run of any kind reports
+that, so item 10 closing leaves this exactly where it was.
 
-Best Practices is **96 on the homepage and 96 elsewhere**, reported and not gated because the plan sets no target. The only failing audit is `errors-in-console`, and the only two entries are 404s for `/_vercel/insights/script.js` and `/_vercel/speed-insights/script.js`, which Vercel's edge serves and a local server does not have. It would be 100 deployed, and that cannot be verified from here.
+Everything that has measured frame rate in this build measured it headless with no GPU, where
+the same sweep reads 16.7 to 24.7ms median depending on viewport and run. Those numbers say the
+work got cheaper as counts came down, which is real, and say nothing about whether a 2021
+laptop holds 60fps.
 
-What stays open is **Performance**, both budgets: mobile Reduced tier at 90 or above, desktop Full tier at 85 or above, from plan sections 602 and 603. The harness deliberately does not score it. This is headless Chromium on a software renderer with no GPU, where the same page measures 16.7 to 24.7ms median frame time across runs, so a Performance score from here would be a precise looking figure that says nothing about a real device. SEO is also unscored, for a narrower reason: several of its audits check a canonical against a real origin, and the production domain does not exist, so it would be scoring item 1 rather than the markup.
+One number from the production run is adjacent and worth carrying here: desktop Total Blocking
+Time is 270ms, on a deployment measured through Lighthouse's desktop CPU profile. That is the
+Full tier's Three.js initialisation and it is the largest single cost in the desktop score. It
+is a load time figure, not a scroll figure, so it bounds the problem rather than answering it.
 
-Unblocks by: running Lighthouse against a deployed preview on real hardware. The harness already takes a `SHOOT_BASE`, so it is one environment variable and no code change.
+Unblocks by: opening the deployed site on a real device and watching the frame counter while
+scrolling. `scripts/check-hero.mjs` already reports an fps figure and asserts only the 30fps
+floor, which passes headless and is not the criterion.
 
-Blocks: closing plan criteria 1 and 2. Nothing ships differently because of it.
+Blocks: closing plan criterion 21. Nothing ships differently because of it.
 
-
-### 11. Frame rate on real hardware is unverified
-
-Particle brief criterion 21 asks for 60fps while scrolling the full page on a mid-range laptop, and never below 30fps on any Full tier device. Neither figure has been measured on hardware.
-
-Everything in this build was measured headless with no GPU, where the same sweep reads 16.7 to 24.7ms median depending on viewport and run. Those numbers say the work got cheaper as counts came down, which is real, and they say nothing about whether a 2021 laptop holds 60fps.
-
-Unblocks by: running the page on a real device, which is also what item 10's Performance half needs. `scripts/check-hero.mjs` already reports an fps figure and asserts only the 30fps floor, which passes headless and is not the criterion.
-
-Blocks: closing criterion 21. Nothing ships differently because of it.
 
 ### 12. Two rendering judgements need a real display
 
@@ -162,6 +163,25 @@ Unblocks by: a decision on View Transitions, taken deliberately with the plain c
 Blocks: nothing. The transition that ships works on every tier and is asserted by `scripts/check-transitions.mjs`.
 
 ## Resolved
+
+### 10. Lighthouse Performance was unverified
+
+Closed against the deployment, both budgets, both tiers, with the tier each form factor resolved to measured rather than assumed:
+
+| | budget | scored | tier | |
+|---|---|---|---|---|
+| mobile | 90 or above | **100** | `reduced`, `pointer:fine false` | FCP 0.9s, LCP 0.9s, TBT 0ms, CLS 0, SI 2.0s |
+| desktop | 85 or above | **89** | `full`, `pointer:fine true` | FCP 0.2s, LCP 0.3s, TBT 270ms, CLS 0, SI 0.9s |
+
+Plan sections 602 and 603 write the budgets per tier, and the form factor is what picks the tier: Lighthouse's mobile emulation reports a coarse pointer, and `useRenderTier` sends every coarse pointer to Reduced before any capability test. Both resolved as intended, which is asserted as part of the criterion rather than assumed, because a mobile 100 reported as a Reduced tier number would be a false claim if the page had served Full.
+
+Accessibility is 100 on all seven routes against the deployment as well as locally. Best Practices is **100** on the deployment against 96 locally, which confirms rather than predicts what that gap was: the two local 404s for `/_vercel/insights/script.js` and `/_vercel/speed-insights/script.js`, files Vercel's edge serves and a local server does not have.
+
+`scripts/check-lighthouse.mjs` gained a remote mode for this. It takes an auth cookie from a Vercel share link and sends it as a header, so the audited URL is the clean one with no redirect and no token in it rather than the share URL itself.
+
+Still open and not closed by this: item 11, sustained frame rate, which Lighthouse does not measure.
+
+
 
 ### 3. `Vaihini.png` spelling
 
