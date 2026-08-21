@@ -1,13 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { BufferAttribute, Color, NormalBlending } from 'three'
 import type { Points, ShaderMaterial } from 'three'
 import { heroFragmentShader, heroVertexShader } from '@/components/motion/webgl/heroField.glsl'
-// The one number the watchdog needs from the stream: where the reveal line sits, so it can
-// tell whether the handoff has started. Imported rather than written twice.
-import { REVEAL_OFFSET } from '@/components/motion/webgl/ThreadStreamScene'
 import { currentScroll } from '@/components/motion/useLenis'
 import { clamp, lerp, seededRandom } from '@/lib/utils'
 
@@ -19,7 +16,17 @@ import { clamp, lerp, seededRandom } from '@/lib/utils'
  * could only partly see.
  *
  * The watchdog below halves it once if the frame rate cannot hold, because the
- * brief's cut order is particle count before anything visual.
+ * The frame rate watchdog that used to halve this is gone. It measured the first two seconds
+ * after mount, which is the two seconds carrying the page load: 672ms of main thread blocking
+ * in three long tasks puts a 60fps machine at 39.6fps average, under its 40 threshold, so it
+ * fired on boot contention rather than on rendering capability and did so intermittently on
+ * one machine and one build. Moving the window past the load stopped the false positives and
+ * left a subsystem that could fire and could not act, since halving 5,280 clamps at a
+ * MIN_COUNT of 5,000 for a 5 percent cut. Removed rather than re-tuned: a subsystem that
+ * halves the field on a false positive is worse than none. Context loss still downgrades the
+ * tier, which is a different mechanism and untouched. See ADR 0020 section 15.
+ *
+ * The brief's cut order is particle count before anything visual.
  *
  * Halved again to 5,280 by the dimming brief. Down 12 percent from 12,000 by the brief
  * before that. That is the whole of the hero change:
@@ -30,7 +37,6 @@ import { clamp, lerp, seededRandom } from '@/lib/utils'
  * enlarged. Item B is cancelled, not deferred. See ADR 0020 section 12.
  */
 const COUNT = 5280
-const MIN_COUNT = 5000
 
 /** Cursor uniform smoothing. Brief 7b.2A fixes this at 0.08. */
 const CURSOR_LERP = 0.08
@@ -52,22 +58,6 @@ function readPalette() {
     accent: pick('--color-accent'),
   }
 }
-
-/**
- * How long after the field's first frame the watchdog waits before it starts measuring.
- *
- * It used to measure the first two seconds, which is the worst two seconds there are.
- * Instrumented on a normal load, 672ms of main thread blocking lands in the first second in
- * three long tasks of 212 to 233ms: hydration, the GSAP and Lenis dynamic imports, and the
- * Thread's sampling pass. A two second window containing 672ms of blocking can deliver about
- * 79 frames, which averages 39.6fps on any GPU, under the 40 threshold. So it fired on boot
- * contention rather than on rendering capability, intermittently, on the same machine and the
- * same build.
- *
- * Three seconds is a little under three times the last long task's end. Nothing cleverer:
- * the brief asked for the smallest fix, not for a two window or step back up scheme.
- */
-const WATCHDOG_WARMUP = 3
 
 /** Reference viewport the count and the point size are calibrated against. */
 const REFERENCE_AREA = 1440 * 900
@@ -132,8 +122,6 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
 
   // Smoothed cursor in world units, plus the raw target it eases toward.
   const cursor = useRef({ x: 0, y: 0, targetX: 0, targetY: 0, strength: 0, targetStrength: 0 })
-  const dropped = useRef(false)
-  const fps = useRef({ frames: 0, elapsed: 0, warmup: 0 })
 
   const geometry = useMemo(() => {
     /*
@@ -306,44 +294,6 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
     uniformCursor[1] = state.y
     shader.uniforms.uCursorStrength!.value = state.strength * 1.9
 
-    /*
-      Frame rate watchdog. If two seconds cannot hold 40fps, drop the count once. Cutting
-      particles is the brief's first cut, before anything visual gets touched.
-
-      Two gates on when those two seconds are allowed to be, both of them about measuring the
-      field rather than something else:
-
-      The warmup keeps the window out of the page load, for the reasons at WATCHDOG_WARMUP.
-
-      The second gate stops the window completing once the hero handoff has started. A
-      downshift rebuilds the field's geometry, and doing that in the middle of an effect whose
-      whole point is that the stream's origins match the field's density would change that
-      density mid migration. The condition is exactly the one the stream uses to decide the
-      handoff has begun, the reveal line reaching the hero's bottom edge, which is why
-      REVEAL_OFFSET is imported rather than the fraction written twice.
-    */
-    if (!dropped.current) {
-      const converging = scroll + size.height * REVEAL_OFFSET >= band.bottom
-      if (converging) {
-        fps.current.frames = 0
-        fps.current.elapsed = 0
-      } else {
-        fps.current.warmup += clamped
-        if (fps.current.warmup >= WATCHDOG_WARMUP) {
-          fps.current.frames += 1
-          fps.current.elapsed += clamped
-          if (fps.current.elapsed > 2) {
-            const average = fps.current.frames / fps.current.elapsed
-            if (average < 40) {
-              dropped.current = true
-              window.dispatchEvent(new CustomEvent('wyrd:field-downshift'))
-            }
-            fps.current.frames = 0
-            fps.current.elapsed = 0
-          }
-        }
-      }
-    }
   })
 
   return (
@@ -389,19 +339,6 @@ function Field({ count, onResolved }: { count: number; onResolved: (value: numbe
  * the hero and stopping at the hero's edges. See ADR 0020.
  */
 export function HeroField({ onCount }: { onCount?: (value: number) => void }) {
-  const [count, setCount] = useState(COUNT)
   const onResolved = useCallback((value: number) => onCount?.(value), [onCount])
-
-  // The watchdog in Field fires this at most once per mount. Halving the count
-  // rebuilds the geometry, which is a one off cost on a machine that has already
-  // told us it cannot hold the frame rate.
-  useEffect(() => {
-    const onDownshift = () => {
-      setCount((current) => Math.max(MIN_COUNT, Math.round(current / 2)))
-    }
-    window.addEventListener('wyrd:field-downshift', onDownshift)
-    return () => window.removeEventListener('wyrd:field-downshift', onDownshift)
-  }, [])
-
-  return <Field count={count} onResolved={onResolved} />
+  return <Field count={COUNT} onResolved={onResolved} />
 }

@@ -333,6 +333,38 @@ Frame time over the standard sweep improves as the brief expected: 22.4ms median
 - **The halved thread still reads as a thread**, not as scattered dots following a line. In the process section at 1440 both strands are continuous, and the particles are close enough together that the eye joins them without effort.
 - **The halved hero field is at the edge of reading as sparse.** It still has presence and the handoff still works against it, but individual particles are now separately countable at 1440 where before they read as a texture. It is a dust rather than a field. That is a judgement rather than a fault, and it is the one of the three worth a second opinion on a real display.
 
+## 15. The frame rate watchdog is removed, and the mobile tier means most of this is desktop only
+
+Two closing findings, the second the more important.
+
+### The watchdog is gone
+
+It measured the two seconds after mount, which is the two seconds carrying the page load. Instrumented: 672ms of main thread blocking in three long tasks of 212 to 233ms, from hydration, the GSAP and Lenis imports and the Thread's sampling pass. A two second window holding 672ms of blocking delivers about 79 frames, averaging 39.6fps on any GPU, under its own 40 threshold. So it fired on boot contention rather than on rendering capability, intermittently, on one machine and one build.
+
+Moving the window three seconds out stopped the false positives and left a subsystem that could fire and could not act: `MIN_COUNT` 5,000 against a base of 5,280 means a downshift clamps to 5,000 and cuts 5 percent. Operator decision, and the right one: removed rather than re-tuned, because a subsystem that halves the field on a false positive is worse than no subsystem. Context loss still downgrades the tier, which is a different mechanism and untouched.
+
+### Every phone gets no Thread at all
+
+`useRenderTier` returns `reduced` for any coarse pointer, unconditionally and before any capability test:
+
+```
+if (!window.matchMedia('(pointer: fine)').matches) return 'reduced'
+```
+
+That is deliberate and documented there: a finger has no hover, and cursor interaction is the point of the Full tier field. The consequence for the Thread was not deliberate. On the Reduced tier the WebGL scene is not mounted, the SVG carrier sits at `opacity: 0`, and the 2D overlay of section 2.3 does not exist, so nothing draws the route. Measured, emulating a coarse pointer:
+
+| context | pointer:fine | tier | webgl host | 2D overlay | svg opacity | Thread |
+|---|---|---|---|---|---|---|
+| 375 narrow desktop | true | full | yes | no | 0 | present |
+| 375 phone | false | reduced | no | no | 0 | **absent** |
+| 768 tablet | false | reduced | no | no | 0 | **absent** |
+
+So the Thread is absent on every phone and every tablet that does not have reduced motion enabled. With reduced motion on, the tier is `static` and the full SVG stroke draws, which is the one mobile path that does render something.
+
+**This makes most of the mobile work in these six briefs desktop only.** The 375px measurements of text dimming, the below 1024 dispersion at half magnitude, the single line's document Y reveal, the spiral and the handoff at narrow widths were all taken in a narrow desktop viewport with a fine pointer, which resolves to Full. None of it reaches a device with a touchscreen. The only part that does is the geometry: `measure` returns the single straight line below 1024 regardless of tier, and the Static tier draws it.
+
+`check-home` could not have caught this, and for a reason worth recording alongside the rest of the harness findings: its `open()` helper writes `localStorage['wyrd:tier'] = 'full'` before navigating, so its 375px criteria force the Full tier and measure a page no phone will see. It emulates touch at that width and then overrides the very decision touch drives.
+
 ## Consequences
 
 - The Thread is the fourth WebGL use on the site. Brief 7b.2's list of three is now a list of four, and this record is the argument 7b.2 requires.

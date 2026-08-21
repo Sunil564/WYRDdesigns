@@ -93,7 +93,29 @@ Recorded here because the acceptance harness hid it. `check-home.mjs` asserted t
 
 Unblocks by: step 9 of `HERO-PARTICLES-AND-THREAD.md`, which also covers the Reduced tier's own handling of the inverse band crossing on the CPU. Two behaviours built for the Full tier since have to be reproduced there and are noted now rather than rediscovered: the document Y reveal line rather than arc length progress, the dispersion through the client logo band, and the spiral trail with its rest rotation, all tested per particle on the CPU against the same ranges and constants the shader reads. See ADR 0020 sections 6, 10 and 11.
 
-Blocks: nothing shipping. It is a tier degradation, and the tier is already the degraded one. See ADR 0020.
+Blocks: the Thread on every touch device. This was recorded as a tier degradation and that undersold it. `useRenderTier` returns `reduced` for any coarse pointer before any capability test, so every phone and every tablet without reduced motion enabled lands here, and the Thread is absent for all of them. Measured at 375 and 768 emulating a coarse pointer: no WebGL host, no overlay, SVG at opacity 0.
+
+It also means the mobile work across the particle briefs is desktop only. The 375px text dimming, the half magnitude dispersion, the single line reveal, the spiral and the handoff at narrow widths were measured in a narrow desktop viewport with a fine pointer, which resolves to Full. See ADR 0020 section 15.
+
+### 11. Frame rate on real hardware is unverified
+
+Particle brief criterion 21 asks for 60fps while scrolling the full page on a mid-range laptop, and never below 30fps on any Full tier device. Neither figure has been measured on hardware.
+
+Everything in this build was measured headless with no GPU, where the same sweep reads 16.7 to 24.7ms median depending on viewport and run. Those numbers say the work got cheaper as counts came down, which is real, and they say nothing about whether a 2021 laptop holds 60fps.
+
+Unblocks by: running the page on a real device. `scripts/check-hero.mjs` already reports an fps figure and asserts only the 30fps floor, which passes headless and is not the criterion.
+
+Blocks: closing criterion 21. Nothing ships differently because of it.
+
+### 12. Two rendering judgements need a real display
+
+Both were reported at the time and neither is a fault, but both are judgements a headless screenshot cannot settle.
+
+The hero field at 5,280 is at the edge of reading as sparse: individual particles are separately countable at 1440 where they read as a texture before. And the spiral trail reads as a fuzzy line in a still frame rather than as a rotating trail, because its rotation exists only as motion, at one turn per eight seconds.
+
+Unblocks by: looking at both on a physical screen at full brightness. If the field reads as thin, the count is one constant. If the rotation reads as busy rather than alive, the spin rate is another.
+
+Blocks: nothing. See ADR 0020 sections 11 and 14.
 
 ## Resolved
 

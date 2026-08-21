@@ -96,6 +96,10 @@ into the token before the page's scripts read it, then measure for that colour. 
 cannot be distinguished at pixel level. Green against grey can. Used in step 6 to prove
 the inverse band switch.
 
+Assert against values the page publishes, not constants copied from the source. Two harness
+criteria failed on a correct build because they held stale copies of `POINT_BAND`. A copied
+constant is a second source of truth that goes stale silently.
+
 A 2D canvas can be asked what it drew. `getImageData` on its own context returns the
 renderer's pixels with no text, grain, or neighbouring element in them, and alpha
 separates "mounted and drawing nothing" from "filled solid" from "a sparse field".
