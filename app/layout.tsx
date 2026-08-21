@@ -6,6 +6,7 @@ import { Header } from '@/components/layout/Header'
 import { SiteMotion } from '@/components/motion/SiteMotion'
 import { instrumentSerif, satoshi } from '@/lib/fonts'
 import { SITE_URL } from '@/lib/site-url'
+import { organizationGraph } from '@/lib/structured-data'
 import { THEME_COLOR_BG } from '@/lib/theme'
 import { defaultMeta, site } from '@/content/site'
 import './globals.css'
@@ -86,6 +87,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <noscript>
           <style>{`[data-reveal],[data-enter]{opacity:1 !important;transform:none !important}`}</style>
         </noscript>
+        {/*
+          JSON-LD for the studio. In the document rather than injected, so it is in the
+          served HTML for a crawler that runs no JavaScript. `lib/structured-data.ts` says
+          what is in it and, at more length, what is deliberately not.
+        */}
+        <script
+          type="application/ld+json"
+          // The content is ours, built from content/site.ts, with no user input anywhere
+          // in it. JSON.stringify is the serialiser, not a sanitiser.
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationGraph()) }}
+        />
       </head>
       <body>
         <SiteMotion>
