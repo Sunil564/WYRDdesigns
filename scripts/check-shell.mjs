@@ -38,8 +38,8 @@ const browser = await chromium.launch()
     scripts, which only exist on Vercel. Both 404 locally and neither is a runtime
     error. The same allowlist is in check-hero and check-home.
   */
-  const EXPECTED_404 =
-    /_vercel\/(insights|speed-insights)|\/(work|studio|contact|privacy|terms)(\?_rsc=|\/|$)/
+  // Analytics scripts only. Every route entry came out as its route landed.
+  const EXPECTED_404 = /_vercel\/(insights|speed-insights)/
   const errors = []
   page.on('console', (m) => {
     if (m.type() !== 'error') return

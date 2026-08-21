@@ -13,15 +13,14 @@
 import { chromium } from 'playwright'
 
 /**
- * Analytics scripts that only exist in production, and routes Phase 5 has not built yet.
+ * The analytics scripts, which only exist in production. Nothing else.
  *
- * Entries come out the moment the route lands. `/studio` and `/contact` were each in here
- * for one commit and are both out now. `/privacy` and `/terms` are not in Phase 5 at all and
- * are the only remaining entries. A masking pattern that outlives its reason is how a real
- * failure stays invisible.
+ * Every route entry that was ever in here has come out as its route landed: `/studio`,
+ * `/contact`, `/work/<slug>`, and finally `/privacy` and `/terms`. There is no route mask
+ * left, which is the state to keep it in. A masking pattern that outlives its reason is how a
+ * real failure stays invisible, and this list is where that would happen first.
  */
-const DEFAULT_EXPECTED_404 =
-  /_vercel\/(insights|speed-insights)|\/(privacy|terms)(\?_rsc=|\/|$)/
+const DEFAULT_EXPECTED_404 = /_vercel\/(insights|speed-insights)/
 
 export function createHarness({ base, expected404 = DEFAULT_EXPECTED_404 }) {
   const results = []
@@ -154,6 +153,20 @@ export function createHarness({ base, expected404 = DEFAULT_EXPECTED_404 }) {
           nobody can reach it at all.
         */
         if (rect.right < 0 || rect.bottom < 0 || rect.left > window.innerWidth) continue
+        /*
+          Inline links inside a sentence are exempt, and this is WCAG's own exception rather
+          than a convenience: 2.5.8 excludes a target whose size is constrained by the
+          line-height of the non-target text around it. A mailto in the middle of a legal
+          paragraph is 20px tall because the paragraph is, and growing it to 44 would break
+          the prose it sits in. The test is structural, an inline element with text beside it
+          in the same parent, so a standalone link styled inline still counts.
+        */
+        const inlineInProse =
+          getComputedStyle(element).display.startsWith('inline') &&
+          Array.from(element.parentElement?.childNodes ?? []).some(
+            (node) => node.nodeType === Node.TEXT_NODE && (node.textContent ?? '').trim().length > 0,
+          )
+        if (inlineInProse) continue
         if (rect.height < 44) {
           out.push(`${element.tagName.toLowerCase()} ${Math.round(rect.height)}px`)
         }

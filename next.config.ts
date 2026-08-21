@@ -1,3 +1,4 @@
+import createMDX from '@next/mdx'
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
@@ -20,4 +21,16 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default nextConfig
+/*
+  MDX, for the legal documents only.
+
+  `pageExtensions` is deliberately not widened to include `.mdx`, because no route is an MDX
+  file. Every route stays a `page.tsx` and imports its copy from `content/legal`, so the
+  layout lives in one component and the operator edits prose rather than a page. See ADR 0021.
+
+  No remark or rehype plugins. The documents are headings, paragraphs and lists, and a plugin
+  chain is a dependency and a build cost for formatting nobody has asked for.
+*/
+const withMDX = createMDX({})
+
+export default withMDX(nextConfig)

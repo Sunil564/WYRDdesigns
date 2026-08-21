@@ -29,8 +29,11 @@ function record(name, pass, detail = '') {
   console.log(`${pass ? 'PASS' : 'FAIL'}  ${name}${detail ? `\n        ${detail}` : ''}`)
 }
 
-const EXPECTED_404 =
-  /_vercel\/(insights|speed-insights)|\/(work|studio|contact|privacy|terms)(\?_rsc=|\/|$)/
+/*
+  The analytics scripts only. Every route this once masked now exists, so every route entry
+  has come out. A masking pattern that outlives its reason is how a real 404 goes unnoticed.
+*/
+const EXPECTED_404 = /_vercel\/(insights|speed-insights)/
 
 const browser = await chromium.launch()
 

@@ -126,19 +126,30 @@ Unblocks by: an operator decision on upgrading Next, taken as its own piece of w
 
 Blocks: nothing today. `sharp` is used at build time for image optimisation and is not in the request path of any route this build ships.
 
-### 14. The footer links to two routes that do not exist
 
-`content/site.ts` gives `legalNav` a Privacy and a Terms entry, and the footer renders both on every page. Neither route exists: both return 404, confirmed against the verification server. Every page on the site therefore carries two links a visitor can click into an error.
+### 14. The USD budget brackets have no source
 
-It surfaced while fixing a harness pattern, not by looking at the footer. `scripts/check-hero.mjs` had been masking `/work`, `/studio` and `/contact` from its 404 check since those routes were unbuilt, and once they all shipped and the mask came off, the two that were genuinely broken were the ones left.
+Decision needed, not a defect. Nothing about them is wrong today, and they are the only figures on `/contact` with no document behind them.
 
-Neither route is in the Phase 5 brief, and neither can be written by this build: a privacy policy and terms of service are legal documents about how a real company handles real data, and inventing their contents is the same failure as inventing a client name.
+`docs/brand.md` section 5 states a deal size of Rs 25,000 to Rs 5,00,000, so the INR brackets are anchored to a verified range with one interior boundary as structure. No USD figure appears anywhere in the supplied material. Converting the rupee range would mean choosing an exchange rate and baking today's rate into the repository, where it would quietly go wrong. So the USD brackets are independent round numbers for the secondary market: under $1,000, $1,000 to $5,000, $5,000 to $25,000, above $25,000.
 
-Unblocks by: supplying the two documents, or deciding the site ships without them. If it ships without them, the fix is deleting the two entries in `legalNav` and the footer section disappears on its own, the same way the client logo row would.
+Two ways to resolve, both the operator's:
 
-Blocks: nothing shipping today, but it is the only place on the site where a visible link is known to fail.
+- Supply real USD brackets, and they replace the four values in `budgetOptions.USD` in `content/contact.ts`.
+- Drop the currency toggle, and the form ships INR only. That is a smaller change than it sounds: delete `budgetOptions.USD` and the `currencies` array, and the toggle and its `role="group"` come out of `ContactForm` with them.
+
+Blocks: nothing shipping. `scripts/check-contact.mjs` allows the current figures explicitly in its digit allowlist, so changing them fails that criterion until the allowlist is updated too, which is the intended coupling.
 
 ## Resolved
+
+### The footer linked to two routes that did not exist
+
+Was item 14. `content/site.ts` gave `legalNav` a Privacy and a Terms entry, the footer rendered both on every page, and both returned 404. It was the only place on the site where a visible link was known to fail, and it surfaced while removing an expired 404 mask from `scripts/check-hero.mjs` rather than by looking at the footer.
+
+Resolved by building both routes with holding text rather than by deleting the links. `/privacy` and `/terms` render through one shared `LegalPage` layout and take their prose from `content/legal/privacy.mdx` and `terms.mdx`, so supplying the real documents is a change to two `.mdx` files and one flag. Both pages say on the page that they are not the published document, state no date or period they cannot support, and give the direct address. `scripts/check-legal.mjs` follows the footer's own links and asserts all of it, 25 of 25.
+
+Still open: the documents themselves. Neither can be written by this build.
+
 
 ### Reduced tier rendered no Thread
 

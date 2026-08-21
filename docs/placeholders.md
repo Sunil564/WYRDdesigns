@@ -37,6 +37,15 @@ All three are generated in the light context: a `--bg-raised` panel with tints o
 | `/work/[slug]` body visuals | `Placeholder` | Three generated visuals, alternating full bleed 21:9 and inset 16:10. Three rather than the brief's three to five because every one is a placeholder and five empty frames read as a longer apology than three | Real project imagery, and then the count follows the imagery rather than this constant |
 | `/work/[slug]` body captions | none | Nothing. A caption on a placeholder visual would be invented copy about a project nobody has described | Real captions, written from the project |
 
+## Legal
+
+| Where | Component | What is there now | What replaces it |
+|---|---|---|---|
+| `/privacy` prose | `content/legal/privacy.mdx` | Holding text. States what the site actually collects today and says the full policy is being prepared. Carries a visible `Not yet published` tag | The real privacy policy, supplied by the operator. Drop the `pending` flag in `app/privacy/page.tsx` with it |
+| `/terms` prose | `content/legal/terms.mdx` | Holding text. States that nothing on the site is a contract and that work is agreed in writing first. Same visible tag | The real terms, same two changes |
+
+Neither carries a date, a version, or a retention period, because all three would be facts about a document nobody has written. `scripts/check-legal.mjs` asserts that: zero digits render on either route.
+
 ## Content
 
 | Where | File | What is there now | What replaces it |

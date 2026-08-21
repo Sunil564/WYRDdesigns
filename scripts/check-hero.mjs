@@ -34,12 +34,11 @@ function record(name, pass, detail = '') {
  * routes Phase 5 has not built yet. Not runtime errors.
  */
 /*
-  Only the routes that genuinely do not exist. `/work`, `/studio` and `/contact` were listed
-  here while they were unbuilt and are all live now, so they came out: a pattern that keeps
-  masking a route after the route ships is how a real 404 goes unnoticed. `/privacy` and
-  `/terms` are linked from the footer, are prefetched from every page, and are not in Phase 5.
+  The analytics scripts only. Every route this once masked now exists and every entry has
+  come out, `/privacy` and `/terms` last. A pattern that keeps masking a route after the route
+  ships is how a real 404 goes unnoticed.
 */
-const EXPECTED_404 = /_vercel\/(insights|speed-insights)|\/(privacy|terms)(\?_rsc=|\/|$)/
+const EXPECTED_404 = /_vercel\/(insights|speed-insights)/
 
 /*
   No explicit GL flags. Headless Chromium already falls back to SwiftShader for
