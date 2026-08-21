@@ -54,21 +54,6 @@ Unblocks by: naming which section each belongs to, and confirming the licence.
 
 Blocks: nothing.
 
-### 8. SITEO has no single colour version
-
-The SITEO mark is five colour blocks with the letters knocked out in white. On the
-old dark canvas it monochromed cleanly. On the light canvas the third block reduces
-to a mean alpha of 22 out of 255, so the `T` inside it becomes a white letter on a
-near white block and stops being readable.
-
-Per Phase 4b section 8, that mark now renders in its original colours while every
-other logo in the row is monochrome. It is the only colour thing in that row.
-
-Unblocks by: asking SITEO for a single colour or reversed version of their mark, or
-confirming they are happy for the full colour mark to be used.
-
-Blocks: nothing. The row renders and every mark is legible.
-
 ### 9. Resend API key
 
 `RESEND_API_KEY` is unset, so the contact form cannot deliver. It does not pretend otherwise: the visitor is told the message has not gone through and given the direct address, and the server logs a line naming the variable. `scripts/check-contact.mjs` runs that path on every run and asserts it, so the behaviour cannot regress into a silent success.
@@ -193,6 +178,14 @@ Blocks: nothing. It is a visual defect in the first two seconds of the homepage.
 
 
 ## Resolved
+
+### 8. SITEO has no single colour version
+
+Closed 2026-08-22 by removing the treatment that needed one, at the operator's instruction.
+
+The row rendered five marks as alpha ink masks tinted to `--color-fg-muted` and SITEO in full colour, because five colour blocks with white letters knocked out do not survive being reduced to one ink. This item asked the operator to obtain a single colour version from SITEO.
+
+It could not close on its own terms. It was a request to another company for a new asset in order to satisfy a treatment we had chosen, and the odd one out existed because of the decision rather than because of the client. Every mark now renders as supplied, in its own colours, so there is no exception to explain and nothing to ask for. See ADR 0027.
 
 ### 4. Client logo clearance
 
