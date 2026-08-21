@@ -27,29 +27,26 @@ import { useRenderTier } from '@/components/motion/useRenderTier'
  *   [data-inverse-band]           a stretch of page where the ground is dark
  *
  * What this component is now. It is the geometry authority and the scroll authority
- * for the Thread, and on two of the three tiers it renders nothing you can see:
+ * for the Thread, and on the Full tier it renders nothing you can see:
  *
  * - The SVG paths stay in the DOM as invisible geometry carriers. They are the single
  *   source of truth for the route, they are what `getPointAtLength` samples, and no
  *   route is defined twice. Particle brief 2.2.
- * - Sampled positions are published to `threadStore`, where the Full tier's WebGL
- *   scene and the Reduced tier's 2D overlay pick them up.
+ * - Sampled positions are published to `threadStore`, where the Full tier's WebGL scene
+ *   picks them up. Only the Full tier samples: see ADR 0020 section 16.
  * - One ScrollTrigger per path, exactly as before, writing reveal progress into the
  *   store. It also keeps writing `stroke-dashoffset` on the invisible paths, which
  *   costs what it always cost and leaves the reveal readable from the DOM.
- * - On the Static tier the paths get their stroke back and render complete. No
+ * - On the Static and Reduced tiers the paths get their stroke back and render complete. No
  *   canvas is mounted anywhere on the page and nothing animates.
  *
  * Where the Thread crosses a dark block it has to change colour or vanish into it.
- * The Static tier's SVG solves that with two paths, one masked, per ADR 0019. The
+ * The stroked tiers solve that with two paths, one masked, per ADR 0019. The
  * particle tiers test each particle's own document y against the same measured
  * bands, per ADR 0020.
  */
 
 type Band = { top: number; bottom: number }
-
-/** Sample density on the Reduced tier, as a fraction of the Full tier's. */
-const REDUCED_DENSITY = 1 / 3
 
 export function Thread() {
   const hostRef = useRef<HTMLDivElement | null>(null)
@@ -57,8 +54,21 @@ export function Thread() {
   const [geometry, setGeometry] = useState<ThreadGeometry | null>(null)
   const { tier } = useRenderTier()
 
-  const still = tier === 'static'
-  const streaming = tier === 'full' || tier === 'reduced'
+  /*
+    Which tiers draw the stroke, and which tier gets the particle stream.
+
+    Both the Static and the Reduced tier render the SVG hairline, complete. The Reduced
+    tier's 2D particle overlay was scoped and rejected: see ADR 0020 section 16. It is the
+    tier that exists to stay light, and it had been rendering no Thread at all, which on a
+    coarse pointer is every phone and tablet.
+
+    `streaming` is the Full tier alone now. It used to include Reduced, which meant the
+    sampler ran its eleven thousand `getPointAtLength` calls on that tier and published them
+    to a renderer that was never mounted. Dead work, and on the one tier that could least
+    afford it.
+  */
+  const stroked = tier === 'static' || tier === 'reduced'
+  const streaming = tier === 'full'
 
   const remeasure = useCallback(() => {
     const host = hostRef.current
@@ -121,7 +131,7 @@ export function Thread() {
       elements,
       geometry.paths.map((path) => path.kind),
       geometry.hostTop,
-      tier === 'reduced' ? REDUCED_DENSITY : 1,
+      1,
       Math.round(geometry.width),
     )
     if (!samples) return
@@ -145,7 +155,7 @@ export function Thread() {
     })
 
     return () => clearThread()
-  }, [geometry, streaming, tier])
+  }, [geometry, streaming])
 
   const bands: Band[] = geometry?.bands ?? []
   // Bands are measured in document coordinates. The SVG's user space is host local,
@@ -175,7 +185,7 @@ export function Thread() {
             display or visibility, because getPointAtLength needs a rendered element.
             Particle brief 2.2.
           */
-          style={{ opacity: still ? 1 : 0 }}
+          style={{ opacity: stroked ? 1 : 0 }}
         >
           {/*
             Each path is drawn twice, once per ground, and each copy is limited to
@@ -224,7 +234,7 @@ export function Thread() {
               d={path.d}
               start={path.start}
               end={path.end}
-              still={still}
+              stroked={stroked}
               hasBands={bands.length > 0}
             />
           ))}
@@ -238,13 +248,13 @@ function ThreadGroup({
   d,
   start,
   end,
-  still,
+  stroked,
   hasBands,
 }: {
   d: string
   start: string
   end: string
-  still: boolean
+  stroked: boolean
   hasBands: boolean
 }) {
   return (
@@ -262,7 +272,7 @@ function ThreadGroup({
         strokeWidth="1"
         pathLength={1}
         strokeDasharray="1"
-        strokeDashoffset={still ? 0 : 1}
+        strokeDashoffset={stroked ? 0 : 1}
         mask={hasBands ? 'url(#wyrd-thread-light)' : undefined}
       />
       {/*
@@ -278,7 +288,7 @@ function ThreadGroup({
           strokeWidth="1"
           pathLength={1}
           strokeDasharray="1"
-          strokeDashoffset={still ? 0 : 1}
+          strokeDashoffset={stroked ? 0 : 1}
           clipPath="url(#wyrd-thread-inverse)"
         />
       )}

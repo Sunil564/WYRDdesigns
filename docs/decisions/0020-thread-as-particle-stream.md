@@ -365,6 +365,30 @@ So the Thread is absent on every phone and every tablet that does not have reduc
 
 `check-home` could not have caught this, and for a reason worth recording alongside the rest of the harness findings: its `open()` helper writes `localStorage['wyrd:tier'] = 'full'` before navigating, so its 375px criteria force the Full tier and measure a page no phone will see. It emulates touch at that width and then overrides the very decision touch drives.
 
+## 16. The Reduced tier gets the stroke, and the 2D overlay is rejected
+
+Operator decision. Section 2.3 of the particle brief gives the Reduced tier a 2D canvas overlay drawing the sampled points at a third of the density, and it is not built and will not be.
+
+**Scoped, and rejected as disproportionate.** Building it means a second renderer: a fixed full viewport canvas, its own draw loop, and CPU reimplementations of everything the vertex shader now does, which by this point is the document Y reveal, the head band, the inverse band colour switch, the client logo dispersion, the spiral trail with its rest rotation, the text dimming against forty rects, and the hero handoff. Every one of those would be a second implementation of a rule that already exists once, free to drift from it, and the drift would be invisible because nothing compares the two. That is the second-source-of-truth problem this build has already paid for twice, in the stale `POINT_BAND` copies and in the carrier that animated a value nothing read.
+
+And the tier exists to stay light. Adding a per frame canvas loop to the tier chosen because the device is low powered or touch driven inverts its purpose.
+
+So the Reduced tier renders the SVG hairline, complete, exactly as the Static tier does. ADR 0019's two path masked crossing already works there and needed no change. Mobile gets a real Thread, no Three.js, no new renderer: measured on an emulated phone and tablet, tier `reduced`, SVG opacity 1, dash offset 0, zero requests matching three or drei, no console output.
+
+**Not revealed on scroll, and the reason is not cost.** A document Y reveal for a stroke needs a per path table mapping Y to normalised arc length, because `stroke-dashoffset` is an arc length quantity and the two diverge wherever the path turns, plus a per frame loop writing nine dash offsets. That is affordable, roughly 576 `getPointAtLength` calls at layout and nine binary searches a frame. It is rejected on the tier's contract rather than its cost: a scrubbed reveal is motion, and this is the tier a visitor lands on because their device or their input said keep it simple. The brief's own fallback is a fully drawn stroke, and that is the honest reading of it.
+
+One thing fixed in passing that was pure waste. `streaming` included the Reduced tier, so the sampler ran its eleven thousand `getPointAtLength` calls there and published the result to a renderer that was never mounted. Full tier only now. `REDUCED_DENSITY` went with it, a constant that existed solely for the overlay.
+
+BLOCKERS item 10 is closed as resolved by decision rather than by build.
+
+## 17. The harness no longer forces a tier
+
+`check-home`'s `open()` defaulted to writing `localStorage['wyrd:tier'] = 'full'` before navigating. It also emulates touch below 600px, so it emulated the exact input that makes `useRenderTier` return Reduced and then overrode the decision that input drives. Every narrow width criterion measured a page no phone can see, which is how the missing mobile Thread survived a green harness for the whole of this work.
+
+The default is now no override. Criteria explicitly about a tier still name one, and the Full tier painting criteria do, which only pins what detection would decide at those widths anyway. The below 1024 criteria resolve naturally and report which tier they landed on.
+
+What changed when the override came off, with the Reduced tier stroke in place: 35 of 35, up from 34, and the one criterion that had been failing since it was written now passes. At 375px the tier resolves to `reduced` and the Thread paints 330 of 331 rows against a control of 17. At 768 and 1023 it resolves to `full`, because this helper only emulates touch below 600px, so those two still measure the particle stream.
+
 ## Consequences
 
 - The Thread is the fourth WebGL use on the site. Brief 7b.2's list of three is now a list of four, and this record is the argument 7b.2 requires.

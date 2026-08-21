@@ -96,6 +96,9 @@ into the token before the page's scripts read it, then measure for that colour. 
 cannot be distinguished at pixel level. Green against grey can. Used in step 6 to prove
 the inverse band switch.
 
+Never force a tier, a feature flag, or an environment override in the acceptance harness.
+Forcing it means measuring a page no user sees.
+
 Assert against values the page publishes, not constants copied from the source. Two harness
 criteria failed on a correct build because they held stale copies of `POINT_BAND`. A copied
 constant is a second source of truth that goes stale silently.

@@ -83,21 +83,7 @@ Unblocks by: a Resend account, a verified domain, and the key in the Vercel proj
 
 Blocks: end to end delivery verification in Phase 5. The form, validation, and error states are testable without it.
 
-### 10. Reduced tier renders no Thread
-
-Scheduled work, not a missing fact and not a defect. Section 2.3 of the particle brief gives the Reduced tier a 2D canvas overlay drawing the sampled points at a third of the density, and it has not been built yet. It is step 9 in that brief's order of work.
-
-Until it is, the Reduced tier renders no Thread at all: the SVG carrier paths are `opacity: 0` on every particle tier, the WebGL scene is not mounted, and nothing takes their place. Confirmed structurally, on the Reduced tier at 1440: `data-thread-stream` host absent, `data-thread-overlay` absent, SVG opacity 0.
-
-Recorded here because the acceptance harness hid it. `check-home.mjs` asserted the Thread by reading `stroke-dashoffset` off those invisible paths, so it passed on the tier that draws nothing, and there was no Reduced tier Thread criterion at all. The Thread criteria now assert on pixels and `the Thread paints at 1440px on the reduced tier` fails, which is the correct reading and the only failure in 35.
-
-Unblocks by: step 9 of `HERO-PARTICLES-AND-THREAD.md`, which also covers the Reduced tier's own handling of the inverse band crossing on the CPU. Two behaviours built for the Full tier since have to be reproduced there and are noted now rather than rediscovered: the document Y reveal line rather than arc length progress, the dispersion through the client logo band, and the spiral trail with its rest rotation, all tested per particle on the CPU against the same ranges and constants the shader reads. See ADR 0020 sections 6, 10 and 11.
-
-Blocks: the Thread on every touch device. This was recorded as a tier degradation and that undersold it. `useRenderTier` returns `reduced` for any coarse pointer before any capability test, so every phone and every tablet without reduced motion enabled lands here, and the Thread is absent for all of them. Measured at 375 and 768 emulating a coarse pointer: no WebGL host, no overlay, SVG at opacity 0.
-
-It also means the mobile work across the particle briefs is desktop only. The 375px text dimming, the half magnitude dispersion, the single line reveal, the spiral and the handoff at narrow widths were measured in a narrow desktop viewport with a fine pointer, which resolves to Full. See ADR 0020 section 15.
-
-### 11. Frame rate on real hardware is unverified
+### 10. Frame rate on real hardware is unverified
 
 Particle brief criterion 21 asks for 60fps while scrolling the full page on a mid-range laptop, and never below 30fps on any Full tier device. Neither figure has been measured on hardware.
 
@@ -107,7 +93,7 @@ Unblocks by: running the page on a real device. `scripts/check-hero.mjs` already
 
 Blocks: closing criterion 21. Nothing ships differently because of it.
 
-### 12. Two rendering judgements need a real display
+### 11. Two rendering judgements need a real display
 
 Both were reported at the time and neither is a fault, but both are judgements a headless screenshot cannot settle.
 
@@ -118,5 +104,13 @@ Unblocks by: looking at both on a physical screen at full brightness. If the fie
 Blocks: nothing. See ADR 0020 sections 11 and 14.
 
 ## Resolved
+
+### Reduced tier rendered no Thread
+
+Was item 10. Section 2.3 of the particle brief gave the Reduced tier a 2D canvas overlay and it was never built, so on that tier nothing drew the route: the WebGL scene is not mounted, the SVG carrier sat at `opacity: 0`, and there was no overlay to take its place. Because `useRenderTier` returns Reduced for any coarse pointer before any capability test, that was every phone and every tablet without reduced motion enabled.
+
+Resolved by decision rather than by build. The overlay was scoped and rejected as disproportionate: it would have meant a second implementation of the reveal, the head, the inverse band switch, the dispersion, the spiral, the text dimming and the handoff, each free to drift from the shader's version with nothing comparing them, on the one tier that exists to stay light. The Reduced tier renders the SVG hairline complete instead, exactly as Static does. Measured on an emulated phone and tablet: tier `reduced`, SVG opacity 1, zero Three.js requests, no console output. See ADR 0020 section 16.
+
+
 
 Nothing yet.

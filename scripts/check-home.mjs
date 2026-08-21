@@ -34,7 +34,15 @@ const EXPECTED_404 =
 
 const browser = await chromium.launch()
 
-async function open(width, height, tier = 'full', reducedMotion = 'no-preference') {
+/**
+ * @param tier Pass a tier only for a criterion that is explicitly about that tier. Leaving it
+ *   null is the default and the right one: the page then resolves the tier the way a real
+ *   device does. It used to default to 'full', which meant every narrow width criterion here
+ *   measured a page no phone can see. `useRenderTier` returns Reduced for any coarse pointer,
+ *   and this helper emulates touch below 600px and then overrode the decision that touch
+ *   drives. See CLAUDE.md, Verification.
+ */
+async function open(width, height, tier = null, reducedMotion = 'no-preference') {
   const context = await browser.newContext({
     viewport: { width, height },
     reducedMotion,
@@ -59,7 +67,9 @@ async function open(width, height, tier = 'full', reducedMotion = 'no-preference
       problems.push(`${response.status()} ${response.url()}`)
     }
   })
-  await page.addInitScript((value) => window.localStorage.setItem('wyrd:tier', value), tier)
+  if (tier) {
+    await page.addInitScript((value) => window.localStorage.setItem('wyrd:tier', value), tier)
+  }
   return { context, page, problems }
 }
 
@@ -323,7 +333,9 @@ async function revealInPositioning(page) {
 }
 
 for (const width of [1024, 1440, 1920, 2560]) {
-  const { context, page } = await open(width, 900)
+  // Full is asked for here because the criterion names it. These widths resolve to Full on a
+  // fine pointer anyway, so the override only pins what detection would already decide.
+  const { context, page } = await open(width, 900, 'full')
   await page.goto(`${BASE}/`, { waitUntil: 'load' })
   await page.waitForTimeout(2500)
 
@@ -377,6 +389,8 @@ for (const tier of ['reduced', 'static']) {
 }
 
 for (const width of [375, 768, 1023]) {
+  // No tier forced. At 375 this helper emulates touch, so the page resolves to Reduced, which
+  // is what a phone does and what these criteria are supposed to be about.
   const { context, page } = await open(width, 812)
   await page.goto(`${BASE}/`, { waitUntil: 'load' })
   await page.waitForTimeout(2500)
@@ -396,7 +410,12 @@ for (const width of [375, 768, 1023]) {
 
   await revealInPositioning(page)
   const ink = await threadOnColumn(page)
-  record(`below 1024 the Thread paints at ${width}px`, painted(ink), inkDetail(ink))
+  const resolved = await page.getAttribute('[data-tier]', 'data-tier')
+  record(
+    `below 1024 the Thread paints at ${width}px`,
+    painted(ink),
+    `tier resolved to ${resolved}, ${inkDetail(ink)}`,
+  )
   await context.close()
 }
 
