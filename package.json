@@ -50,6 +50,7 @@
     "@types/three": "0.180.0",
     "eslint": "9.39.5",
     "eslint-config-next": "15.5.23",
+    "lighthouse": "^12.8.2",
     "playwright": "^1.62.1",
     "prettier": "3.9.6",
     "prettier-plugin-tailwindcss": "0.8.1",

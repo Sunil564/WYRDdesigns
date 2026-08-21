@@ -43,7 +43,14 @@ export function Positioning() {
       // `mask: 'lines'` wraps every line in an overflow hidden box, which is what
       // makes this a mask reveal rather than a fade.
       const splits = [...body, ...(emphasisEl ? [emphasisEl] : [])].map(
-        (element) => new SplitText(element, { type: 'lines', mask: 'lines' }),
+        /*
+          `aria: 'none'` because the default puts `aria-label` on the element it splits, and
+          these are plain spans. ARIA prohibits `aria-label` on a generic role, and Lighthouse
+          scored the homepage 96 on it. With the option off, GSAP adds no ARIA at all and the
+          sentence stays in the DOM as ordinary text, which assistive technology reads without
+          help. Nothing here needs a label: the text is the text.
+        */
+        (element) => new SplitText(element, { type: 'lines', mask: 'lines', aria: 'none' }),
       )
 
       const bodyLines = splits.slice(0, body.length).flatMap((split) => split.lines)

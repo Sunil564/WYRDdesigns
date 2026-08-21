@@ -167,28 +167,25 @@ export default async function CaseStudyPage({ params }: { params: Promise<Params
           <div className="flex flex-col gap-4">
             {previous && (
               /*
-                The label and the title are separate spans, so the concatenated accessible
-                name came out as "PreviousEcommerce build, garments". An explicit name puts
-                the separator back for a screen reader without changing what is on screen.
+                The separator is a text node, not an aria-label.
+
+                An earlier fix gave these links an explicit name because the two spans
+                concatenated to "PreviousEcommerce build, garments". That solved the reading
+                and created a different fault: the name no longer contained the visible text,
+                which is what `label-content-name-mismatch` checks and what Lighthouse then
+                flagged. A space between the spans fixes both at once, and the accessible name
+                is simply what is on screen.
               */
-              <Link
-                href={`/work/${previous.slug}`}
-                aria-label={`${caseStudy.nav.previous}: ${previous.title}`}
-                className="group max-w-[38ch]"
-              >
-                <span className="label text-fg-muted">{caseStudy.nav.previous}</span>
+              <Link href={`/work/${previous.slug}`} className="group max-w-[38ch]">
+                <span className="label text-fg-muted">{caseStudy.nav.previous}</span>{' '}
                 <span className="text-title text-fg group-hover:text-accent-strong mt-2 block font-bold transition-colors duration-[var(--dur-fast)]">
                   {previous.title}
                 </span>
               </Link>
             )}
             {next && (
-              <Link
-                href={`/work/${next.slug}`}
-                aria-label={`${caseStudy.nav.next}: ${next.title}`}
-                className="group max-w-[38ch]"
-              >
-                <span className="label text-fg-muted">{caseStudy.nav.next}</span>
+              <Link href={`/work/${next.slug}`} className="group max-w-[38ch]">
+                <span className="label text-fg-muted">{caseStudy.nav.next}</span>{' '}
                 <span className="text-title text-fg group-hover:text-accent-strong mt-2 block font-bold transition-colors duration-[var(--dur-fast)]">
                   {next.title}
                 </span>

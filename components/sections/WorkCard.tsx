@@ -11,6 +11,15 @@ type WorkCardProps = {
   project: Project
   /** 4 / 5 for the tall lead card, 16 / 9 for the stacked pair. */
   aspect: number
+  /**
+   * Heading level for the card title, as a number.
+   *
+   * It cannot be baked in. On the homepage the grid sits under an S4 `h2`, so the card is an
+   * `h3`. On `/work` the grid sits directly under the page `h1`, so an `h3` skips a level and
+   * Lighthouse fails `heading-order`, which is what it did. The caller knows what it nested
+   * the card inside; the card does not.
+   */
+  headingLevel?: 2 | 3
   className?: string
 }
 
@@ -25,7 +34,8 @@ type WorkCardProps = {
  * A placeholder card says so, on the card. No client name, no year, and no outcome
  * is rendered while `placeholder` is true, because none of those facts exist yet.
  */
-export function WorkCard({ project, aspect, className }: WorkCardProps) {
+export function WorkCard({ project, aspect, headingLevel = 3, className }: WorkCardProps) {
+  const Heading = `h${headingLevel}` as const
   const cardRef = useRef<HTMLElement | null>(null)
 
   return (
@@ -44,7 +54,7 @@ export function WorkCard({ project, aspect, className }: WorkCardProps) {
         </div>
 
         <div className="mt-6 flex flex-col gap-2">
-          <h3 className="work-card-title text-title text-fg font-bold">{project.title}</h3>
+          <Heading className="work-card-title text-title text-fg font-bold">{project.title}</Heading>
           <p className="measure text-body text-fg-muted">{project.summary}</p>
 
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">

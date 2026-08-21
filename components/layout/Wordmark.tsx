@@ -45,6 +45,15 @@ export function Wordmark({
       >
         WYRD
       </span>
+      {/*
+        A real space between the two words, not only the flex gap.
+
+        The gap separates them visually and leaves the text content as "WYRDDesigns", so the
+        header link's accessible name, "WYRD Designs, home", did not contain its own visible
+        text and Lighthouse failed label-content-name-mismatch on every route. Third time this
+        build that a visual separator was mistaken for a textual one.
+      */}
+      {descriptor && ' '}
       {descriptor && (
         <span
           className={cn(

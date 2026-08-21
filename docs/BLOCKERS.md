@@ -81,15 +81,20 @@ Unblocks by: creating a Resend account, adding `RESEND_API_KEY` to the Vercel pr
 Blocks: the form actually delivering. Nothing else. Every other path on `/contact` works without it.
 
 
-### 10. Lighthouse has never been run, on any route
+### 10. Lighthouse Performance is unverified
 
-Not once, in any phase. Every score the build plan sets a number for is unverified: Accessibility 100 on every route, which is plan criterion 613 and Phase 5 criterion 2, and both Performance budgets, mobile Reduced tier at 90 or above and desktop Full tier at 85 or above, from plan section 602 and 603.
+**Half of this is now closed.** Lighthouse runs on every route, in `scripts/check-lighthouse.mjs`, as a devDependency driving Playwright's own Chromium against the verification server. Accessibility and Best Practices are device independent, so they are real numbers here.
 
-What has been measured instead, per route, is the set of things a harness can assert directly: one `h1`, one of each landmark, a title and description that are not the defaults, every keyboard stop rendered and carrying a visible focus ring, every interactive target 44px tall, no horizontal scroll from 320 to 2560, every rendered text and background pair against WCAG AA contrast ratios, and JS transferred against both tier ceilings. Those overlap with a good part of what Lighthouse's accessibility audit checks and with none of what its performance audit checks. They are not a substitute and have never been reported as one.
+Accessibility is **100 on all seven routes**, which is plan criterion 10 and Phase 5 criterion 2, closed. It was not 100 when first measured: the homepage scored 96 and `/work` 98, and three real defects had to be fixed first. Those are in the commit that added this.
 
-Unblocks by: adding `lighthouse` as a devDependency and running it against the verification server on 3100. Playwright's Chromium is already installed and can be launched with `--remote-debugging-port`, which is the endpoint Lighthouse drives, so no second browser is needed. The one thing this environment cannot give is a trustworthy Performance number: it is a headless software renderer with no GPU, and the same page here measures 16.7 to 24.7ms median frame time across runs. Accessibility, Best Practices and SEO are device independent and would be real. Performance has to come from a real device, which is item 11.
+Best Practices is **96 on the homepage and 96 elsewhere**, reported and not gated because the plan sets no target. The only failing audit is `errors-in-console`, and the only two entries are 404s for `/_vercel/insights/script.js` and `/_vercel/speed-insights/script.js`, which Vercel's edge serves and a local server does not have. It would be 100 deployed, and that cannot be verified from here.
 
-Blocks: closing Phase 5 criterion 2 and plan criteria 1, 2 and 10. Nothing ships differently because of it.
+What stays open is **Performance**, both budgets: mobile Reduced tier at 90 or above, desktop Full tier at 85 or above, from plan sections 602 and 603. The harness deliberately does not score it. This is headless Chromium on a software renderer with no GPU, where the same page measures 16.7 to 24.7ms median frame time across runs, so a Performance score from here would be a precise looking figure that says nothing about a real device. SEO is also unscored, for a narrower reason: several of its audits check a canonical against a real origin, and the production domain does not exist, so it would be scoring item 1 rather than the markup.
+
+Unblocks by: running Lighthouse against a deployed preview on real hardware. The harness already takes a `SHOOT_BASE`, so it is one environment variable and no code change.
+
+Blocks: closing plan criteria 1 and 2. Nothing ships differently because of it.
+
 
 ### 11. Frame rate on real hardware is unverified
 
