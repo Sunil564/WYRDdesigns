@@ -1,25 +1,24 @@
 /**
  * Copy and options for the `/contact` route. Brief section 6.5.
  *
- * Two things here need their sourcing stated, because both put numbers on the site and this
- * route carries more numbers than any other.
+ * **The budget brackets are INR only, and there is no currency toggle.**
  *
- * **The INR brackets.** `docs/brand.md` section 5 states a deal size of Rs 25k to Rs 5L, so
- * both endpoints are that verified range and only the interior boundary is structure. These
- * are not prices. CLAUDE.md bans a price, meaning what the studio charges, and this asks the
- * visitor what they have to spend, which the brief specifies twice and is a qualifier on an
- * enquiry rather than a rate card.
+ * `docs/brand.md` section 5 states a deal size of Rs 25k to Rs 5L, so both endpoints are that
+ * verified range and only the interior boundary is structure. These are not prices. CLAUDE.md
+ * bans a price, meaning what the studio charges, and this asks the visitor what they have to
+ * spend, which the brief specifies twice and is a qualifier on an enquiry rather than a rate
+ * card.
  *
- * **The USD brackets.** No USD figure appears in `docs/brand.md`, and converting the rupee
- * range would mean inventing an exchange rate and baking today's rate into the repository.
- * So these are independent round numbers for the secondary market rather than conversions,
- * and they are the one set of figures on this route with no document behind them. Flagged
- * for the operator rather than presented as sourced.
+ * A USD set shipped alongside it for one release and was removed by operator decision on
+ * 2026-08-22. No USD figure appears in `docs/brand.md`; converting the rupee range would have
+ * meant inventing an exchange rate and baking one day's rate into the repository, so the USD
+ * brackets were independent round numbers with no document behind them. That is the one thing
+ * this site does not do. A US enquiry says what it has to spend in the message field, which
+ * costs that visitor one sentence and costs the site nothing it cannot stand behind. See
+ * ADR 0028.
  *
  * Timeline and cluster options are the brief's wording verbatim.
  */
-
-export type Currency = 'INR' | 'USD'
 
 export const contactPage = {
   eyebrow: 'Contact',
@@ -43,8 +42,7 @@ export const contactPage = {
     timeline: { label: 'Timeline' },
     budget: {
       label: 'Budget',
-      hint: 'Optional. It helps us tell you quickly whether we are a fit.',
-      toggleLabel: 'Currency',
+      hint: 'Optional, in rupees. It helps us tell you quickly whether we are a fit.',
     },
     message: { label: 'Message', placeholder: 'What are you making, and what does it need?' },
     /**
@@ -100,21 +98,10 @@ export const timelineOptions = [
   { value: 'exploring', label: 'Exploring' },
 ] as const
 
-export const budgetOptions: Record<Currency, ReadonlyArray<{ value: string; label: string }>> = {
-  INR: [
-    { value: '', label: 'Prefer not to say' },
-    { value: 'inr-under-25k', label: 'Under Rs 25,000' },
-    { value: 'inr-25k-1l', label: 'Rs 25,000 to Rs 1,00,000' },
-    { value: 'inr-1l-5l', label: 'Rs 1,00,000 to Rs 5,00,000' },
-    { value: 'inr-5l-plus', label: 'Above Rs 5,00,000' },
-  ],
-  USD: [
-    { value: '', label: 'Prefer not to say' },
-    { value: 'usd-under-1k', label: 'Under $1,000' },
-    { value: 'usd-1k-5k', label: '$1,000 to $5,000' },
-    { value: 'usd-5k-25k', label: '$5,000 to $25,000' },
-    { value: 'usd-25k-plus', label: 'Above $25,000' },
-  ],
-}
-
-export const currencies: ReadonlyArray<Currency> = ['INR', 'USD']
+export const budgetOptions: ReadonlyArray<{ value: string; label: string }> = [
+  { value: '', label: 'Prefer not to say' },
+  { value: 'inr-under-25k', label: 'Under Rs 25,000' },
+  { value: 'inr-25k-1l', label: 'Rs 25,000 to Rs 1,00,000' },
+  { value: 'inr-1l-5l', label: 'Rs 1,00,000 to Rs 5,00,000' },
+  { value: 'inr-5l-plus', label: 'Above Rs 5,00,000' },
+]

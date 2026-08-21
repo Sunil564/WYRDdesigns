@@ -103,6 +103,8 @@ Blocks: nothing. See ADR 0020 sections 11 and 14.
 
 ### 13. Advisories whose only fix is a Next major
 
+**Deferred to after launch by operator decision, 2026-08-22.** The reasoning given: neither chain is exploitable in how this site uses sharp, and the upgrade swaps webpack for Turbopack on a site measured in bytes. Revisit after launch. Not closed, because the advisories are still open upstream and the assessment in ADR 0021 still stands.
+
 Assessed in full in ADR 0021, not upgraded. `next` stays at 15.5.23.
 
 Two chains reach `next`, and neither is exploitable in this deployment:
@@ -119,20 +121,9 @@ Unblocks by: an operator decision to upgrade, taken as its own piece of work. AD
 Blocks: nothing. Neither advisory is reachable with attacker controlled input.
 
 
-### 15. The USD budget brackets have no source
-
-Decision needed, not a defect. Nothing about them is wrong today, and they are the only figures on `/contact` with no document behind them.
-
-`docs/brand.md` section 5 states a deal size of Rs 25,000 to Rs 5,00,000, so the INR brackets are anchored to a verified range with one interior boundary as structure. No USD figure appears anywhere in the supplied material. Converting the rupee range would mean choosing an exchange rate and baking today's rate into the repository, where it would quietly go wrong. So the USD brackets are independent round numbers for the secondary market: under $1,000, $1,000 to $5,000, $5,000 to $25,000, above $25,000.
-
-Two ways to resolve, both the operator's:
-
-- Supply real USD brackets, and they replace the four values in `budgetOptions.USD` in `content/contact.ts`.
-- Drop the currency toggle, and the form ships INR only. That is a smaller change than it sounds: delete `budgetOptions.USD` and the `currencies` array, and the toggle and its `role="group"` come out of `ContactForm` with them.
-
-Blocks: nothing shipping. `scripts/check-contact.mjs` allows the current figures explicitly in its digit allowlist, so changing them fails that criterion until the allowlist is updated too, which is the intended coupling.
-
 ### 16. The Full tier page transition is the plain one
+
+**Deferred to after launch by operator decision, 2026-08-22.** Keep the plain crossfade. No experimental flag before launch. Not closed, because it remains a real difference from the brief's WebGL dissolve rather than a question that has gone away.
 
 Decision needed, not a defect. Section 7b.2C specifies a WebGL dissolve for the Full tier: the outgoing page rendered to a render target and dissolved through a noise threshold. What ships is an opacity transition, the same on every tier.
 
@@ -147,6 +138,8 @@ Unblocks by: a decision on View Transitions, taken deliberately with the plain c
 Blocks: nothing. The transition that ships works on every tier and is asserted by `scripts/check-transitions.mjs`.
 
 ### 17. A flagship phone is treated as a budget one
+
+**Deferred to after launch by operator decision, 2026-08-22.** Leave as recorded, revisit after launch. It costs capable phones fidelity and costs nobody correctness, and the tiering rule is the most load bearing decision in the build.
 
 Follow up, recorded rather than acted on, at the operator's instruction. Do not change it as a side effect of other work.
 
@@ -178,6 +171,14 @@ Blocks: nothing. It is a visual defect in the first two seconds of the homepage.
 
 
 ## Resolved
+
+### 15. The USD budget brackets have no source
+
+Closed 2026-08-22 by operator decision: drop them. INR only, and the currency toggle goes with them.
+
+No dollar figure appears in `docs/brand.md`, and converting the rupee range would have meant inventing an exchange rate and baking one day's rate into the repository. The brackets were independent round numbers chosen to look plausible. Four unsourced money figures behind a toggle is the site's second rule being escaped by one click.
+
+A US enquiry states its budget in the message field, which costs that visitor one sentence and costs the site nothing it cannot stand behind. See ADR 0028.
 
 ### 8. SITEO has no single colour version
 

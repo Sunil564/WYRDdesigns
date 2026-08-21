@@ -38,7 +38,7 @@ export const contactSchema = z.object({
   email: z.string().trim().min(1).max(200).pipe(z.email()),
   needs: z.array(z.enum(values(needOptions) as [string, ...string[]])).max(needOptions.length),
   timeline: optionalChoice(values(timelineOptions)),
-  budget: optionalChoice([...values(budgetOptions.INR), ...values(budgetOptions.USD)]),
+  budget: optionalChoice(values(budgetOptions)),
   message: z.string().trim().min(1).max(4000),
 })
 

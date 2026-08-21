@@ -83,6 +83,7 @@ await harness.checkOverflow(ROUTE)
     return {
       requiredFields: Array.from(document.querySelectorAll('[required]')).map((node) => node.id),
       needsChips: document.querySelectorAll('fieldset [aria-pressed]').length,
+      // Should be zero. The toggle was removed with the USD brackets, ADR 0028.
       currencyChips: document.querySelectorAll('[aria-label="Currency"] [aria-pressed]').length,
       budgetOptions: Array.from(document.querySelectorAll('#budget option')).map((node) =>
         (node.textContent ?? '').trim(),
@@ -101,16 +102,22 @@ await harness.checkOverflow(ROUTE)
     `required: ${form.requiredFields.join(', ')}`,
   )
   record(
-    'the multi select and the currency toggle are real buttons with pressed state',
-    form.needsChips >= 6 && form.currencyChips === 2,
-    `${form.needsChips} need chips, ${form.currencyChips} currency chips, ` +
-      `${form.timelineOptions} timeline options`,
+    'the multi select is real buttons with pressed state',
+    form.needsChips >= 6,
+    `${form.needsChips} need chips, ${form.timelineOptions} timeline options`,
   )
+  /*
+    Rupees, and no way to reach anything else. This asserted that the select defaulted to
+    INR, which a currency toggle satisfied while still offering unsourced USD brackets one
+    click away. It now asserts the toggle is gone as part of the same criterion, because
+    "INR only" is the claim and the toggle was how that claim was escaped. ADR 0028.
+  */
   record(
-    'the budget select defaults to INR brackets',
+    'the budget select offers INR brackets only, with no currency toggle',
     form.budgetOptions.some((label) => label.includes('Rs')) &&
-      !form.budgetOptions.some((label) => label.includes('$')),
-    `options: ${form.budgetOptions.join(' | ')}`,
+      !form.budgetOptions.some((label) => label.includes('$')) &&
+      form.currencyChips === 0,
+    `${form.currencyChips} currency chips, options: ${form.budgetOptions.join(' | ')}`,
   )
   record(
     'the honeypot exists, is off screen, and is not a tab stop',
@@ -121,26 +128,6 @@ await harness.checkOverflow(ROUTE)
     'the timing stamp is set on mount rather than at build time',
     form.startedAt !== null && Number(form.startedAt) > 0,
     `startedAt ${form.startedAt}`,
-  )
-  await context.close()
-}
-
-// --------------------------------------------------------- currency toggle switches brackets
-{
-  const { context, page } = await open(1440, 900)
-  await page.goto(`${BASE}${ROUTE}`, { waitUntil: 'load' })
-  await page.waitForTimeout(2000)
-  await page.click('[aria-label="Currency"] button:has-text("USD")')
-  await page.waitForTimeout(400)
-  const options = await page.evaluate(() =>
-    Array.from(document.querySelectorAll('#budget option')).map((node) =>
-      (node.textContent ?? '').trim(),
-    ),
-  )
-  record(
-    'the currency toggle switches the brackets to USD',
-    options.some((label) => label.includes('$')) && !options.some((label) => label.includes('Rs')),
-    `options after toggle: ${options.join(' | ')}`,
   )
   await context.close()
 }

@@ -5,14 +5,7 @@ import { useFormStatus } from 'react-dom'
 import { submitContact } from '@/app/contact/actions'
 import { Chip } from '@/components/ui/Chip'
 import { Field, FieldShell, SelectField, TextAreaField } from '@/components/ui/Field'
-import {
-  budgetOptions,
-  contactPage,
-  currencies,
-  needOptions,
-  timelineOptions,
-  type Currency,
-} from '@/content/contact'
+import { budgetOptions, contactPage, needOptions, timelineOptions } from '@/content/contact'
 import { EMPTY_VALUES, FIELD, IDLE_STATE, type ContactState } from '@/lib/contact-fields'
 
 /**
@@ -59,7 +52,6 @@ export function ContactForm() {
 
   /** What the fields render with. Empty on first paint, the visitor's typing after a failure. */
   const values = state.values ?? EMPTY_VALUES
-  const [currency, setCurrency] = useState<Currency>('INR')
   const [needs, setNeeds] = useState<string[]>([])
   const startedAt = useRef<HTMLInputElement | null>(null)
   const errorRef = useRef<HTMLParagraphElement | null>(null)
@@ -156,33 +148,18 @@ export function ContactForm() {
           options={timelineOptions}
         />
 
+        {/*
+          Rupees only, and no currency toggle. The USD brackets it switched to were round
+          numbers with no source, so the toggle offered a choice between a sourced range and
+          an invented one. ADR 0028.
+        */}
         <FieldShell id={FIELD.budget} label={contactPage.form.budget.label} hint={contactPage.form.budget.hint}>
-          {/*
-            Manual currency toggle, defaulting to INR. No locale sniffing: the main plan calls
-            that fragile and offers the toggle alone as the alternative, and a wrong guess
-            about someone's currency is worse than asking.
-          */}
-          <div
-            className="mb-3 flex flex-wrap gap-3"
-            role="group"
-            aria-label={contactPage.form.budget.toggleLabel}
-          >
-            {currencies.map((option) => (
-              <Chip
-                key={option}
-                selected={currency === option}
-                onClick={() => setCurrency(option)}
-              >
-                {option}
-              </Chip>
-            ))}
-          </div>
           <select
             id={FIELD.budget}
             name={FIELD.budget}
             className="rounded-input border-border bg-bg-raised text-body text-fg hover:border-fg-muted focus:border-accent w-full appearance-none border px-4 py-3 transition-colors duration-[var(--dur-fast)]"
           >
-            {budgetOptions[currency].map((option) => (
+            {budgetOptions.map((option) => (
               <option key={option.value} value={option.value} className="bg-bg-raised text-fg">
                 {option.label}
               </option>
