@@ -97,19 +97,43 @@ The wider fact behind both: on no tier does anything visible consume what that S
 
 `aAlong` and `aGroup` are still sampled and still uploaded, read by nothing. The handoff in step 8 has to assign a hero particle to a place on the route, and that is what they are for.
 
-## 7. The Thread passes behind opaque content, by decision
+## 7. The Thread runs behind content, and is visible on bare page
 
-Operator decision, taken with the evidence below in front of it: the stream passes behind the four dark cluster cards by design. Criteria 11, 12 and 16 of the particle brief are amended accordingly, and the inverse block crossing applies to the full width inverse sections only.
+Operator decision, taken against the full route inventory below: all four occluders stay as they are. The Thread passes behind the capabilities intro panel, behind the four dark cluster cards, behind the work grid placeholder panels, and behind the contact button. It is visible on bare page ground. That is the design, not a defect to work around.
 
-The evidence. The stream host is `z-2`, the slot ADR 0019 established, and that record's layering holds for an inverse `Section`, which paints its dark ground as a sibling layer at `z-1`: measured at the contact call to action, 687 of the stream's 1,294 pixels there sit over dark ground, so the stream does cross it. It does not hold anywhere content carries its own background inside a `z-10` section. Confirmed by computed stacking:
+The reasoning, recorded because it will look like an omission later otherwise: particles over body text read as broken, and particles over real photography will read as dirt once the placeholders are replaced by client work. Both are worse than a thread that disappears behind a block and comes out the other side.
 
-```
-[data-thread-branch-point]   section z=10        bg rgb(247,246,244)
-[data-thread-branch-target]  section z=10        bg rgb(10,10,12)
-[data-inverse-band]          no z above 2        does not occlude
-```
+The inventory, sampled at 1,809 points along all nine paths against every element in every section:
 
-Two things worth recording plainly. First, this is not new and not caused by the particle work: the pre-particle hairline baseline in `build-logs/thread-before-full.txt` reports contrast 0 and coverage 0 percent at the branch, clusters and strands stops. The SVG stroke was equally invisible there. Second, it is wider than the four cluster cards. The branch point panel, the work grid placeholder panels and any other `z-10` section with a background occlude it too, so the Thread is visible over bare page ground and nowhere else. A future decision to change that is a layering change to those components, not a change to the stream.
+| Section | Route pts | Occluder | Occluded | Ground |
+|---|---|---|---|---|
+| hero | 1 | none | 0 | |
+| positioning | 152 | none | 0 | visible |
+| capabilities | 921 | `div[data-thread-branch-point]` | 471 | `#F7F6F4`, 16 percent of it on body text |
+| | | `article[data-thread-branch-target]` x4 | 293 | `#0A0A0C`, 15 percent on text including the cluster headings |
+| work | 286 | `div[data-placeholder]` | 132 | `#F7F6F4`, no text, all of it artwork |
+| clients | 86 | `span` x3, the logo marks | 7 | `#5E5E66`, which is the particle rest colour exactly |
+| process | 109 | none | 0 | visible |
+| studio-strip | 108 | none | 0 | visible |
+| contact and footer | 147 | `a[data-thread-converge]` | 4 | `#FF521F`, the terminus |
+
+Two corrections to earlier readings in this build, both recorded because each was stated confidently and was wrong. The z-10 sections are not themselves opaque; specific content inside them is, which is why "visible over bare page ground and nowhere else" overstated it. Positioning, process and the studio strip carry the thread with nothing in the way at all. And `div[data-inverse-band]` carries no z-index above 2, so it does not occlude: measured at the contact call to action, 687 of the stream's 1,294 pixels there sit over dark ground.
+
+None of this is new. The pre-particle hairline baseline in `build-logs/thread-before-full.txt` reports contrast 0 and coverage 0 percent at the branch, clusters and strands stops. The SVG stroke was equally invisible in all the same places, and the zeros sat in a log nobody read as occlusion.
+
+## 8. Step 6 is one band, not four cards
+
+Section 2.5 of the particle brief is written for a stream that crosses every inverse block, and section 7 above removes most of what it was written for. The cluster cards were the crossing problem, and there is nothing left to switch on them: the stream is behind them.
+
+What remains is real and still needed. The contact call to action's inverse band is not an occluder, so the stream genuinely crosses it, on a `#0A0A0C` ground where `--fg-muted` particles measure the same 1.28:1 the hairline did. So step 6 is:
+
+- One band, the contact call to action. Resting particles switch to `--fg-inverse-muted` and the head to `--accent-on-inverse` inside it.
+- A hard switch at the band edge, no fade, because the background edge is hard.
+- Implemented as the brief's preferred approach: the band's document Y range passed to the shader as a uniform, each particle testing its own Y. `threadStore` already carries `bandTops`, `bandBottoms` and `bandCount` from the same measurement pass that samples the paths, so there is one source of truth for where the dark ground is and nothing to add on the geometry side.
+- Not `mix-blend-mode` on the canvas, which would blend the hero field along with the stream. ADR 0019 rejected difference blending for the stroke with arithmetic, and the canvas case is strictly worse.
+- The footer needs nothing: the route terminates at the contact button, above it.
+
+Criteria 11, 12 and 16 of the particle brief are amended to this scope. 16's weight conservation at the branch is unaffected and already measured in section 6; what it loses is the clause about reading correctly against the dark capabilities cards, which is now moot.
 
 ## Consequences
 
@@ -117,4 +141,4 @@ Two things worth recording plainly. First, this is not new and not caused by the
 - The reveal stays on the same ScrollTrigger per path that drew the stroke. Progress is written into a shared typed array rather than React state, because it changes sixty times a second and must never cause a render.
 - The Static tier keeps the SVG stroke, complete and unanimated, with the two path crossing solution from ADR 0019 intact. Nothing about that tier changes.
 - Verification reads counts from the DOM rather than inferring them from pixels: `data-field-count` for the hero field and `data-thread-stream` for the stream.
-- What is not decided yet: the inverse block crossing for the full width sections, the Reduced tier's 2D overlay, which must reproduce the Y based reveal on the CPU, and whether below 1024 gets a stream or keeps the stroke. Those are the steps that follow, and each adds its section here.
+- What is not decided yet: the Reduced tier's 2D overlay, which must reproduce the Y based reveal on the CPU and currently renders nothing at all, and whether below 1024 gets a stream or keeps the stroke. Those are the steps that follow, and each adds its section here.
