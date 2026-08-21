@@ -12,9 +12,15 @@
 
 import { chromium } from 'playwright'
 
-/** Analytics scripts that only exist in production, and routes Phase 5 has not built yet. */
+/**
+ * Analytics scripts that only exist in production, and routes Phase 5 has not built yet.
+ *
+ * Entries come out the moment the route lands. `/studio` was in here for one commit and is
+ * out now, `/contact` goes when route 4 does, and `/privacy` and `/terms` are not in Phase 5
+ * at all. A masking pattern that outlives its reason is how a real failure stays invisible.
+ */
 const DEFAULT_EXPECTED_404 =
-  /_vercel\/(insights|speed-insights)|\/(studio|contact|privacy|terms)(\?_rsc=|\/|$)/
+  /_vercel\/(insights|speed-insights)|\/(contact|privacy|terms)(\?_rsc=|\/|$)/
 
 export function createHarness({ base, expected404 = DEFAULT_EXPECTED_404 }) {
   const results = []
@@ -165,7 +171,12 @@ export function createHarness({ base, expected404 = DEFAULT_EXPECTED_404 }) {
       ).length,
       canvases: document.querySelectorAll('canvas').length,
       lenis: Boolean(window.__lenis),
-      placeholders: document.querySelectorAll('[data-placeholder]').length,
+      /*
+        Scoped to main. The header's wordmark is an interim placeholder site wide, per
+        BLOCKERS item 2, so counting the whole document tells you about the shell rather than
+        about the route.
+      */
+      placeholders: document.querySelectorAll('main [data-placeholder]').length,
     }))
     record(
       `${route} renders composed under reduced motion, with nothing mounted`,

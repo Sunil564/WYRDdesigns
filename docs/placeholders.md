@@ -49,10 +49,10 @@ These are not placeholders. They are sections that do not render because the fac
 
 | Thing | Why absent |
 |---|---|
-| Team section on `/studio` | No real names supplied |
+| Team section on `/studio` | No real names supplied. The route ships with no team section, no generic "our team" block, and no placeholder person. `scripts/check-studio.mjs` asserts the absence three ways: no section label about people, no team phrase in the rendered text, and no image in `main`. |
 | Street address | None supplied. Only `Bangalore, Karnataka, India` renders. |
 | Outcome metrics on case studies | None supplied. Never invented. |
 | Testimonials | None supplied. No section exists for them. |
-| Client count, founding year, team size, awards | None supplied. Nothing on the site refers to any of them. |
+| Client count, founding year, team size, years in business, awards | None supplied. Nothing on the site refers to any of them. On `/studio` this is asserted rather than trusted: every digit rendered on the route is matched against an allowlist of the four process indexes and the two phone numbers from `docs/brand.md`. |
 | Prices | Banned outright. Pricing is a conversation. |
 | Client logo marquee | Six logos supplied, and the marquee needs eight. A static centred row renders instead, per ADR 0004. |

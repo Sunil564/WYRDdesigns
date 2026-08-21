@@ -109,7 +109,7 @@ await harness.checkOverflow(first)
           emptyMetaValues: Array.from(main?.querySelectorAll('dd') ?? []).filter(
             (value) => (value.textContent ?? '').trim().length === 0,
           ).length,
-          placeholders: document.querySelectorAll('[data-placeholder]').length,
+          placeholders: document.querySelectorAll('main [data-placeholder]').length,
           h1: document.querySelector('h1')?.textContent?.trim() ?? '',
         }
       }, slug),

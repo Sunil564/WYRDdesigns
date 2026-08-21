@@ -47,7 +47,7 @@ await harness.checkOverflow(ROUTE)
     return {
       cards: cards.length,
       slugs: cards.map((card) => card.querySelector('a')?.getAttribute('href') ?? ''),
-      placeholders: document.querySelectorAll('[data-placeholder]').length,
+      placeholders: document.querySelectorAll('main [data-placeholder]').length,
       chips: Array.from(document.querySelectorAll(chipGroup)).map((button) => ({
         label: button.textContent?.trim() ?? '',
         disabled: button.disabled,
