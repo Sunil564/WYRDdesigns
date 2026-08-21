@@ -83,6 +83,18 @@ Unblocks by: a Resend account, a verified domain, and the key in the Vercel proj
 
 Blocks: end to end delivery verification in Phase 5. The form, validation, and error states are testable without it.
 
+### 10. Reduced tier renders no Thread
+
+Scheduled work, not a missing fact and not a defect. Section 2.3 of the particle brief gives the Reduced tier a 2D canvas overlay drawing the sampled points at a third of the density, and it has not been built yet. It is step 9 in that brief's order of work.
+
+Until it is, the Reduced tier renders no Thread at all: the SVG carrier paths are `opacity: 0` on every particle tier, the WebGL scene is not mounted, and nothing takes their place. Confirmed structurally, on the Reduced tier at 1440: `data-thread-stream` host absent, `data-thread-overlay` absent, SVG opacity 0.
+
+Recorded here because the acceptance harness hid it. `check-home.mjs` asserted the Thread by reading `stroke-dashoffset` off those invisible paths, so it passed on the tier that draws nothing, and there was no Reduced tier Thread criterion at all. The Thread criteria now assert on pixels and `the Thread paints at 1440px on the reduced tier` fails, which is the correct reading and the only failure in 35.
+
+Unblocks by: step 9 of `HERO-PARTICLES-AND-THREAD.md`, which also covers the Reduced tier's own handling of the inverse band crossing on the CPU.
+
+Blocks: nothing shipping. It is a tier degradation, and the tier is already the degraded one. See ADR 0020.
+
 ## Resolved
 
 Nothing yet.

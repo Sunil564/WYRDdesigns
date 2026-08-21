@@ -164,32 +164,174 @@ async function walk(page, step = 600, settle = 220) {
 }
 
 // ------------------------------------------------------------------- the Thread
+/*
+  These criteria used to read `stroke-dashoffset` off the carrier paths. Those paths
+  are `opacity: 0` on every particle tier, so the old assertions passed on a page that
+  drew no Thread at all, and they kept passing after the reveal moved to document Y and
+  the dash state stopped describing anything. See CLAUDE.md, Verification.
+
+  So: painting is asserted on pixels, by hiding whatever renderer is responsible and
+  diffing, which works the same on all three tiers without knowing which one is up.
+  Geometry is asserted on the geometry, and says so in its own name rather than being
+  dressed up as evidence that something was drawn.
+*/
+
+/**
+ * Is the Thread painted on its own column, at the current scroll?
+ *
+ * One screenshot, and a spatial comparison inside it: the Thread is a narrow feature on
+ * a column the geometry can name, so its column is compared against a control column at
+ * the same rows, with a per row local ground so a heading or a dark block cannot skew it.
+ *
+ * Time never enters the measurement, and that is the whole point. The first version of
+ * this hid the renderers and diffed two screenshots taken 400ms apart, which reported
+ * 789 Thread pixels on a Reduced tier that draws no Thread at all: the hero field
+ * animates between the two frames and the difference was charged to the Thread. Two
+ * frames of an animated page are never a control for each other.
+ *
+ * Geometry is used to locate the column and for nothing else. Whether anything is
+ * painted there is decided by pixels.
+ */
+async function threadOnColumn(page) {
+  const routeX = await page.evaluate(() => {
+    const trunk = document.querySelector('[data-thread-body]')
+    if (!trunk) return null
+    return Math.round(trunk.getPointAtLength(0).x + trunk.ownerSVGElement.getBoundingClientRect().left)
+  })
+  if (routeX === null) return { routeX: null, onRows: 0, ctrlRows: 0, onMean: 0, ctrlMean: 0, redPeak: 0 }
+
+  const base64 = (await page.screenshot()).toString('base64')
+  return page.evaluate(
+    async ({ base64, routeX }) => {
+      const blob = await (await fetch(`data:image/png;base64,${base64}`)).blob()
+      const bitmap = await createImageBitmap(blob)
+      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height)
+      const context = canvas.getContext('2d')
+      context.drawImage(bitmap, 0, 0)
+      const { data, width } = context.getImageData(0, 0, bitmap.width, bitmap.height)
+      const lum = (x, y) => {
+        const i = (width * y + x) * 4
+        return (data[i] + data[i + 1] + data[i + 2]) / 3
+      }
+      // The widest control offset that still fits the viewport with its own ground strip.
+      const offset = [200, 150, 100, 80].find(
+        (value) => routeX + value + 76 < width || routeX - value - 76 > 0,
+      )
+      const controlX = routeX + offset + 76 < width ? routeX + offset : routeX - offset
+      const peakNear = (centre, y, ground) => {
+        let peak = 0
+        for (let x = centre - 6; x <= centre + 6; x += 1) peak = Math.max(peak, Math.abs(lum(x, y) - ground))
+        return peak
+      }
+
+      let rows = 0
+      let onRows = 0
+      let ctrlRows = 0
+      let onSum = 0
+      let ctrlSum = 0
+      let redPeak = 0
+      for (let y = 250; y <= 580; y += 1) {
+        for (let x = routeX - 6; x <= routeX + 6; x += 1) {
+          const i = (width * y + x) * 4
+          redPeak = Math.max(redPeak, data[i] - Math.max(data[i + 1], data[i + 2]))
+        }
+        const strip = []
+        for (let x = routeX - 70; x <= routeX + 70; x += 1) strip.push(lum(x, y))
+        const ground = [...strip].sort((a, b) => a - b)[Math.floor(strip.length / 2)]
+        const on = peakNear(routeX, y, ground)
+        const control = peakNear(controlX, y, ground)
+        rows += 1
+        onSum += on
+        ctrlSum += control
+        if (on > 15) onRows += 1
+        if (control > 15) ctrlRows += 1
+      }
+      return {
+        routeX,
+        controlX,
+        rows,
+        onRows,
+        ctrlRows,
+        onMean: Number((onSum / rows).toFixed(1)),
+        ctrlMean: Number((ctrlSum / rows).toFixed(1)),
+        redPeak,
+      }
+    },
+    { base64, routeX },
+  )
+}
+
+/**
+ * Painted, if the Thread's own column carries markedly more ink than a control column
+ * beside it. Measured margins: Full tier +194 rows and +67 mean deviation, Static +116
+ * and +13, Reduced +13 and +6 because nothing paints there at all.
+ */
+function painted(ink) {
+  return ink.onRows >= ink.ctrlRows + 60 && ink.onMean >= ink.ctrlMean + 10
+}
+
+function inkDetail(ink) {
+  return (
+    `column x${ink.routeX} inked ${ink.onRows}/${ink.rows} rows at mean deviation ${ink.onMean}, ` +
+    `control x${ink.controlX} inked ${ink.ctrlRows} at ${ink.ctrlMean}`
+  )
+}
+
+/**
+ * Put the reveal line inside the positioning section, which the occlusion inventory in
+ * ADR 0020 section 7 records as carrying the Thread with nothing in front of it, and far
+ * enough down that the hero field is off screen and cannot contribute ink.
+ *
+ * Through Lenis when it is running, because that is the number the stream places itself
+ * from. `window.scrollTo` would leave the two disagreeing.
+ */
+async function revealInPositioning(page) {
+  await page.evaluate(() => {
+    if (window.__lenis) window.__lenis.scrollTo(1100, { immediate: true })
+    else window.scrollTo(0, 1100)
+  })
+  await page.waitForTimeout(1400)
+}
+
 for (const width of [1024, 1440, 1920, 2560]) {
   const { context, page } = await open(width, 900)
   await page.goto(`${BASE}/`, { waitUntil: 'load' })
-  await page.waitForTimeout(2000)
+  await page.waitForTimeout(2500)
 
-  const before = await page.evaluate(() => {
+  const route = await page.evaluate(() => {
     const bodies = Array.from(document.querySelectorAll('[data-thread-body]'))
-    return bodies.map((path) => Number(path.style.strokeDashoffset || 1))
+    return { count: bodies.length, lengths: bodies.map((path) => Math.round(path.getTotalLength())) }
   })
-
-  await walk(page)
-
-  const after = await page.evaluate(() => {
-    const bodies = Array.from(document.querySelectorAll('[data-thread-body]'))
-    return {
-      count: bodies.length,
-      offsets: bodies.map((path) => Number(path.style.strokeDashoffset || 1)),
-      heads: document.querySelectorAll('[data-thread-head]').length,
-    }
-  })
-
-  const drawn = after.offsets.filter((offset) => offset < 0.5).length
   record(
-    `the Thread branches into four and draws through the page at ${width}px`,
-    after.count === 9 && drawn >= 5 && before.every((offset) => offset >= 0.99),
-    `${after.count} paths, ${drawn} drawn past halfway, ${after.heads} accent heads`,
+    `the Thread route is nine sampled paths at ${width}px`,
+    route.count === 9 && route.lengths.every((length) => length > 100),
+    `${route.count} paths, lengths ${route.lengths.join(', ')}px`,
+  )
+
+  await revealInPositioning(page)
+  const ink = await threadOnColumn(page)
+  const reported = Number(
+    (await page.getAttribute('[data-thread-stream]', 'data-thread-stream')) ?? 0,
+  )
+  record(
+    `the Thread paints at ${width}px on the Full tier`,
+    painted(ink) && reported >= 8000 && reported <= 12000,
+    `${inkDetail(ink)}, renderer reports ${reported} points`,
+  )
+  await context.close()
+}
+
+for (const tier of ['reduced', 'static']) {
+  const { context, page } = await open(1440, 900, tier)
+  await page.goto(`${BASE}/`, { waitUntil: 'load' })
+  await page.waitForTimeout(2500)
+  await revealInPositioning(page)
+  const ink = await threadOnColumn(page)
+  const resolved = await page.getAttribute('[data-tier]', 'data-tier')
+  record(
+    `the Thread paints at 1440px on the ${tier} tier`,
+    painted(ink),
+    `tier resolved to ${resolved}, ${inkDetail(ink)}`,
   )
   await context.close()
 }
@@ -197,26 +339,24 @@ for (const width of [1024, 1440, 1920, 2560]) {
 for (const width of [375, 768, 1023]) {
   const { context, page } = await open(width, 812)
   await page.goto(`${BASE}/`, { waitUntil: 'load' })
-  await page.waitForTimeout(2000)
-  await walk(page)
+  await page.waitForTimeout(2500)
 
-  const state = await page.evaluate(() => {
+  const route = await page.evaluate(() => {
     const bodies = Array.from(document.querySelectorAll('[data-thread-body]'))
-    return {
-      count: bodies.length,
-      d: bodies[0]?.getAttribute('d') ?? '',
-      offset: Number(bodies[0]?.style.strokeDashoffset ?? 1),
-    }
+    return { count: bodies.length, d: bodies[0]?.getAttribute('d') ?? '' }
   })
-
   // One path, and its geometry is a straight vertical line: two points, same x.
-  const points = state.d.match(/-?\d+(\.\d+)?/g) ?? []
+  const points = route.d.match(/-?\d+(\.\d+)?/g) ?? []
   const straight = points.length === 4 && points[0] === points[2]
   record(
-    `below 1024 the Thread is a single straight line at ${width}px`,
-    state.count === 1 && straight && state.offset < 0.5,
-    `${state.count} path, d="${state.d}", offset=${state.offset}`,
+    `below 1024 the Thread route is a single straight line at ${width}px`,
+    route.count === 1 && straight,
+    `${route.count} path, d="${route.d}"`,
   )
+
+  await revealInPositioning(page)
+  const ink = await threadOnColumn(page)
+  record(`below 1024 the Thread paints at ${width}px`, painted(ink), inkDetail(ink))
   await context.close()
 }
 
@@ -401,10 +541,6 @@ for (const width of [375, 768, 1023]) {
     hiddenReveals: Array.from(document.querySelectorAll('[data-reveal]')).filter(
       (element) => Number(getComputedStyle(element).opacity) < 0.99,
     ).length,
-    threadOffsets: Array.from(document.querySelectorAll('[data-thread-body]')).map((path) =>
-      path.getAttribute('stroke-dashoffset'),
-    ),
-    heads: document.querySelectorAll('[data-thread-head]').length,
     sections: document.querySelectorAll('main section[id]').length,
   }))
 
@@ -413,14 +549,20 @@ for (const width of [375, 768, 1023]) {
     state.canvases === 0 &&
       !state.lenis &&
       state.hiddenReveals === 0 &&
-      state.heads === 0 &&
       state.sections === 8,
     JSON.stringify(state),
   )
+  /*
+    Pixels, not the dash attribute. "Complete at rest colour" is a claim about what the
+    page looks like, so it is measured on the column: ink present along it, and no accent
+    anywhere on it, since the travelling head must not exist on this tier.
+  */
+  await revealInPositioning(page)
+  const restInk = await threadOnColumn(page)
   record(
     'reduced motion renders the Thread complete at rest colour',
-    state.threadOffsets.length > 0 && state.threadOffsets.every((offset) => offset === '0'),
-    state.threadOffsets.join(','),
+    painted(restInk) && restInk.redPeak < 40,
+    `${inkDetail(restInk)}, reddest pixel on the column ${restInk.redPeak}`,
   )
   record('no console problems under reduced motion', problems.length === 0, problems.join(' | '))
   await context.close()

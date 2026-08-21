@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { BufferAttribute, Color, NormalBlending } from 'three'
 import type { Points, ShaderMaterial } from 'three'
-import { subscribeThread, threadState } from '@/components/motion/threadStore'
+import { MAX_BANDS, subscribeThread, threadState } from '@/components/motion/threadStore'
 import type { ThreadStreamData } from '@/components/motion/threadStore'
 import { HEAD_LENGTH } from '@/components/motion/threadGeometry'
 import { currentScroll } from '@/components/motion/useLenis'
@@ -69,6 +69,21 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
       // The head is the hero field's accent, the same token, because the stream is
       // meant to read as having come out of the field. Particle brief 2.1.
       uColourHead: { value: pick('--color-accent') },
+      /*
+        The same pair for the dark grounds the stream crosses. Particle brief 2.5.
+
+        `--accent-on-inverse` is the same #ff521f as `--accent` today, since ADR 0019
+        gave the accent no twin, so the visible switch at a band edge is the rest colour
+        alone. Read from tokens regardless, so a future divergence needs no code here.
+      */
+      uColourRestInverse: { value: pick('--color-fg-inverse-muted') },
+      uColourHeadInverse: { value: pick('--color-accent-on-inverse') },
+      // Dark ground ranges in document pixels, from the same measurement pass that
+      // samples the paths. Sized at the uniform array length, not the live band count,
+      // so a relayout cannot change the array length and force a recompile.
+      uBandTops: { value: new Float32Array(MAX_BANDS) },
+      uBandBottoms: { value: new Float32Array(MAX_BANDS) },
+      uBandCount: { value: 0 },
       // The reveal line in document pixels, written every frame, and the depth of the
       // head band above it. One scalar each, where step 5 carried an array per path.
       uRevealLine: { value: 0 },
@@ -156,6 +171,17 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
       Two floats a frame, no buffer upload, no per path array, no dynamic indexing.
     */
     live.uRevealLine!.value = scroll + size.height * REVEAL_OFFSET
+
+    /*
+      The dark grounds, copied here for the same reason the reveal line is computed here:
+      the only writes to this material happen in this block, through the live uniforms,
+      so there is nowhere for a stale holder to hide. See CLAUDE.md, WebGL uniforms.
+
+      Cheap enough to do unconditionally. Eight floats and a count, no upload.
+    */
+    ;(live.uBandTops!.value as Float32Array).set(data.bandTops)
+    ;(live.uBandBottoms!.value as Float32Array).set(data.bandBottoms)
+    live.uBandCount!.value = data.bandCount
   })
 
   if (!data) return null

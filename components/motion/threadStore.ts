@@ -16,9 +16,6 @@ import type { ThreadBand, ThreadSamples } from '@/components/motion/threadGeomet
  * changes sixty times a second and must never cause a React render. See ADR 0020.
  */
 
-/** Uniform array size for per group values. Nine paths at the widest, sixteen is slack. */
-export const MAX_GROUPS = 16
-
 /** Uniform array size for inverse blocks. Four today: the four names in Phase 4b section 4. */
 export const MAX_BANDS = 8
 
@@ -36,10 +33,6 @@ export type ThreadStreamData = {
 
 const state = {
   data: null as ThreadStreamData | null,
-  /** Reveal progress, 0 to 1, per group. Written by ScrollTrigger, read per frame. */
-  progress: new Float32Array(MAX_GROUPS),
-  /** Hero exit progress, 0 to 1, which drives the field's handoff into the stream. */
-  handoff: 0,
 }
 
 const listeners = new Set<() => void>()
@@ -51,8 +44,6 @@ export function publishThread(data: Omit<ThreadStreamData, 'version'>): void {
 
 export function clearThread(): void {
   state.data = null
-  state.progress.fill(0)
-  state.handoff = 0
   for (const listener of listeners) listener()
 }
 

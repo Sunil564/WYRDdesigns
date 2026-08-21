@@ -259,10 +259,6 @@ export type ThreadSamples = {
   group: Float32Array
   /** Per point random, stable for a given layout. Size, alpha, and phase read it. */
   random: Float32Array
-  /** Path length in pixels, per group. */
-  lengths: Float32Array
-  /** `HEAD_LENGTH` as a fraction of that group's length, per group. */
-  headFraction: Float32Array
   groupCount: number
 }
 
@@ -349,7 +345,6 @@ export function samplePaths(
   const along = new Float32Array(total)
   const group = new Float32Array(total)
   const random = new Float32Array(total)
-  const headFraction = new Float32Array(groupCount)
 
   // A plain linear congruential step. Deterministic for a given layout, which is
   // all that is needed: the same page measures to the same thread twice.
@@ -367,7 +362,6 @@ export function samplePaths(
     const element = elements[index]!
     const length = lengths[index]!
     const count = counts[index]!
-    headFraction[index] = length > 0 ? Math.min(1, HEAD_LENGTH / length) : 1
 
     for (let step = 0; step < count; step += 1) {
       const point = element.getPointAtLength(((step + 0.5) / count) * length)
@@ -413,8 +407,6 @@ export function samplePaths(
     along,
     group,
     random,
-    lengths,
-    headFraction,
     groupCount,
   }
 }

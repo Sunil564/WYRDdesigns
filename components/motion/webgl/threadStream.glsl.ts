@@ -21,6 +21,8 @@
  * frame changes two floats.
  */
 
+import { MAX_BANDS } from '@/components/motion/threadStore'
+
 /**
  * Point size at the head, as a multiple of the same particle's rest size, and the
  * head's alpha floor. Both are ratios off the rest state rather than absolutes,
@@ -49,10 +51,27 @@ uniform float uSize;
 uniform float uRevealLine;
 uniform float uHeadLength;
 
+/*
+  The dark grounds the stream crosses, as document Y ranges. Particle brief 2.5.
+
+  One entry per [data-inverse-band], measured by the same pass that samples the paths,
+  so there is one definition of where the dark ground is. In practice this is the contact
+  call to action: ADR 0020 section 7 records that the four dark cluster cards paint over
+  the stream rather than under it, so there is nothing to switch on them.
+
+  Not mix-blend-mode on the canvas, which would blend the hero field along with the
+  stream. ADR 0019 rejected difference blending for the stroke with arithmetic and the
+  canvas case is strictly worse.
+*/
+uniform float uBandTops[${MAX_BANDS}];
+uniform float uBandBottoms[${MAX_BANDS}];
+uniform float uBandCount;
+
 attribute float aRandom;
 
 varying float vRandom;
 varying float vHead;
+varying float vInverse;
 
 void main() {
   vRandom = aRandom;
@@ -113,6 +132,25 @@ void main() {
   head *= head;
   vHead = head;
 
+  /*
+    Which ground this particle is on, decided per particle from its own document Y.
+
+    A point primitive has one vertex, so this varying arrives at the fragment shader
+    exactly 0 or 1 with nothing interpolated. That is what makes the switch hard at the
+    block boundary without a single comparison in the fragment shader: the edge falls
+    between two particles, which is as hard as a discrete stream can be, and it matches
+    the hard edge the background itself has.
+
+    No break, which ESSL 1.00 is awkward about, and no dynamic loop bound. Bands past
+    the count are gated to zero by the multiply instead.
+  */
+  float inverse = 0.0;
+  for (int i = 0; i < ${MAX_BANDS}; i++) {
+    float live = step(float(i), uBandCount - 0.5);
+    inverse = max(inverse, live * step(uBandTops[i], position.y) * step(position.y, uBandBottoms[i]));
+  }
+  vInverse = inverse;
+
   // position is in document pixels. The object's matrix carries the scroll, the
   // page centre, and the pixels to world units scale.
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
@@ -133,10 +171,13 @@ precision mediump float;
 
 uniform vec3 uColourRest;
 uniform vec3 uColourHead;
+uniform vec3 uColourRestInverse;
+uniform vec3 uColourHeadInverse;
 uniform float uOpacity;
 
 varying float vRandom;
 varying float vHead;
+varying float vInverse;
 
 void main() {
   float d = length(gl_PointCoord - vec2(0.5));
@@ -152,7 +193,7 @@ void main() {
     discrete particles at that lightness on white are invisible. 50 to 70 percent
     alpha, per the same section.
   */
-  float rest = 0.5 + vRandom * 0.2;
+  float restAlpha = 0.5 + vRandom * 0.2;
 
   /*
     The head gets an alpha floor of its own rather than a multiplier off the rest
@@ -161,14 +202,22 @@ void main() {
     out mottled; a floor makes every particle in the head bright and keeps only a
     little variance on top.
   */
-  float head = 0.86 + vRandom * 0.14;
+  float headAlpha = 0.86 + vRandom * 0.14;
 
-  float alpha = core * mix(rest, head, vHead) * uOpacity;
+  float alpha = core * mix(restAlpha, headAlpha, vHead) * uOpacity;
   if (alpha < 0.002) discard;
 
-  // Rest to accent across the head window, so the head is a travelling gradient
-  // rather than a hard edged dash. The hard edges on this stream are the reveal tip
-  // and, in the step that follows, the inverse block boundary.
-  gl_FragColor = vec4(mix(uColourRest, uColourHead, vHead), alpha);
+  /*
+    Two grounds, picked by vInverse, then rest to accent across the head window.
+
+    The head pair resolves to the same colour today: --accent-on-inverse and --accent
+    are both #ff521f, because ADR 0019 found the accent reads on both grounds and gave it
+    no twin. So the visible switch at a band edge is the rest colour, --fg-muted to
+    --fg-inverse-muted. Both are read from tokens anyway rather than collapsed into one,
+    so the day the tokens diverge this needs no shader change.
+  */
+  vec3 rest = mix(uColourRest, uColourRestInverse, vInverse);
+  vec3 head = mix(uColourHead, uColourHeadInverse, vInverse);
+  gl_FragColor = vec4(mix(rest, head, vHead), alpha);
 }
 `

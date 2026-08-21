@@ -1,14 +1,12 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { loadGsap } from '@/components/motion/gsap'
 import {
-  HEAD_LENGTH,
   measure,
   samplePaths,
   type ThreadGeometry,
 } from '@/components/motion/threadGeometry'
-import { clearThread, MAX_BANDS, publishThread, threadState } from '@/components/motion/threadStore'
+import { clearThread, MAX_BANDS, publishThread } from '@/components/motion/threadStore'
 import { useRenderTier } from '@/components/motion/useRenderTier'
 
 /**
@@ -147,129 +145,6 @@ export function Thread() {
     return () => clearThread()
   }, [geometry, streaming, tier])
 
-  /*
-    Draw on scroll. One ScrollTrigger per path, each writing its own reveal progress
-    into the store and its own dash offset onto the carrier path.
-
-    Worth knowing before touching this: on no tier does anything visible consume what
-    this animates. The carrier paths are `opacity: 0` on the particle tiers, where they
-    exist only so `getPointAtLength` has something to read, and on the Static tier this
-    effect does not run at all and the stroke renders fully drawn. `store.progress` is
-    written here and read by nothing since the reveal moved to document Y. It is kept
-    unscrubbed rather than removed so it cannot disagree with the stream, but it is a
-    mirror of nothing at present. See ADR 0020 section 6.
-  */
-  useEffect(() => {
-    if (!geometry || still) return
-    const host = hostRef.current
-    if (!host) return
-
-    let cancelled = false
-    let cleanup: (() => void) | undefined
-
-    const run = async () => {
-      const { gsap, ScrollTrigger } = await loadGsap()
-      if (cancelled || !hostRef.current) return
-      const store = threadState()
-
-      const context = gsap.context(() => {
-        const groups = Array.from(host.querySelectorAll<SVGGElement>('[data-thread-group]'))
-
-        groups.forEach((group, index) => {
-          const body = group.querySelector<SVGPathElement>('[data-thread-body]')
-          const inverseBody = group.querySelector<SVGPathElement>('[data-thread-body-inverse]')
-          const head = group.querySelector<SVGPathElement>('[data-thread-head]')
-          if (!body) return
-
-          const total = body.getTotalLength()
-          const startSelector = group.dataset.start
-          const endSelector = group.dataset.end
-          const trigger = startSelector ? document.querySelector(startSelector) : null
-          const endTrigger = endSelector ? document.querySelector(endSelector) : null
-
-          // The body path carries pathLength="1", so its dash space is normalised
-          // and no length has to be measured to hide it before this runs. The head
-          // still needs the real length, because its window is 240 real pixels.
-          body.style.strokeDasharray = '1'
-          body.style.strokeDashoffset = '1'
-          if (inverseBody) {
-            inverseBody.style.strokeDasharray = '1'
-            inverseBody.style.strokeDashoffset = '1'
-          }
-          if (head) {
-            gsap.set(head, {
-              strokeDasharray: `${HEAD_LENGTH} ${total + HEAD_LENGTH}`,
-              strokeDashoffset: HEAD_LENGTH,
-              opacity: 0,
-            })
-          }
-
-          const state = { progress: 0 }
-
-          gsap.to(state, {
-            progress: 1,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: trigger ?? host,
-              start: trigger ? 'top 85%' : 'top top',
-              endTrigger: endTrigger ?? undefined,
-              end: endTrigger ? 'bottom 60%' : 'bottom bottom',
-              /*
-                Unscrubbed, deliberately, where this was `scrub: 1`.
-
-                The easing existed to make the head feel drawn rather than clipped, and
-                it was right while the stream read this same progress. The stream now
-                reveals by document Y against an unscrubbed reveal line, so a one second
-                ease here would put the carrier and the particles on two different
-                curves: measured, a jump from 1200 to 2000 left the carrier still
-                travelling for 800ms and 395px after the reveal line had already
-                arrived. Parent brief criterion 8 is about exactly that gap.
-
-                `true` rather than a number means the value tracks scroll with no
-                interpolation, which is what the particles do.
-              */
-              scrub: true,
-            },
-            onUpdate: () => {
-              const drawn = total * state.progress
-              /*
-                The particle stream reads this array. Writing it here rather than
-                from a second ScrollTrigger is what criterion 8 is about: there is
-                one trigger per path and the stream cannot desynchronise from the
-                line, because they are the same number.
-              */
-              if (index < store.progress.length) store.progress[index] = state.progress
-
-              body.style.strokeDashoffset = String(1 - state.progress)
-              // The twin is the same path in the inverse hairline colour, clipped
-              // to the dark bands, so it draws in lockstep with the body.
-              if (inverseBody) inverseBody.style.strokeDashoffset = String(1 - state.progress)
-              if (head) {
-                // The visible window sits at [drawn - HEAD_LENGTH, drawn], so the
-                // accent segment travels with the live tip and the body sits back.
-                head.style.strokeDashoffset = String(HEAD_LENGTH - drawn)
-                head.style.opacity = state.progress > 0.001 && state.progress < 0.999 ? '1' : '0'
-              }
-            },
-          })
-        })
-      }, host)
-
-      cleanup = () => {
-        context.revert()
-        store.progress.fill(0)
-        ScrollTrigger.refresh()
-      }
-    }
-
-    void run()
-
-    return () => {
-      cancelled = true
-      cleanup?.()
-    }
-  }, [geometry, still])
-
   const bands: Band[] = geometry?.bands ?? []
   // Bands are measured in document coordinates. The SVG's user space is host local,
   // so the Static tier's mask and clip have to shift them back.
@@ -406,13 +281,6 @@ function ThreadGroup({
         />
       )}
 
-      {/*
-        The accent head needs no twin: the accent measures 3.24:1 on white, which is
-        fine for a graphic, and 6.10:1 on the dark ground. One colour, both grounds.
-      */}
-      {!still && (
-        <path data-thread-head d={d} stroke="var(--color-accent)" strokeWidth="1.5" opacity="0" />
-      )}
     </g>
   )
 }

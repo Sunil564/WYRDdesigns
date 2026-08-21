@@ -135,6 +135,16 @@ What remains is real and still needed. The contact call to action's inverse band
 
 Criteria 11, 12 and 16 of the particle brief are amended to this scope. 16's weight conservation at the branch is unaffected and already measured in section 6; what it loses is the clause about reading correctly against the dark capabilities cards, which is now moot.
 
+## 9. Step 6 as built
+
+One band, measured at 1440 as document 7075 to 7975, the contact call to action. Nine route paths cross it and the switch happens per particle from its own document Y against a uniform array of band ranges, gated by a band count. A point primitive carries one vertex, so the varying reaches the fragment shader as exactly 0 or 1 and the switch is hard without a single comparison in the fragment shader: the edge falls between two particles.
+
+Verified by forcing `--color-fg-inverse-muted` to `#00ff00` before the page's scripts read it, which is the only way to tell two similar greys apart at partial coverage. Particles on the dark ground came back `rgb(1,223,2)`, greenness 221, against greenness 2 with the real tokens. Zero green rows above the band edge, first green row 1px past it, out of 595 route rows sampled.
+
+One thing the brief expects that does not visibly happen: the head does not change colour. `--accent-on-inverse` and `--accent` are both `#ff521f`, because ADR 0019 section 5 found the accent reads on both grounds and deliberately gave it no twin. Both are read from tokens rather than collapsed into one, so the day they diverge this needs no shader change, but today the visible switch at a band edge is the rest colour alone, `--fg-muted` to `--fg-inverse-muted`.
+
+No blend mode on the canvas. The footer needs nothing: the route terminates at the contact button, inside the band's upper half.
+
 ## Consequences
 
 - The Thread is the fourth WebGL use on the site. Brief 7b.2's list of three is now a list of four, and this record is the argument 7b.2 requires.

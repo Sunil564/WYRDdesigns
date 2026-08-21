@@ -77,6 +77,20 @@ rides `object.matrixWorld`, not uniforms.
 
 Phase 5 adds two more WebGL scenes. This applies to both.
 
+## Verification
+
+Assert on pixels, or on the renderer's own report of what it drew. Never on a sibling
+subsystem's state as a proxy for what is painted. An acceptance harness that reads an
+invisible element passes on a blank page.
+
+A measured zero is a finding, not a null. `shoot-thread.mjs` reported coverage 0 percent
+at two stops across two builds and nobody read it as occlusion.
+
+Two frames of an animated page are never a control for each other. Hiding a renderer and
+diffing two screenshots taken milliseconds apart charges every other animation on the
+page to the thing you hid: that method reported 789 Thread pixels on a tier that draws no
+Thread. Compare space, not time.
+
 ## Commits
 
 Conventional commits. One commit per meaningful unit, not one per phase. Commit before starting risky work so there is an undo point.
