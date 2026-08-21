@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Container } from '@/components/layout/Container'
+import { Wordmark } from '@/components/layout/Wordmark'
 import { legalNav, nav, site, socials } from '@/content/site'
 
 /**
@@ -25,7 +26,13 @@ export function Footer() {
       <Container className="relative pt-32 pb-16">
         <div className="grid gap-16 md:grid-cols-3">
           <div>
-            <p className="text-title text-fg-inverse font-black tracking-[-0.02em]">WYRD</p>
+            {/*
+              The white artwork, at the same size the header renders the black one. Until the
+              white variant was supplied this was the word set in Satoshi, which read as a
+              second logo sitting a few hundred pixels below the real one. Same mark, same
+              size, different ground.
+            */}
+            <Wordmark variant="inverse" />
             <p className="measure text-body text-fg-inverse-muted mt-6">{site.tagline}</p>
             <p className="measure text-body text-fg-inverse-muted mt-3">
               A digital and creative studio in {site.location.city}.

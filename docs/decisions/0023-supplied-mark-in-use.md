@@ -1,6 +1,6 @@
 # 0023. The supplied mark goes into use, on light grounds only
 
-Status: accepted
+Status: accepted, and its footer conclusion superseded by ADR 0025
 Date: 2026-08-21
 Phase: 6
 
@@ -32,6 +32,8 @@ It is used unmodified. Not redrawn, not recoloured, not restretched, per section
 Exported at 3x the largest render by `scripts/process-assets.py`: `wyrd-header.webp` and `.png` at 255 by 120, which is 3x of 40. WebP with a PNG fallback through `<picture>`, intrinsic width and height on the `img` so the box is reserved before the file loads and the header cannot shift.
 
 **40px was chosen by looking, not calculated.** At 32px the `Designs` inside the lockup is cramped; at 40px it reads. The mark is 85px wide there, inside an 81px header bar with room either side. A rendering of 32, 40, 48 and 56px is at `build-logs/screens/logo-header-sizes.png`.
+
+> **Superseded in part, 2026-08-21.** A white variant was supplied and the footer now renders it. Everything below about the black artwork on dark grounds remains true and is why the fallback existed. See ADR 0025.
 
 ## It does not read on the dark grounds, and it is not being inverted
 

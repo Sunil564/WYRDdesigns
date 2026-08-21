@@ -96,8 +96,8 @@ export function ThreadOverlay2D() {
       styles.getPropertyValue(name).trim() || fallback
     const restColour = token('--color-fg-muted', '#5e5e66')
     const restInverse = token('--color-fg-inverse-muted', '#9a9aa2')
-    const headColour = token('--color-accent', '#ff521f')
-    const headInverse = token('--color-accent-on-inverse', '#ff521f')
+    const headColour = token('--color-accent', '#4c86db')
+    const headInverse = token('--color-accent-on-inverse', '#4c86db')
 
     /** Matches the shader's `fract(sin(x) * k)` so both renderers scatter identically. */
     const hash = (value: number, a: number, b: number, k: number) => {

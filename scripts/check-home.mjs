@@ -488,9 +488,22 @@ for (const width of [375, 768, 1023]) {
     const span = el.querySelector('.capability-sweep')
     return span ? getComputedStyle(span).transform : null
   })
+  /*
+    Read the token the page resolved rather than a colour copied into this file. This
+    criterion held `rgb(255, 82, 31)` as a literal and would have failed on a correct build
+    the moment the accent changed, which is the stale-copied-constant fault the Verification
+    rules in CLAUDE.md name. The comparison is done in the page so both sides come from the
+    same computed-style pass and the format matches without parsing.
+  */
   const indexColour = await block.evaluate((el) => {
     const label = el.querySelector('.label')
-    return label ? getComputedStyle(label).color : null
+    if (!label) return null
+    const probe = document.createElement('span')
+    probe.style.color = 'var(--color-accent-on-inverse)'
+    el.append(probe)
+    const expected = getComputedStyle(probe).color
+    probe.remove()
+    return { actual: getComputedStyle(label).color, expected }
   })
 
   record(
@@ -498,8 +511,10 @@ for (const width of [375, 768, 1023]) {
     restBackground !== hoverBackground &&
       sweep !== null &&
       !/matrix\(0,/.test(sweep ?? '') &&
-      indexColour === 'rgb(255, 82, 31)',
-    `${restBackground} to ${hoverBackground}, sweep ${sweep}, index ${indexColour}`,
+      indexColour !== null &&
+      indexColour.actual === indexColour.expected,
+    `${restBackground} to ${hoverBackground}, sweep ${sweep}, index ${indexColour?.actual}` +
+      ` against --accent-on-inverse ${indexColour?.expected}`,
   )
 
   const pointerVars = await page.evaluate(() => {

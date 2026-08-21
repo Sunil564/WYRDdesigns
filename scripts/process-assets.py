@@ -20,6 +20,7 @@ from PIL import Image
 SRC = r"M:\WYRD Projects\WYRD Website\Codebase2"
 CLIENT_SRC = os.path.join(SRC, "Client logos")
 BRAND_SRC = os.path.join(SRC, "Company logo", "Logo_Design_Black final.png")
+BRAND_SRC_WHITE = os.path.join(SRC, "Company logo", "Logo_Design_White.png")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOGO_OUT = os.path.join(ROOT, "public", "logos")
@@ -194,6 +195,19 @@ def process_brand():
         v.save(os.path.join(BRAND_OUT, "wyrd-%s.webp" % label), "WEBP", lossless=True, quality=100)
         v.save(os.path.join(BRAND_OUT, "wyrd-%s.png" % label), "PNG", optimize=True)
         print("brand wyrd-%-8s %4dx%-4d" % (label, w, h))
+
+    # The white variant, for the inverse blocks. Supplied 2026-08-21, and it is the same
+    # artwork rather than a recolour of ours: same 2101 by 989 trim, same 2.124 aspect, with
+    # the Y carrying a grey gradient where the black one carries a dark one. Rendered at the
+    # same 40px as the header mark so the two grounds show one identity at one size.
+    white = trim(Image.open(BRAND_SRC_WHITE).convert("RGBA"))
+    print("brand white supplied trimmed to %dx%d" % white.size)
+    h = 40 * 3
+    w = int(round(white.width * (h / white.height)))
+    v = white.resize((w, h), Image.LANCZOS)
+    v.save(os.path.join(BRAND_OUT, "wyrd-inverse.webp"), "WEBP", lossless=True, quality=100)
+    v.save(os.path.join(BRAND_OUT, "wyrd-inverse.png"), "PNG", optimize=True)
+    print("brand wyrd-inverse      %4dx%-4d" % (w, h))
 
     # OG mark. Transparent is wrong for OG, so it sits on the canvas colour.
     og = Image.new("RGBA", (1200, 400), CANVAS)

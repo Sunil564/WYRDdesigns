@@ -89,7 +89,7 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
       /*
         The same pair for the dark grounds the stream crosses. Particle brief 2.5.
 
-        `--accent-on-inverse` is the same #ff521f as `--accent` today, since ADR 0019
+        `--accent-on-inverse` is the same #4c86db as `--accent` today, since ADR 0019
         gave the accent no twin, so the visible switch at a band edge is the rest colour
         alone. Read from tokens regardless, so a future divergence needs no code here.
       */

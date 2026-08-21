@@ -14,19 +14,20 @@ Unblocks by: registering the domain and setting `NEXT_PUBLIC_SITE_URL` in the Ve
 
 Blocks: Phase 7 deploy to a production domain. Nothing earlier.
 
-### 2. No vector mark, no dark variant, no square glyph
+### 2. No vector mark, no square glyph
 
-**Partially resolved.** The supplied raster is now in use on every light ground: the header, the favicon set at 16, 32, 180 and 512, and the OG mark. It had been sitting unused in `public/brand/` since Phase 0 because ADR 0003 shelved it for a dark canvas that Phase 4b replaced. See ADR 0023.
+**The dark variant clause closed 2026-08-21.** `Logo_Design_White.png` was supplied and is in use on every dark ground: the footer mark renders it at the same 40px the header renders the black one. Verified as the same artwork rather than a recolour, trimming to the same 2101 by 989 at the same 2.124 aspect, and measuring 19.78:1 against `--color-bg-inverse` where the black mark measured 1.06:1. The typographic fallback and its `data-placeholder` tag are gone. See ADR 0025.
 
-Three things are still missing, and they are separate asks:
+The supplied black raster remains in use on every light ground: the header, the favicon set at 16, 32, 180 and 512, and the OG mark. See ADR 0023.
 
-- **A vector.** Every size shipped is a resample of a 2101px raster. Adequate for a 40px header at 3x, not adequate for anything larger, and the footer's closing treatment renders around 665px tall at 2560px, which no crop of this file can serve.
-- **A variant drawn for a dark background.** Measured against `--color-bg-inverse`, the artwork's darkest ink is 1.06:1 and the Y's gradient reaches about 1.4:1. Rendered and looked at, it is a ghost with `Designs` gone entirely. Section 0.3 forbids recolouring a supplied mark, so the header's `inverse` branch and the footer both keep the typographic fallback until a real variant exists.
+Two things are still missing, and they are separate asks:
+
+- **A vector.** Every size shipped is a resample of a 2101px raster, now two of them. Adequate for a 40px mark at 3x, not adequate for anything larger, and the footer's closing watermark renders around 665px tall at 2560px, which no crop of either file can serve. That watermark stays typographic for this reason and because it is decorative and `aria-hidden`.
 - **A square single glyph.** The lockup is 2.124 aspect. Letterboxed into a favicon it leaves the mark small: legible as a shape at 32px, rough at 16px.
 
-Unblocks by: supplying an SVG, AI, EPS or PDF of the mark, a variant for dark grounds, and ideally a square glyph. Any one of the three is independently useful.
+Unblocks by: supplying an SVG, AI, EPS or PDF of the mark, and ideally a square glyph. Either is independently useful.
 
-Blocks: nothing. The site ships the raster on light grounds and type on dark ones.
+Blocks: nothing. Both grounds now carry the real mark.
 
 
 ### 5. No real project data

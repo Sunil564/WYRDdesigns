@@ -596,7 +596,7 @@ void main() {
     Two grounds, picked by vInverse, then rest to accent across the head window.
 
     The head pair resolves to the same colour today: --accent-on-inverse and --accent
-    are both #ff521f, because ADR 0019 found the accent reads on both grounds and gave it
+    are both #4c86db, because ADR 0019 found the accent reads on both grounds and gave it
     no twin. So the visible switch at a band edge is the rest colour, --fg-muted to
     --fg-inverse-muted. Both are read from tokens anyway rather than collapsed into one,
     so the day the tokens diverge this needs no shader change.

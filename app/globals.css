@@ -30,10 +30,14 @@
   --color-border: #e2dfda;
   --color-fg: #0a0a0c;
   --color-fg-muted: #5e5e66;
-  /* 3.24:1 on white. Large text and non text graphics only. See 3.3. */
-  --color-accent: #ff521f;
-  /* 5.08:1 on white. This is the accent for anything text sized. */
-  --color-accent-strong: #c93c0e;
+  /*
+    Both blues are read off the supplied mark's Y, which carries a gradient from
+    #2B4D8A at its foot to #336BC8 at its head. Sampled, not eyeballed. ADR 0025.
+  */
+  /* 3.66:1 on white, 3.39 on --bg-raised. Large text and non text graphics only. See 3.3. */
+  --color-accent: #4c86db;
+  /* 5.15:1 on white. This is the accent for anything text sized. */
+  --color-accent-strong: #336bc8;
 
   /* Inverse context, the dark blocks. */
   --color-bg-inverse: #0a0a0c;
@@ -42,10 +46,10 @@
   --color-border-inverse: #24242a;
   /*
     Same value as --color-accent today, and deliberately a separate token: the
-    orange that works on white is not the orange that works on black, and one day
+    blue that works on white is not the blue that works on black, and one day
     one of these changes without the other.
   */
-  --color-accent-on-inverse: #ff521f;
+  --color-accent-on-inverse: #4c86db;
 
   /* Type scale. Fluid, clamped. Brief section 4.2, mega adjusted, see docs. */
   --text-mega: clamp(2.25rem, 7vw, 5rem);
@@ -155,10 +159,14 @@
   }
 
   /*
-    Focus ring. --accent measures 3.24:1 on white and 3.00:1 on --bg-raised, which
-    is exactly the 3:1 floor for a non text indicator and no margin at all against a
-    form field. --accent-strong measures 5.08 on white, 4.70 on --bg-raised, and 3.90
+    Focus ring. --accent measures 3.66:1 on white and 3.39:1 on --bg-raised, which
+    clears the 3:1 floor for a non text indicator but not by much against a form
+    field. --accent-strong measures 5.15 on white, 4.77 on --bg-raised, and 3.84
     on --bg-inverse, so one value has headroom on every ground the site has.
+
+    Those three numbers were 5.08, 4.70 and 3.90 when this was orange. The blue was
+    picked to land on them rather than merely to pass, so every contrast relationship
+    the design was tuned against survives the swap unchanged.
   */
   :focus-visible {
     outline: 2px solid var(--color-accent-strong);
@@ -374,10 +382,10 @@
   Filled accent.
 
   Phase 4b 3.3 says filled accent buttons use the accent with white text, and asks
-  for that pair to be verified. Verified: #FFFFFF on #FF521F is 3.24:1, legal for
+  for that pair to be verified. Verified: #FFFFFF on #4C86DB is 3.66:1, legal for
   large text and failing for a 13px label. The fill is therefore
-  --color-accent-strong, where white measures 5.08:1 and clears AA at any size.
-  Recorded in docs/decisions/0019.
+  --color-accent-strong, where white measures 5.15:1 and clears AA at any size.
+  Recorded in docs/decisions/0019 and re-verified against the blue in 0025.
 */
 @utility accent-fill {
   background-color: var(--color-accent-strong);
@@ -391,7 +399,7 @@
 
 /*
   The same fill inside an inverse block. There the bright accent is correct:
-  near black on #FF521F measures 6.10:1.
+  near black on #4C86DB measures 5.41:1.
 */
 @utility accent-fill-inverse {
   background-color: var(--color-accent-on-inverse);
