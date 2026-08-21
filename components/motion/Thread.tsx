@@ -147,8 +147,18 @@ export function Thread() {
     return () => clearThread()
   }, [geometry, streaming, tier])
 
-  // Draw on scroll. One ScrollTrigger per path, each scrubbed, each writing its own
-  // reveal progress into the store and its own dash offset onto the carrier path.
+  /*
+    Draw on scroll. One ScrollTrigger per path, each writing its own reveal progress
+    into the store and its own dash offset onto the carrier path.
+
+    Worth knowing before touching this: on no tier does anything visible consume what
+    this animates. The carrier paths are `opacity: 0` on the particle tiers, where they
+    exist only so `getPointAtLength` has something to read, and on the Static tier this
+    effect does not run at all and the stroke renders fully drawn. `store.progress` is
+    written here and read by nothing since the reveal moved to document Y. It is kept
+    unscrubbed rather than removed so it cannot disagree with the stream, but it is a
+    mirror of nothing at present. See ADR 0020 section 6.
+  */
   useEffect(() => {
     if (!geometry || still) return
     const host = hostRef.current
@@ -204,9 +214,21 @@ export function Thread() {
               start: trigger ? 'top 85%' : 'top top',
               endTrigger: endTrigger ?? undefined,
               end: endTrigger ? 'bottom 60%' : 'bottom bottom',
-              // The brief's scrub: 1. The head lags the pointer of the scroll by a
-              // beat, which is what makes the line feel drawn rather than clipped.
-              scrub: 1,
+              /*
+                Unscrubbed, deliberately, where this was `scrub: 1`.
+
+                The easing existed to make the head feel drawn rather than clipped, and
+                it was right while the stream read this same progress. The stream now
+                reveals by document Y against an unscrubbed reveal line, so a one second
+                ease here would put the carrier and the particles on two different
+                curves: measured, a jump from 1200 to 2000 left the carrier still
+                travelling for 800ms and 395px after the reveal line had already
+                arrived. Parent brief criterion 8 is about exactly that gap.
+
+                `true` rather than a number means the value tracks scroll with no
+                interpolation, which is what the particles do.
+              */
+              scrub: true,
             },
             onUpdate: () => {
               const drawn = total * state.progress

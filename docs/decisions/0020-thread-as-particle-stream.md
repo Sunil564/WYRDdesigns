@@ -89,6 +89,12 @@ Three things fell out of the change rather than being designed:
 
 What was given up: the scrub. The old head lagged the scroll by a beat, which is what made the line feel drawn rather than clipped. A lagging reveal line is a line that slides up and down the viewport, so the lag had to go. The reveal is now instantaneous with scroll, which is what the brief asks for and why it also forbids any easing on the render side.
 
+The SVG carrier's `scrub: 1` went with it, and had to. Leaving it would have put the carrier and the particles on two different curves: measured on a jump from 1200 to 2000, the carrier was still travelling 800ms and 395px after the reveal line had already arrived. It is `scrub: true` now, so both track scroll with no interpolation.
+
+They are still not the same number, and cannot be. The carrier reveals by arc length per path and the stream by document Y across all paths, so a settled carrier tip and the reveal line sit 448px apart at that same scroll position. That is not a fault to fix but a trap to know about: the carrier's `stroke-dashoffset` was a valid reference for verifying the stream in step 5 and is not one any more. Measure the stream against the reveal line.
+
+The wider fact behind both: on no tier does anything visible consume what that ScrollTrigger animates. The carrier paths are `opacity: 0` on the particle tiers, and on the Static tier the effect does not run and the stroke renders fully drawn. Whether to keep animating an invisible path at all is a separate question, left open rather than answered here.
+
 `aAlong` and `aGroup` are still sampled and still uploaded, read by nothing. The handoff in step 8 has to assign a hero particle to a place on the route, and that is what they are for.
 
 ## 7. The Thread passes behind opaque content, by decision
