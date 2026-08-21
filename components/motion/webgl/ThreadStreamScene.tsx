@@ -218,6 +218,13 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
     ;(live.uBandBottoms!.value as Float32Array).set(data.bandBottoms)
     live.uBandCount!.value = data.bandCount
 
+    /*
+      Published by `measure`, not imported here: narrow viewports get a wider trail and the
+      page is what decides which. Written through `live` every frame like every other
+      data-derived uniform, for the reason in the comment above.
+    */
+    live.uSpiralRadius!.value = data.spiralRadius
+
     const spread = live.uDisperseSpread!.value as Float32Array
     if (data.disperse) {
       live.uDisperseTop!.value = data.disperse.top

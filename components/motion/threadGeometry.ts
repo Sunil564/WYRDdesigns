@@ -1,5 +1,7 @@
 'use client'
 
+import { SPIRAL_RADIUS, SPIRAL_RADIUS_NARROW } from '@/components/motion/threadConstants'
+
 /**
  * The Thread's geometry. One definition of the route, for every tier.
  *
@@ -56,6 +58,12 @@ export type ThreadGeometry = {
    * on the page. Item C.
    */
   disperse: ThreadDispersion | null
+  /**
+   * How far the spiral trail rides from the path centre, in CSS pixels. Published here
+   * rather than imported by each renderer, so the shader and the 2D overlay cannot end up
+   * on different values for the same page.
+   */
+  spiralRadius: number
 }
 
 /**
@@ -280,6 +288,118 @@ function boxOf(element: Element, scrollY: number) {
 }
 
 /**
+ * Lateral reach of the narrow weave, as a fraction of the host's width.
+ *
+ * 0.16 puts the extremes 66px either side of centre at 412px, so the route swings across
+ * about a third of the viewport. Enough to read as a weave rather than a wobble, and well
+ * inside the gutters once the trail's own radius is added.
+ *
+ * It does not need to avoid text: the copy runs gutter to gutter at this width, so a centred
+ * straight line already passes under all of it and no lateral position passes under more.
+ * The constraint here is legibility of the weave, not safety.
+ */
+const WEAVE_WIDTH_FRACTION = 0.16
+
+/**
+ * Anchors closer together than this are one anchor, as a fraction of viewport height.
+ *
+ * The page hands back anchors in clusters: a section boundary and the block that opens it
+ * are often 200px apart. Alternating an extreme at each would produce a tight zigzag at
+ * exactly the places the weave is supposed to be arriving somewhere.
+ */
+const WEAVE_MERGE_FRACTION = 0.3
+
+/**
+ * Gaps longer than this are subdivided, as a fraction of viewport height.
+ *
+ * Without it the weave is hostage to how the page happens to be laid out. The work section
+ * is 2,029px tall at 412px with no marked block inside it, so the route would run straight
+ * for two and a half viewports through the middle of the page. Subdividing a measured gap is
+ * still derived from the page rather than hardcoded: it is the distance between two measured
+ * anchors that decides how many points go in it.
+ */
+const WEAVE_MAX_GAP_FRACTION = 1.1
+
+/** Selectors whose measured positions the weave is anchored to, in document coordinates. */
+const WEAVE_ANCHOR_SELECTORS = ['[data-thread-node]', '[data-thread-branch-target]']
+
+/**
+ * The narrow route: one line that weaves down the page rather than falling straight.
+ *
+ * Anchors are measured, never hardcoded. Section boundaries, the marked thread nodes and the
+ * capability blocks all contribute, and the weave reaches an extreme at each one, alternating
+ * sides, so it is at its furthest out where the page changes and back through centre in
+ * between. Clusters are merged and long gaps subdivided, both against viewport height.
+ *
+ * Every segment leaves one waypoint vertically and arrives at the next vertically, which is
+ * the same cubic the wide route's branches use. Tangents match across every join, so the
+ * result is one smooth line with no corners, and `samplePaths` walks it by arc length like
+ * any other path.
+ */
+function weaveNarrowRoute(
+  centreX: number,
+  startY: number,
+  endY: number,
+  width: number,
+  viewportHeight: number,
+  anchorsLocal: number[],
+): string {
+  const span = endY - startY
+  if (span <= 0) return `M ${centreX} ${startY} L ${centreX} ${endY}`
+
+  const merge = viewportHeight * WEAVE_MERGE_FRACTION
+  const maxGap = viewportHeight * WEAVE_MAX_GAP_FRACTION
+
+  // Inside the run, and not so near either end that the first or last segment is a stub.
+  const inside = anchorsLocal
+    .filter((y) => y > startY + merge && y < endY - merge)
+    .sort((a, b) => a - b)
+
+  // Cluster: keep absorbing while the next anchor is within `merge` of the last absorbed.
+  const merged: number[] = []
+  let cluster: number[] = []
+  for (const y of inside) {
+    const tail = cluster[cluster.length - 1]
+    if (tail === undefined || y - tail <= merge) cluster.push(y)
+    else {
+      merged.push(cluster.reduce((a, b) => a + b, 0) / cluster.length)
+      cluster = [y]
+    }
+  }
+  if (cluster.length > 0) merged.push(cluster.reduce((a, b) => a + b, 0) / cluster.length)
+
+  // Subdivide any run longer than maxGap, including the two end runs.
+  const filled: number[] = []
+  let previous = startY
+  for (const y of [...merged, endY]) {
+    const gap = y - previous
+    if (gap > maxGap) {
+      const steps = Math.ceil(gap / maxGap)
+      for (let i = 1; i < steps; i++) filled.push(previous + (gap * i) / steps)
+    }
+    if (y !== endY) filled.push(y)
+    previous = y
+  }
+
+  const amplitude = width * WEAVE_WIDTH_FRACTION
+  const points = filled.map((y, index) => ({
+    x: centreX + (index % 2 === 0 ? amplitude : -amplitude),
+    y,
+  }))
+
+  let d = `M ${centreX} ${startY}`
+  let fromX = centreX
+  let fromY = startY
+  for (const point of [...points, { x: centreX, y: endY }]) {
+    const midY = (fromY + point.y) / 2
+    d += ` C ${fromX} ${midY} ${point.x} ${midY} ${point.x} ${point.y}`
+    fromX = point.x
+    fromY = point.y
+  }
+  return d
+}
+
+/**
  * Measure the route from the DOM.
  *
  * Above 1024px: one line down to the capabilities section, four strands from there
@@ -362,15 +482,36 @@ export function measure(host: HTMLElement, wide: boolean): ThreadGeometry | null
     }
   })()
 
-  // Mobile and anything narrow: one straight vertical line, nothing else.
+  // Mobile and anything narrow: one line, weaving. Branch geometry depends on a two
+  // column grid that does not exist here, so the route stays single and finds its way
+  // down instead of falling straight. See weaveNarrowRoute.
   if (!wide || targets.length !== 4 || !branchPoint) {
+    /*
+      Anchors from the page, in host local coordinates. Section boundaries are the tops of
+      the sections themselves; the rest are the blocks already marked for the wide route,
+      which on a narrow viewport are simply content the thread should acknowledge as it
+      passes. Nothing here is a Y value written into this file.
+    */
+    const anchors = [
+      ...Array.from(document.querySelectorAll('main section')).map(
+        (section) => toLocal(boxOf(section, scrollY).top),
+      ),
+      ...WEAVE_ANCHOR_SELECTORS.flatMap((selector) =>
+        Array.from(document.querySelectorAll(selector)).map((element) => {
+          const box = boxOf(element, scrollY)
+          // A block is anchored at its middle, a boundary at its edge.
+          return toLocal((box.top + box.bottom) / 2)
+        }),
+      ),
+    ]
+
     return {
       width,
       height,
       hostTop,
       paths: [
         {
-          d: `M ${centreX} ${startY} L ${centreX} ${endY}`,
+          d: weaveNarrowRoute(centreX, startY, endY, width, window.innerHeight, anchors),
           kind: 'trunk',
           start: '[data-thread-origin]',
           end: '[data-thread-converge]',
@@ -379,6 +520,7 @@ export function measure(host: HTMLElement, wide: boolean): ThreadGeometry | null
       bands,
       text,
       hero,
+      spiralRadius: SPIRAL_RADIUS_NARROW,
       /*
         The narrow route is one straight line down the page centre, and it passes through
         the clients section like everything else, so it disperses too. At reduced
@@ -461,6 +603,7 @@ export function measure(host: HTMLElement, wide: boolean): ThreadGeometry | null
     text,
     hero,
     disperse,
+    spiralRadius: SPIRAL_RADIUS,
   }
 }
 

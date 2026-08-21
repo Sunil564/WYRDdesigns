@@ -38,6 +38,13 @@ export type ThreadStreamData = {
   disperse: ThreadDispersion | null
   /** Body copy the trail recedes behind, in document coordinates. */
   text: ThreadTextRects
+  /**
+   * How far the spiral trail rides from the path centre, in CSS pixels. Narrow viewports
+   * publish a wider one, because the narrow route has no strands to carry lateral interest.
+   * Both renderers read it from here rather than importing a constant, so they cannot
+   * disagree about the page they are drawing.
+   */
+  spiralRadius: number
 }
 
 const state = {

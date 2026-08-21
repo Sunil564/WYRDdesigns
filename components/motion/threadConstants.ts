@@ -28,6 +28,19 @@ export const DISPERSE_OUTWARD = 0.3
 /** Maximum distance a particle rides from the path centre, in CSS pixels. */
 export const SPIRAL_RADIUS = 16
 
+/**
+ * The same, below 1024px.
+ *
+ * 16 puts the trail in a column about 20px wide, which at phone scale is most of why the
+ * narrow route read as a rule rather than a thread. The narrow route also has none of the
+ * lateral interest the wide one gets from four strands, so the trail has to carry it.
+ *
+ * Neither renderer imports this. `measure` picks between the two and publishes the result on
+ * the geometry, so the value the shader and the overlay use is the one the page decided,
+ * not a constant either of them chose for itself.
+ */
+export const SPIRAL_RADIUS_NARROW = 30
+
 /** No particle's orbit comes inside this fraction of the maximum radius. */
 export const SPIRAL_RADIUS_FLOOR = 0.3
 

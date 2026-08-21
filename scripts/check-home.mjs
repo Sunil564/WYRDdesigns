@@ -204,18 +204,44 @@ async function walk(page, step = 600, settle = 220) {
  *
  * Geometry is used to locate the column and for nothing else. Whether anything is
  * painted there is decided by pixels.
+ *
+ * **The probe follows the route, row by row.** It used to read `getPointAtLength(0).x` once
+ * and hold that column for every row, which was correct only while every route below 1024px
+ * was a straight vertical line. When the narrow route began to weave, the fixed column
+ * measured 19 inked rows of 331 at 375px and 0 at 768px on a build that was drawing
+ * perfectly well. The probe was reporting where it was looking, not what was painted.
  */
 async function threadOnColumn(page) {
-  const routeX = await page.evaluate(() => {
+  /*
+    The route's x at every row of the measured band, in viewport pixels. Sampled from the
+    path itself rather than assumed, so a straight route and a woven one are measured the
+    same way and neither needs a special case.
+  */
+  const rowX = await page.evaluate(() => {
     const trunk = document.querySelector('[data-thread-body]')
     if (!trunk) return null
-    return Math.round(trunk.getPointAtLength(0).x + trunk.ownerSVGElement.getBoundingClientRect().left)
+    const box = trunk.ownerSVGElement.getBoundingClientRect()
+    const length = trunk.getTotalLength()
+    const steps = Math.max(400, Math.ceil(length / 3))
+    const rows = new Array(331).fill(null)
+    for (let i = 0; i <= steps; i += 1) {
+      const point = trunk.getPointAtLength((i / steps) * length)
+      const y = Math.round(point.y + box.top)
+      if (y >= 250 && y <= 580) rows[y - 250] = Math.round(point.x + box.left)
+    }
+    // Fill any row the sampling stepped over, so every row in the band has a column.
+    for (let i = 1; i < rows.length; i += 1) if (rows[i] === null) rows[i] = rows[i - 1]
+    for (let i = rows.length - 2; i >= 0; i -= 1) if (rows[i] === null) rows[i] = rows[i + 1]
+    return rows
   })
-  if (routeX === null) return { routeX: null, onRows: 0, ctrlRows: 0, onMean: 0, ctrlMean: 0, redPeak: 0 }
+  if (rowX === null || rowX[0] === null) {
+    return { routeX: null, onRows: 0, ctrlRows: 0, onMean: 0, ctrlMean: 0, redPeak: 0 }
+  }
+  const routeX = rowX[Math.floor(rowX.length / 2)]
 
   const base64 = (await page.screenshot()).toString('base64')
   return page.evaluate(
-    async ({ base64, routeX }) => {
+    async ({ base64, routeX, rowX }) => {
       const blob = await (await fetch(`data:image/png;base64,${base64}`)).blob()
       const bitmap = await createImageBitmap(blob)
       const canvas = new OffscreenCanvas(bitmap.width, bitmap.height)
@@ -236,54 +262,70 @@ async function threadOnColumn(page) {
         is the closest thing to that, and picking it costs nothing when none of them is
         contaminated.
       */
+      const minRoute = Math.min(...rowX)
+      const maxRoute = Math.max(...rowX)
       const candidates = []
       for (const offset of [150, 200, 250, 300]) {
         for (const sign of [1, -1]) {
-          const x = routeX + sign * offset
-          if (x - 76 > 0 && x + 76 < width) candidates.push(x)
+          // Offsets are from the route's own extremes, so a control never lands inside the
+          // band a woven route sweeps through.
+          const x = sign > 0 ? maxRoute + offset : minRoute - offset
+          if (x - 76 > 0 && x + 76 < width) candidates.push({ offset: sign * offset, x })
         }
       }
-      if (candidates.length === 0) candidates.push(routeX + 80 + 76 < width ? routeX + 80 : routeX - 80)
+      if (candidates.length === 0) {
+        const fallback = maxRoute + 80 + 76 < width ? { offset: 80, x: maxRoute + 80 } : { offset: -80, x: minRoute - 80 }
+        candidates.push(fallback)
+      }
       const peakNear = (centre, y, ground) => {
         let peak = 0
         for (let x = centre - 6; x <= centre + 6; x += 1) peak = Math.max(peak, Math.abs(lum(x, y) - ground))
         return peak
       }
 
-      const measure = (centre) => {
+      // `at` gives the column to probe for a row: the route itself, or a fixed offset from
+      // the band it sweeps. Either way it is evaluated per row, never once for the band.
+      const measure = (at) => {
         let rows = 0
         let inked = 0
         let sum = 0
         for (let y = 250; y <= 580; y += 1) {
+          const here = rowX[y - 250]
           const strip = []
-          for (let x = routeX - 70; x <= routeX + 70; x += 1) strip.push(lum(x, y))
+          for (let x = here - 70; x <= here + 70; x += 1) strip.push(lum(x, y))
           const ground = [...strip].sort((a, b) => a - b)[Math.floor(strip.length / 2)]
+          const centre = at(y)
+          if (centre - 6 < 0 || centre + 6 >= width) continue
           const peak = peakNear(centre, y, ground)
           rows += 1
           sum += peak
           if (peak > 15) inked += 1
         }
-        return { rows, inked, mean: sum / rows }
+        return { rows, inked, mean: rows ? sum / rows : 0 }
       }
-      const controls = candidates.map((x) => ({ x, ...measure(x) }))
+      const controls = candidates.map((c) => ({
+        x: c.x,
+        ...measure(() => c.x),
+      }))
       const control = controls.reduce((best, c) => (c.inked < best.inked ? c : best), controls[0])
       const controlX = control.x
 
       let rows = 0
       let onRows = 0
-      let ctrlRows = control.inked
+      const ctrlRows = control.inked
       let onSum = 0
-      let ctrlSum = control.mean * control.rows
+      const ctrlSum = control.mean * control.rows
       let redPeak = 0
       for (let y = 250; y <= 580; y += 1) {
-        for (let x = routeX - 6; x <= routeX + 6; x += 1) {
+        const here = rowX[y - 250]
+        for (let x = here - 6; x <= here + 6; x += 1) {
           const i = (width * y + x) * 4
           redPeak = Math.max(redPeak, data[i] - Math.max(data[i + 1], data[i + 2]))
         }
         const strip = []
-        for (let x = routeX - 70; x <= routeX + 70; x += 1) strip.push(lum(x, y))
+        for (let x = here - 70; x <= here + 70; x += 1) strip.push(lum(x, y))
         const ground = [...strip].sort((a, b) => a - b)[Math.floor(strip.length / 2)]
-        const on = peakNear(routeX, y, ground)
+        const on = peakNear(here, y, ground)
         rows += 1
         onSum += on
         if (on > 15) onRows += 1
@@ -295,11 +337,11 @@ async function threadOnColumn(page) {
         onRows,
         ctrlRows,
         onMean: Number((onSum / rows).toFixed(1)),
-        ctrlMean: Number((ctrlSum / rows).toFixed(1)),
+        ctrlMean: Number((ctrlSum / Math.max(1, control.rows)).toFixed(1)),
         redPeak,
       }
     },
-    { base64, routeX },
+    { base64, routeX, rowX },
   )
 }
 
@@ -398,17 +440,38 @@ for (const width of [375, 768, 1023]) {
   await page.goto(`${BASE}/`, { waitUntil: 'load' })
   await page.waitForTimeout(2500)
 
+  /*
+    One path, and it weaves. This asserted a straight vertical line until the narrow route
+    was given a weave; the amplitude is read off the path rather than compared against a
+    number copied from the source, so a tuning change moves the measurement with it.
+  */
   const route = await page.evaluate(() => {
     const bodies = Array.from(document.querySelectorAll('[data-thread-body]'))
-    return { count: bodies.length, d: bodies[0]?.getAttribute('d') ?? '' }
+    const trunk = bodies[0]
+    if (!trunk) return { count: bodies.length, turns: 0, amplitude: 0, width: 0 }
+    const length = trunk.getTotalLength()
+    const xs = []
+    for (let i = 0; i <= 400; i += 1) xs.push(trunk.getPointAtLength((i / 400) * length).x)
+    const centre = (Math.min(...xs) + Math.max(...xs)) / 2
+    let turns = 0
+    for (let i = 1; i < xs.length - 1; i += 1) {
+      const before = xs[i] - xs[i - 1]
+      const after = xs[i + 1] - xs[i]
+      if (before > 0 !== after > 0 && Math.abs(xs[i] - centre) > 4) turns += 1
+    }
+    return {
+      count: bodies.length,
+      turns,
+      amplitude: Math.round((Math.max(...xs) - Math.min(...xs)) / 2),
+      width: Math.round(trunk.ownerSVGElement.getBoundingClientRect().width),
+    }
   })
-  // One path, and its geometry is a straight vertical line: two points, same x.
-  const points = route.d.match(/-?\d+(\.\d+)?/g) ?? []
-  const straight = points.length === 4 && points[0] === points[2]
+  const fraction = route.width ? route.amplitude / route.width : 0
   record(
-    `below 1024 the Thread route is a single straight line at ${width}px`,
-    route.count === 1 && straight,
-    `${route.count} path, d="${route.d}"`,
+    `below 1024 the Thread route is one path that weaves at ${width}px`,
+    route.count === 1 && route.turns >= 4 && fraction > 0.1 && fraction < 0.25,
+    `${route.count} path, ${route.turns} turning points, amplitude ${route.amplitude}px` +
+      ` on ${route.width}px = ${(fraction * 100).toFixed(1)}% of width`,
   )
 
   await revealInPositioning(page)

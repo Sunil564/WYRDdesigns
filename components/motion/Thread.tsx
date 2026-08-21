@@ -165,6 +165,7 @@ export function Thread() {
       hero: geometry.hero,
       disperse: geometry.disperse,
       text: geometry.text,
+      spiralRadius: geometry.spiralRadius,
     })
 
     return () => clearThread()

@@ -13,7 +13,6 @@ import {
   SPIRAL_DEPTH,
   SPIRAL_HEAD_DAMP,
   SPIRAL_IN_CLOUD,
-  SPIRAL_RADIUS,
   SPIRAL_RADIUS_CURVE,
   SPIRAL_RADIUS_FLOOR,
   SPIRAL_SPIN,
@@ -84,7 +83,7 @@ export function ThreadOverlay2D() {
     const context = canvas.getContext('2d')
     if (!context) return
 
-    const { samples, bandTops, bandBottoms, bandCount, disperse, text } = data
+    const { samples, bandTops, bandBottoms, bandCount, disperse, text, spiralRadius } = data
     const { positions, distance, normals, random, count } = samples
 
     /*
@@ -201,7 +200,7 @@ export function ThreadOverlay2D() {
           time * SPIRAL_SPIN
         const radiusHash = hash(rand, 45.164, 9.7, 24634.6345)
         let radius =
-          SPIRAL_RADIUS *
+          spiralRadius *
           (SPIRAL_RADIUS_FLOOR + (1 - SPIRAL_RADIUS_FLOOR) * radiusHash ** SPIRAL_RADIUS_CURVE)
         radius *= 1 + (SPIRAL_IN_CLOUD - 1) * ramp
         radius *= 1 + (SPIRAL_HEAD_DAMP - 1) * head
