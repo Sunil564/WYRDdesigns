@@ -171,6 +171,24 @@ Unblocks by: a decision on View Transitions, taken deliberately with the plain c
 
 Blocks: nothing. The transition that ships works on every tier and is asserted by `scripts/check-transitions.mjs`.
 
+### 17. A flagship phone is treated as a budget one
+
+Follow up, recorded rather than acted on, at the operator's instruction. Do not change it as a side effect of other work.
+
+`useRenderTier` returns Reduced for any coarse pointer before it tests anything about the device:
+
+```
+if (!window.matchMedia('(pointer: fine)').matches) return 'reduced'
+```
+
+That is deliberate and ADR 0015 has the reasoning: cursor interaction is the point of the Full tier field and a finger has no hover. The consequence was not deliberate. A current flagship phone, which outruns most laptops, gets the same tier as a five year old budget handset, and the deviceMemory and hardwareConcurrency tests below that line never run on any touch device at all.
+
+It is also why the Thread was absent on every phone for a whole phase, which is the resolved entry below this one.
+
+What a fix would have to decide: whether the Full tier's cursor behaviour has a touch equivalent worth having, or whether a fourth state is needed for a capable device with a coarse pointer. Neither is obvious, and the tiering rule is the single most load bearing decision in the build, so this is not a change to make casually.
+
+Blocks: nothing. It costs capable phones some fidelity and costs nobody correctness.
+
 ## Resolved
 
 ### 10. Lighthouse Performance was unverified
