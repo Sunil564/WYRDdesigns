@@ -13,10 +13,19 @@ type FieldShellProps = {
   className?: string
 }
 
+/*
+  No `focus:outline-none` here.
+
+  It used to be, and it killed the global `:focus-visible` ring in globals.css for every
+  control in this file, leaving a border tint as the only keyboard focus cue. Nothing caught
+  it for three phases because no form existed to tab through: `/contact` is the first route
+  to render these, and its harness failed on six controls with no ring the first time it ran.
+  The border colour stays as a second cue, and the ring does the work.
+*/
 const control =
   'w-full rounded-input border bg-bg-raised px-4 py-3 text-body text-fg ' +
   'placeholder:text-fg-muted transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out)] ' +
-  'hover:border-fg-muted focus:border-accent focus:outline-none'
+  'hover:border-fg-muted focus:border-accent'
 
 /**
  * One shell, three controls. The label, the error wiring, and the 4px radius are

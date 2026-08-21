@@ -77,11 +77,14 @@ Blocks: nothing. The row renders and every mark is legible.
 
 ### 9. Resend API key
 
-Phase 5 sends the contact form through Resend to `hello@wyrddesigns.in`. `RESEND_API_KEY` and a verified sending domain are needed for real delivery.
+`RESEND_API_KEY` is unset, so the contact form cannot deliver. It does not pretend otherwise: the visitor is told the message has not gone through and given the direct address, and the server logs a line naming the variable. `scripts/check-contact.mjs` runs that path on every run and asserts it, so the behaviour cannot regress into a silent success.
 
-Unblocks by: a Resend account, a verified domain, and the key in the Vercel project.
+The sender is `onboarding@resend.dev`, Resend's own verified address, because a custom sender needs a verified domain and the production domain is not registered. It moves to the real domain along with item 1.
 
-Blocks: end to end delivery verification in Phase 5. The form, validation, and error states are testable without it.
+Unblocks by: creating a Resend account, adding `RESEND_API_KEY` to the Vercel project, and the same variable locally. One variable, no code change.
+
+Blocks: the form actually delivering. Nothing else. Every other path on `/contact` works without it.
+
 
 ### 10. Lighthouse has never been run, on any route
 
@@ -112,6 +115,28 @@ The hero field at 5,280 is at the edge of reading as sparse: individual particle
 Unblocks by: looking at both on a physical screen at full brightness. If the field reads as thin, the count is one constant. If the rotation reads as busy rather than alive, the spin rate is another.
 
 Blocks: nothing. See ADR 0020 sections 11 and 14.
+
+### 13. A high severity advisory in a transitive dependency
+
+`npm audit` reports three high severity findings, all the same one: `sharp` below 0.35.0 inherits libvips vulnerabilities CVE-2026-33327, CVE-2026-33328, CVE-2026-35590 and CVE-2026-35591. `sharp` arrives through `next`, not through anything this build chose, and it was already present before Phase 5. It surfaced here because installing Resend ran the audit.
+
+`npm audit fix --force` resolves it by installing `next@16.3.1`, which is a major version bump across the whole application and not a decision to take inside a route commit.
+
+Unblocks by: an operator decision on upgrading Next, taken as its own piece of work with the full harness run afterwards.
+
+Blocks: nothing today. `sharp` is used at build time for image optimisation and is not in the request path of any route this build ships.
+
+### 14. The footer links to two routes that do not exist
+
+`content/site.ts` gives `legalNav` a Privacy and a Terms entry, and the footer renders both on every page. Neither route exists: both return 404, confirmed against the verification server. Every page on the site therefore carries two links a visitor can click into an error.
+
+It surfaced while fixing a harness pattern, not by looking at the footer. `scripts/check-hero.mjs` had been masking `/work`, `/studio` and `/contact` from its 404 check since those routes were unbuilt, and once they all shipped and the mask came off, the two that were genuinely broken were the ones left.
+
+Neither route is in the Phase 5 brief, and neither can be written by this build: a privacy policy and terms of service are legal documents about how a real company handles real data, and inventing their contents is the same failure as inventing a client name.
+
+Unblocks by: supplying the two documents, or deciding the site ships without them. If it ships without them, the fix is deleting the two entries in `legalNav` and the footer section disappears on its own, the same way the client logo row would.
+
+Blocks: nothing shipping today, but it is the only place on the site where a visible link is known to fail.
 
 ## Resolved
 

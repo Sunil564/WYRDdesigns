@@ -15,12 +15,13 @@ import { chromium } from 'playwright'
 /**
  * Analytics scripts that only exist in production, and routes Phase 5 has not built yet.
  *
- * Entries come out the moment the route lands. `/studio` was in here for one commit and is
- * out now, `/contact` goes when route 4 does, and `/privacy` and `/terms` are not in Phase 5
- * at all. A masking pattern that outlives its reason is how a real failure stays invisible.
+ * Entries come out the moment the route lands. `/studio` and `/contact` were each in here
+ * for one commit and are both out now. `/privacy` and `/terms` are not in Phase 5 at all and
+ * are the only remaining entries. A masking pattern that outlives its reason is how a real
+ * failure stays invisible.
  */
 const DEFAULT_EXPECTED_404 =
-  /_vercel\/(insights|speed-insights)|\/(contact|privacy|terms)(\?_rsc=|\/|$)/
+  /_vercel\/(insights|speed-insights)|\/(privacy|terms)(\?_rsc=|\/|$)/
 
 export function createHarness({ base, expected404 = DEFAULT_EXPECTED_404 }) {
   const results = []
@@ -146,6 +147,13 @@ export function createHarness({ base, expected404 = DEFAULT_EXPECTED_404 }) {
           included: it renders 1 by 1 until focused and is not a touch target.
         */
         if (rect.width <= 4 || rect.height <= 4) continue
+        /*
+          And anything parked off screen is not a touch target either, whatever its own box
+          says. The contact form's honeypot sits at left -9999px and measures 168 by 26 in
+          its own right, so a size test alone reports it as a control too small to tap when
+          nobody can reach it at all.
+        */
+        if (rect.right < 0 || rect.bottom < 0 || rect.left > window.innerWidth) continue
         if (rect.height < 44) {
           out.push(`${element.tagName.toLowerCase()} ${Math.round(rect.height)}px`)
         }

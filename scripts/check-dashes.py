@@ -17,7 +17,11 @@ BANNED = {
     "\u2212": "minus sign",
 }
 
-SKIP_DIRS = {".git", "node_modules", ".next", "build-logs", "out", ".vercel"}
+# `.next-verify` is the verification build and belongs here for the same reason `.next`
+# does: it is generated output, not repo copy. It went unnoticed until a bundled
+# dependency of the Resend SDK brought in an HTML entity table containing literal
+# "&mdash;" to codepoint mappings, which are third party data and not prose anyone wrote.
+SKIP_DIRS = {".git", "node_modules", ".next", ".next-verify", "build-logs", "out", ".vercel"}
 TEXT_EXT = {
     ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".css", ".scss", ".json",
     ".md", ".mdx", ".html", ".svg", ".txt", ".yml", ".yaml", ".sh", ".py",
