@@ -30,28 +30,26 @@ BRAND_OUT = os.path.join(ROOT, "public", "brand")
 # off white value to pure white, matching --color-bg.
 CANVAS = (255, 255, 255, 255)
 
-# Canvas height for every client logo mask, 3x the 32px desktop render height.
+# Canvas height for every client logo, 3x the 32px desktop render height.
 MASK_H = 96
 
-# name, source file, optical scale factor, survives monochroming.
+# name, source file, optical scale factor.
 #
 # The optical factor scales squarer emblems down so they read at the same visual
 # weight as a wide wordmark, which is optical normalisation rather than bounding
 # box normalisation.
 #
-# `mono` is False for a mark that does not survive being reduced to one colour.
-# SITEO is five colour blocks with the letters knocked out in white. On the dark
-# canvas that worked. On white, the third block maps to a mean alpha of 22 out of
-# 255, so the T inside it is a white letter on a near white block and stops being
-# readable. Phase 4b section 8 says such a mark goes in its original form and gets
-# listed in docs/BLOCKERS.md, which is what happens.
+# Every mark ships in its own colours. There was a fourth column here saying whether
+# a mark survived being reduced to one ink, because five were rendered as alpha masks
+# and SITEO was not. That treatment is gone: the row shows six client logos as their
+# owners drew them. See ADR 0027.
 CLIENTS = [
-    ("Bhavani Sarees", "Bhavani logo.png", 1.00, True),
-    ("G Monisa", "G-Monisa.png", 0.94, True),
-    ("Maharaja", "Maharaja_Logo.png", 0.92, True),
-    ("SITEO", "SITEO LOGO.jpeg", 0.74, False),
-    ("Seervi Business Expo", "Seervi EXPO - Copy.png", 1.00, True),
-    ("Vahini Pipes", "Vaihini.png", 0.86, True),
+    ("Bhavani Sarees", "Bhavani logo.png", 1.00),
+    ("G Monisa", "G-Monisa.png", 0.94),
+    ("Maharaja", "Maharaja_Logo.png", 0.92),
+    ("SITEO", "SITEO LOGO.jpeg", 0.74),
+    ("Seervi Business Expo", "Seervi EXPO - Copy.png", 1.00),
+    ("Vahini Pipes", "Vaihini.png", 0.86),
 ]
 
 
@@ -118,48 +116,42 @@ def flatten_on_canvas(im):
 
 
 def process_clients():
+    """
+    Every client mark, in its own colours, at one optical height.
+
+    The ink mask branch is gone. `to_ink_mask` is still used, but only to find the
+    artwork's true bounding box: it is the reliable way to trim a mark whose file has
+    a white background rather than transparency, which several of these do.
+    """
     os.makedirs(LOGO_OUT, exist_ok=True)
     manifest = []
-    for name, filename, factor, mono in CLIENTS:
+    for name, filename, factor in CLIENTS:
         src = os.path.join(CLIENT_SRC, filename)
-        im = Image.open(src)
-        mask = fit_to_canvas(trim(to_ink_mask(im)), factor)
+        source = Image.open(src).convert("RGBA")
         base = slug(name)
-        mask.save(os.path.join(LOGO_OUT, base + ".webp"), "WEBP", lossless=True, quality=100)
-        mask.save(os.path.join(LOGO_OUT, base + ".png"), "PNG", optimize=True)
 
-        entry = {
+        # Trim on ink, then crop the colour artwork to that same box.
+        box = trim(to_ink_mask(source)).getbbox()
+        full = to_ink_mask(source).getbbox()
+        colour = source.crop(full) if full else source
+
+        target_h = max(1, int(round(MASK_H * factor)))
+        ratio = target_h / colour.height
+        colour = colour.resize(
+            (max(1, int(round(colour.width * ratio))), target_h), Image.LANCZOS
+        )
+        flat = flatten_on_canvas(colour)
+        flat.save(os.path.join(LOGO_OUT, base + ".webp"), "WEBP", quality=92)
+
+        manifest.append({
             "name": name,
             "slug": base,
             "file": "/logos/" + base + ".webp",
-            "width": mask.width,
-            "height": mask.height,
+            "width": flat.width,
+            "height": flat.height,
             "source": filename,
-            "mono": mono,
-        }
-
-        if not mono:
-            # The original artwork, trimmed and flattened onto the canvas colour,
-            # at the same optical height as every mask in the row.
-            source = Image.open(src).convert("RGBA")
-            trimmed = trim(to_ink_mask(source))
-            box = trimmed.getbbox()
-            colour = source.crop(source.getbbox() if source.mode == "RGBA" else box)
-            target_h = MASK_H
-            ratio = target_h / colour.height
-            colour = colour.resize(
-                (max(1, int(round(colour.width * ratio))), target_h), Image.LANCZOS
-            )
-            flat = flatten_on_canvas(colour)
-            flat.save(os.path.join(LOGO_OUT, base + "-original.webp"), "WEBP", quality=92)
-            entry["file"] = "/logos/" + base + "-original.webp"
-            entry["width"] = flat.width
-            entry["height"] = flat.height
-            print("logo  %-24s %4dx%-4d  ORIGINAL, does not survive mono" % (base, flat.width, flat.height))
-        else:
-            print("logo  %-24s %4dx%-4d  from %s" % (base, mask.width, mask.height, filename))
-
-        manifest.append(entry)
+        })
+        print("logo  %-24s %4dx%-4d  original colours, from %s" % (base, flat.width, flat.height, filename))
     with open(os.path.join(LOGO_OUT, "manifest.json"), "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
         f.write("\n")

@@ -632,32 +632,71 @@ for (const width of [375, 768, 1023]) {
   await page.waitForTimeout(1500)
 
   const logos = await page.evaluate(() => {
-    const masks = Array.from(document.querySelectorAll('#clients [role="img"]')).map((element) => ({
-      name: element.getAttribute('aria-label'),
-      mask: getComputedStyle(element).maskImage.includes('url'),
-      colour: getComputedStyle(element).backgroundColor,
-    }))
-    const images = Array.from(document.querySelectorAll('#clients img')).map((element) => ({
-      name: element.getAttribute('alt'),
-      src: element.getAttribute('src'),
-    }))
-    return { masks, images }
+    const images = Array.from(document.querySelectorAll('#clients img')).map((element) => {
+      const style = getComputedStyle(element)
+      return {
+        name: element.getAttribute('alt'),
+        src: element.getAttribute('src'),
+        loaded: element.complete && element.naturalWidth > 0,
+        // A mask or a tint would show up as either of these. Neither should be set.
+        masked: style.maskImage !== 'none',
+        filtered: style.filter !== 'none',
+      }
+    })
+    return { images, masks: document.querySelectorAll('#clients [role="img"]').length }
   })
 
   /*
-    Six logos, five of them tinted masks in --fg-muted. SITEO ships as original
-    artwork because it does not survive monochroming on the light canvas, so it is
-    an img with its real name as alt rather than a mask. Phase 4b section 8 and
-    docs/BLOCKERS.md item 8.
+    Six client marks, every one of them the artwork as supplied.
+
+    This asserted the opposite until the treatment was dropped: five alpha ink masks tinted
+    to --fg-muted, with SITEO alone in colour because it does not survive being reduced to
+    one ink. See ADR 0027.
+
+    `loaded` is checked because an img with a stale src still renders an alt-text box and
+    would satisfy a count. The colours themselves are asserted from pixels below.
   */
   record(
-    'S5 renders six real client logos, five as muted masks and SITEO as original artwork',
-    logos.masks.length === 5 &&
-      logos.masks.every((logo) => logo.mask && logo.name) &&
-      logos.masks.every((logo) => logo.colour === 'rgb(94, 94, 102)') &&
-      logos.images.length === 1 &&
-      logos.images[0]?.name === 'SITEO',
-    `${logos.masks.length} masks: ${logos.masks.map((l) => l.name).join(', ')} | ${logos.images.length} original: ${logos.images.map((l) => l.name).join(', ')}`,
+    'S5 renders six real client logos, all as supplied artwork',
+    logos.images.length === 6 &&
+      logos.masks === 0 &&
+      logos.images.every((logo) => logo.name && logo.loaded) &&
+      logos.images.every((logo) => !logo.masked && !logo.filtered),
+    `${logos.images.length} images, ${logos.masks} masks: ` +
+      logos.images.map((l) => `${l.name}${l.loaded ? '' : ' NOT LOADED'}`).join(', '),
+  )
+
+  /*
+    And they are actually in colour, which the DOM cannot say. Sampled from the row itself:
+    a monochrome mark has near zero saturation on every pixel, so the row is asked how many
+    of its marks carry a saturated one.
+  */
+  const colourful = await page.evaluate(async () => {
+    const out = []
+    for (const img of Array.from(document.querySelectorAll('#clients img'))) {
+      const box = img.getBoundingClientRect()
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(1, Math.round(box.width))
+      canvas.height = Math.max(1, Math.round(box.height))
+      const context = canvas.getContext('2d')
+      context.drawImage(img, 0, 0, canvas.width, canvas.height)
+      const data = context.getImageData(0, 0, canvas.width, canvas.height).data
+      let saturated = 0
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i + 3] < 40) continue
+        const max = Math.max(data[i], data[i + 1], data[i + 2])
+        const min = Math.min(data[i], data[i + 1], data[i + 2])
+        if (max - min > 40) saturated += 1
+      }
+      out.push({ name: img.getAttribute('alt'), saturated })
+    }
+    return out
+  })
+  const inColour = colourful.filter((logo) => logo.saturated > 20)
+  record(
+    'every client mark renders in its own colours, not a tint',
+    inColour.length === colourful.length && colourful.length === 6,
+    colourful.map((l) => `${l.name} ${l.saturated}`).join(', '),
   )
 
   const marquee = await page.evaluate(() => document.querySelectorAll('.marquee').length)

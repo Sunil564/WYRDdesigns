@@ -11,20 +11,21 @@ type ClientLogoProps = {
 /**
  * One client mark in the S5 row. Phase 4b section 8.
  *
- * Two renderings, chosen by data rather than by eye:
+ * One rendering: the artwork as supplied, in its own colours, at a shared optical height.
  *
- * - `mono: true` is an alpha only ink mask tinted with `currentColor`, so the row
- *   moves from `--fg-muted` to `--fg` on hover with one CSS transition and one file.
- * - `mono: false` is the original artwork, for a mark that stops being readable when
- *   reduced to one colour. It sits on the same optical height as the masks and is
- *   listed in docs/BLOCKERS.md as needing a supplied single colour version.
+ * **There used to be two.** Five marks shipped as alpha only ink masks tinted with
+ * `currentColor`, and SITEO shipped in colour because five colour blocks with white letters
+ * knocked out do not survive being reduced to one ink. That made the row five grey marks and
+ * one in full colour, which read as an inconsistency rather than a decision, and it put the
+ * odd one out permanently in `docs/BLOCKERS.md` waiting for a file SITEO was never asked
+ * for. Removing the treatment closes it. See ADR 0027.
  *
- * Either way the real company name is the accessible name, and nothing is renamed.
+ * The real company name is the accessible name, and nothing is renamed.
  */
 export function ClientLogo({ client, height = 40, className }: ClientLogoProps) {
   const width = Math.round((client.width / client.height) * height)
 
-  if (!client.mono) {
+  return (
     /*
       A plain img, not next/image. The file is a local static asset at a known size
       that needs no resizing, no format negotiation, and no lazy loading, and the
@@ -32,24 +33,13 @@ export function ClientLogo({ client, height = 40, className }: ClientLogoProps) 
       mark in the row. Width and height are set, so the box is reserved and there is
       no layout shift.
     */
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={client.file}
-        alt={client.name}
-        width={width}
-        height={height}
-        className={cn('block h-10 w-auto', className)}
-      />
-    )
-  }
-
-  return (
-    <span
-      role="img"
-      aria-label={client.name}
-      className={cn('logo-mask block h-10', className)}
-      style={{ width: `${width}px`, maskImage: `url(${client.file})` }}
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={client.file}
+      alt={client.name}
+      width={width}
+      height={height}
+      className={cn('block h-10 w-auto', className)}
     />
   )
 }

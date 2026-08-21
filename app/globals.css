@@ -777,14 +777,3 @@
   }
 }
 
-/*
-  Mask rendered client logo. The file is an alpha only ink mask, so the colour
-  comes from currentColor and the hover transition is one property. See
-  docs/decisions/0004.
-*/
-@utility logo-mask {
-  background-color: currentColor;
-  mask-repeat: no-repeat;
-  mask-position: center;
-  mask-size: contain;
-}

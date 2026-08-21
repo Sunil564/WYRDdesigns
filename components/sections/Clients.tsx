@@ -39,11 +39,14 @@ export function Clients() {
             data-thread-node
             data-thread-loop
           >
+            {/*
+              No hover treatment on the row. The colour transition that used to live on each
+              item drove `currentColor` through the ink masks, and with the masks gone there
+              is nothing for it to tint: these are their owners' artwork and we do not
+              restyle it on hover. ADR 0027.
+            */}
             {clients.map((client) => (
-              <li
-                key={client.name}
-                className="text-fg-muted hover:text-fg transition-colors duration-[var(--dur-base)]"
-              >
+              <li key={client.name}>
                 <ClientLogo client={client} />
               </li>
             ))}

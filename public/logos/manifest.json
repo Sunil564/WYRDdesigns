@@ -5,35 +5,31 @@
     "file": "/logos/bhavani-sarees.webp",
     "width": 115,
     "height": 96,
-    "source": "Bhavani logo.png",
-    "mono": true
+    "source": "Bhavani logo.png"
   },
   {
     "name": "G Monisa",
     "slug": "g-monisa",
     "file": "/logos/g-monisa.webp",
     "width": 113,
-    "height": 96,
-    "source": "G-Monisa.png",
-    "mono": true
+    "height": 90,
+    "source": "G-Monisa.png"
   },
   {
     "name": "Maharaja",
     "slug": "maharaja",
     "file": "/logos/maharaja.webp",
     "width": 135,
-    "height": 96,
-    "source": "Maharaja_Logo.png",
-    "mono": true
+    "height": 88,
+    "source": "Maharaja_Logo.png"
   },
   {
     "name": "SITEO",
     "slug": "siteo",
-    "file": "/logos/siteo-original.webp",
-    "width": 384,
-    "height": 96,
-    "source": "SITEO LOGO.jpeg",
-    "mono": false
+    "file": "/logos/siteo.webp",
+    "width": 284,
+    "height": 71,
+    "source": "SITEO LOGO.jpeg"
   },
   {
     "name": "Seervi Business Expo",
@@ -41,16 +37,14 @@
     "file": "/logos/seervi-business-expo.webp",
     "width": 87,
     "height": 96,
-    "source": "Seervi EXPO - Copy.png",
-    "mono": true
+    "source": "Seervi EXPO - Copy.png"
   },
   {
     "name": "Vahini Pipes",
     "slug": "vahini-pipes",
     "file": "/logos/vahini-pipes.webp",
     "width": 201,
-    "height": 96,
-    "source": "Vaihini.png",
-    "mono": true
+    "height": 83,
+    "source": "Vaihini.png"
   }
 ]
