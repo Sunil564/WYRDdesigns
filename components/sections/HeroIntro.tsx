@@ -17,9 +17,11 @@ type HeroIntroProps = {
 /**
  * The hero's text layer and its entrance ordering. Brief 6.1 S1 layer 1.
  *
- * The eyebrow fades in first. The headline reveal starts 200ms later. The lead and
- * the actions follow the headline's real completion rather than a guessed duration,
- * which is what `onComplete` is for.
+ * The eyebrow fades in first. The headline reveal starts 200ms later. The lead and the
+ * actions are released part way through the character run rather than after it, so they are
+ * already arriving as the last characters land. `SplitHeadline`'s `REVEAL_AT` carries the
+ * fraction and the measurements behind it. The 300ms between the lead and the actions is
+ * unchanged and lives in `hero-enter-late`.
  *
  * Entrance state is one attribute per element and the transitions live in
  * globals.css, so reduced motion, and JavaScript being absent, are each handled by
@@ -27,8 +29,8 @@ type HeroIntroProps = {
  */
 export function HeroIntro({ eyebrow, lines, lead, primary, secondary }: HeroIntroProps) {
   const [mounted, setMounted] = useState(false)
-  const [headlineDone, setHeadlineDone] = useState(false)
-  const onComplete = useCallback(() => setHeadlineDone(true), [])
+  const [revealed, setRevealed] = useState(false)
+  const onReveal = useCallback(() => setRevealed(true), [])
 
   useEffect(() => {
     // One frame after hydration, so the transition has a state to move from.
@@ -44,7 +46,7 @@ export function HeroIntro({ eyebrow, lines, lead, primary, secondary }: HeroIntr
 
       <SplitHeadline
         lines={lines}
-        onComplete={onComplete}
+        onReveal={onReveal}
         delay={0.2}
         className="text-mega text-fg mt-8 font-black"
         lineClassName="overflow-hidden pb-[0.08em]"
@@ -52,14 +54,14 @@ export function HeroIntro({ eyebrow, lines, lead, primary, secondary }: HeroIntr
 
       <p
         className="hero-enter text-lead text-fg-muted mt-10 max-w-[60ch]"
-        data-enter={headlineDone ? 'in' : 'out'}
+        data-enter={revealed ? 'in' : 'out'}
       >
         {lead}
       </p>
 
       <div
         className="hero-enter hero-enter-late mt-12 flex flex-wrap items-center gap-8"
-        data-enter={headlineDone ? 'in' : 'out'}
+        data-enter={revealed ? 'in' : 'out'}
       >
         <Button href={primary.href}>{primary.label}</Button>
         <Button variant="link" onClick={() => scrollToTarget(secondary.target, -80)}>
