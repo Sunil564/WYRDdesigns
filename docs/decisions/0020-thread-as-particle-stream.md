@@ -275,6 +275,64 @@ Reveal and the head window both read `position.y` before any displacement exists
 
 Counts unchanged at 10,003, 11,032 and 11,454. Frame time 24.4ms median and 31.0ms at p95, inside the 21.8 to 24.7 and 28.4 to 38.0 range the same sweep measured before this change.
 
+## 14. Text dimming, both counts halved, watchdog window moved
+
+Four items from the dimming brief, in the order it required: the stream's count first, so the dimming was tuned against the density that ships rather than against one twice as dense.
+
+### Stream count and trail alpha
+
+`TRUNK_DENSITY` 1.5 to 0.75. Measured counts 5,874 at 375, 5,002 at 1024, 5,518 at 1440 and 5,728 at 1920. `POINT_BAND` moved with it to 4,000 to 6,000 and `MAX_POINTS` to 8,000, keeping the same third of headroom the ceiling had over the band before. The tripwire is silent at every width, which is the point: a count change that leaves the tripwire behind makes it fire on a decision rather than on drift, and that is how a guard gets ignored.
+
+Settled trail alpha is 65 percent of what it was, 0.5 to 0.7 becoming 0.325 to 0.455. The head is untouched at 0.86 to 1.0, because the contrast between a bright head and a receded trail is the whole change.
+
+The trail alpha was done with the count rather than after the dimming, a deviation from the stated order and the reason is the brief's own warning about the compound case: dimming tuned against the old alpha would have had to be tuned twice.
+
+### Dimming over body copy
+
+Boxes are collected in the same layout pass as the route and passed as a uniform array of rects in document space. Dimmed, never occluded: cutting the trail out over copy would break it into disconnected segments and lose the continuity the effect exists for.
+
+**The cap is set against the uniform budget, not the page.** ESSL 1.00 guarantees only 128 vertex uniform vectors and each rect costs one, so this page's 87 raw boxes risked a shader that fails to compile on a conforming minimum implementation, which shows up as a thread that silently does not draw. Merging neighbouring blocks brings 87 down to 36 at 375px and 38 at 1024, 1440 and 1920, so `MAX_TEXT_RECTS` is 40 and **the cap is not reached at any width**. If a longer page ever exceeds it the largest boxes by area win and the collector says so on the console.
+
+Merging is also the better rendering. A box per line or per list item dims in stripes; a box per block recedes the trail across the whole passage. The cost is that the gaps inside a block dim too, which is a far smaller error than half the page not dimming.
+
+Values: dim to 0.3 of normal alpha, ramped across a 6px pad either side of each edge rather than stepped, because a hard alpha step on a rectangle reads as a rectangle cut out of the trail, which is more distracting than the particles were. **The head keeps 85 percent of its brightness**, taking only 15 percent of the dimming, so the thread does not appear to stall wherever it crosses copy.
+
+The test uses the displaced position, unlike the reveal and the inverse band which use undisplaced Y. Deliberate, and the distinction is worth keeping straight: those two ask where the particle's place on the route is, and this one asks where the particle actually ended up relative to the words, which is the only thing that decides whether it distracts.
+
+At 375px, where the thread column and the text column overlap almost completely, the trail measures 188 of 311 rows inked at mean deviation 45.5 against a control column at 0 rows, so it is still clearly a thread. No breakpoint specific dim factor was needed.
+
+### Hero count, and why `ORIGIN_SHARE` did not move
+
+`COUNT` 10,560 to 5,280. The whole hero diff is that constant and its comment.
+
+The brief expected this to break the handoff tuning, on the reasoning that halving the field leaves the stream's scattered origins denser than the thing they blend into. It does not, and the reason is the order the brief itself set. Item 3 halved the stream's count first, which halved the number of particles in the handoff window, so the recruited origins halved in step with the field: about 620 of 10,560 before, about 310 of 5,280 after, which is 5.9 percent either way. `ORIGIN_SHARE` stays at 0.55, and confirmed by looking at the hero exit, the origins still cannot be picked out of the field as a distinct layer.
+
+### Watchdog
+
+The measurement window now waits three seconds after the field's first frame, a little under three times the end of the last load time long task. That is the whole fix, as instructed, and no downshift fired at either width on any run since.
+
+A second gate stops the window completing once the handoff has begun, which is the criterion about not changing field density mid effect. The condition is the one the stream uses, the reveal line reaching the hero's bottom edge, so `REVEAL_OFFSET` is imported rather than the fraction written twice.
+
+**And the honest part: the watchdog can no longer do anything meaningful.** `MIN_COUNT` is 5,000 and the base is now 5,280, so a downshift halves 5,280 to 2,640, clamps to 5,000, and delivers a 5.3 percent cut. It is a subsystem that can fire and cannot act, which is the pattern section 11's dead ScrollTrigger was. Two ways out, both the operator's call and neither taken here: lower `MIN_COUNT` so the cut means something, or remove the watchdog on the grounds that a field of 5,280 is already the low setting.
+
+### Two harness repairs the density change forced
+
+Both are the same fault in different places: a number copied out of the source and left behind when the source moved.
+
+`check-home` asserted the point count against a hardcoded 8,000 to 12,000 and failed four criteria on a correct build. It now reads the band from `data-thread-band`, which `SceneCanvas` publishes from `POINT_BAND`, so the page states its own limit and the copy cannot go stale again.
+
+The painting criterion's control column was a fixed offset, and at 1920 that offset landed inside the centred positioning copy: the control inked 155 of 331 rows on its own and left the thread 54 rows clear of a threshold needing 60. The threshold was not the problem and was not touched. The control is now the emptiest of eight candidate offsets, which is the closest available stand in for "this page without a thread on it". Margins after: 255 against 60 at 1024, 231 against 120 at 1440, 211 against 106 at 1920, 225 against 106 at 2560.
+
+### Measured
+
+Frame time over the standard sweep improves as the brief expected: 22.4ms median and 28.4ms p95 at 1440 against 24.4 and 31.0 before, and 16.7 and 17.9 at 375px. No console output at any width. 34 of 35 in `check-home`, the known Reduced tier gap.
+
+### Judged by looking, all three in the brief's terms
+
+- **The dimmed trail over text reads as receded, not broken up.** The ramp does the work: at 375px the trail visibly fades as it enters a paragraph and comes back in the gap between them, with no rectangular edge anywhere. The head crossing copy at full brightness is what keeps it from reading as an interruption.
+- **The halved thread still reads as a thread**, not as scattered dots following a line. In the process section at 1440 both strands are continuous, and the particles are close enough together that the eye joins them without effort.
+- **The halved hero field is at the edge of reading as sparse.** It still has presence and the handoff still works against it, but individual particles are now separately countable at 1440 where before they read as a texture. It is a dust rather than a field. That is a judgement rather than a fault, and it is the one of the three worth a second opinion on a real display.
+
 ## Consequences
 
 - The Thread is the fourth WebGL use on the site. Brief 7b.2's list of three is now a list of four, and this record is the argument 7b.2 requires.

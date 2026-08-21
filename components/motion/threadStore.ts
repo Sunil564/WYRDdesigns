@@ -4,6 +4,7 @@ import type {
   ThreadBand,
   ThreadDispersion,
   ThreadSamples,
+  ThreadTextRects,
 } from '@/components/motion/threadGeometry'
 
 /**
@@ -35,6 +36,8 @@ export type ThreadStreamData = {
   hero: ThreadBand | null
   /** Where the stream blooms outward and re-gathers. Null when there is no logo row. */
   disperse: ThreadDispersion | null
+  /** Body copy the trail recedes behind, in document coordinates. */
+  text: ThreadTextRects
 }
 
 const state = {

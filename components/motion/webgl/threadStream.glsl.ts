@@ -21,6 +21,7 @@
  * frame changes two floats.
  */
 
+import { MAX_TEXT_RECTS } from '@/components/motion/threadGeometry'
 import { MAX_BANDS } from '@/components/motion/threadStore'
 
 /**
@@ -109,6 +110,25 @@ const SPIRAL_WAVELENGTH = 350.0
  * particle visibly travels while the page is still.
  */
 const SPIRAL_SPIN = 0.785
+
+/**
+ * How the trail recedes over body copy. Item 1 of the dimming brief.
+ *
+ * `TEXT_DIM` is the alpha multiplier well inside a text box. Dimming rather than occluding:
+ * cutting the trail out over copy would break it into disconnected segments and lose the
+ * continuity the whole effect is for.
+ *
+ * `TEXT_PAD` is the half width of the ramp across a box's edge. Unlike the inverse band this
+ * transition is soft, because a hard alpha step on a rectangle reads as a rectangle cut out
+ * of the trail, which is more distracting than the particles were.
+ *
+ * `TEXT_DIM_HEAD_KEEP` is how much of the dimming a particle at full head weight receives.
+ * Nearly none: the head is the moving focal point, and dimming it makes the thread look like
+ * it stalls wherever it crosses copy.
+ */
+const TEXT_DIM = 0.3
+const TEXT_PAD = 6.0
+const TEXT_DIM_HEAD_KEEP = 0.15
 
 /**
  * The hero handoff. Step 8 of the parent brief's order of work, built here rather than
@@ -211,6 +231,13 @@ uniform float uDisperseCentreX;
 */
 uniform vec4 uHandoffBox;
 
+/*
+  Body copy, as left, top, right, bottom in document space, with a live count. Same idea as
+  the inverse band and extended from a Y range to a box.
+*/
+uniform vec4 uTextRects[${MAX_TEXT_RECTS}];
+uniform float uTextCount;
+
 uniform float uSpiralRadius;
 uniform float uTime;
 
@@ -227,10 +254,13 @@ varying float vInverse;
 varying float vDepth;
 /** 0 at a handoff particle's scattered origin, 1 once it has settled onto the path. */
 varying float vSettle;
+/** Alpha multiplier from the body copy this particle is drawn over, 1 where there is none. */
+varying float vTextDim;
 
 void main() {
   vRandom = aRandom;
   vSettle = 1.0;
+  vTextDim = 1.0;
 
   /*
     Reveal by document Y.
@@ -452,6 +482,33 @@ void main() {
     vSettle = settle;
   }
 
+  /*
+    Dim over body copy.
+
+    Tested against drawn, the displaced position, and not against the undisplaced Y the
+    reveal and the inverse band use. That difference is deliberate: those two ask where the
+    particle's place on the route is, and this one asks where the particle actually ended up
+    relative to the words, which is the only thing that matters for whether it distracts.
+
+    Computed here rather than in the fragment shader because a point primitive has one
+    vertex, so the answer is exact either way and this pays for the loop once per particle
+    instead of once per fragment.
+
+    The ramp is centred on the box edge and spans a pad either side, so a particle fades as
+    it approaches copy instead of stepping down on a rectangle boundary.
+  */
+  float dim = 0.0;
+  for (int i = 0; i < ${MAX_TEXT_RECTS}; i++) {
+    if (float(i) > uTextCount - 0.5) break;
+    vec4 box = uTextRects[i];
+    float dx = max(box.x - drawn.x, drawn.x - box.z);
+    float dy = max(box.y - drawn.y, drawn.y - box.w);
+    float outside = max(dx, dy);
+    dim = max(dim, 1.0 - smoothstep(-${TEXT_PAD.toFixed(1)}, ${TEXT_PAD.toFixed(1)}, outside));
+  }
+  // The head keeps almost all of its brightness, so the thread does not appear to stall.
+  vTextDim = mix(1.0, ${TEXT_DIM.toFixed(2)}, dim * mix(1.0, ${TEXT_DIM_HEAD_KEEP.toFixed(2)}, head));
+
   gl_Position = projectionMatrix * modelViewMatrix * vec4(drawn, 1.0);
 
   /*
@@ -485,6 +542,7 @@ varying float vHead;
 varying float vInverse;
 varying float vDepth;
 varying float vSettle;
+varying float vTextDim;
 
 void main() {
   float d = length(gl_PointCoord - vec2(0.5));
@@ -497,10 +555,14 @@ void main() {
   /*
     Rest colour is --fg-muted, not --border. The particle brief 2.4 is explicit
     about this and it is right: --border was chosen for a solid 1px hairline, and
-    discrete particles at that lightness on white are invisible. 50 to 70 percent
-    alpha, per the same section.
+    discrete particles at that lightness on white are invisible.
+
+    Alpha was 50 to 70 percent, from the same section. The dimming brief takes the settled
+    trail to 65 percent of that, so 32.5 to 45.5 percent, to stop it competing for attention
+    the length of the page. The head is untouched: the contrast between a bright head and a
+    receded trail is the point of the change, so only this line moves.
   */
-  float restAlpha = 0.5 + vRandom * 0.2;
+  float restAlpha = 0.325 + vRandom * 0.13;
 
   /*
     The head gets an alpha floor of its own rather than a multiplier off the rest
@@ -524,6 +586,8 @@ void main() {
     which is the whole reason this is interpolated rather than switched.
   */
   alpha *= mix(0.55, 1.0, vSettle);
+  // Receded over body copy. Computed per particle in the vertex shader.
+  alpha *= vTextDim;
   if (alpha < 0.002) discard;
 
   /*

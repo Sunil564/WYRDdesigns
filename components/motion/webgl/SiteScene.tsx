@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
+import { POINT_BAND } from '@/components/motion/threadGeometry'
 import { HeroField } from '@/components/motion/webgl/HeroFieldScene'
 import { SceneCanvas } from '@/components/motion/webgl/SceneCanvas'
 import { ThreadStream } from '@/components/motion/webgl/ThreadStreamScene'
@@ -36,6 +37,7 @@ export function SiteScene({ onContextLost }: { onContextLost?: () => void }) {
       onContextLost={onContextLost}
       pointCount={heroPoints}
       streamCount={streamPoints}
+      streamBand={`${POINT_BAND.min}-${POINT_BAND.max}`}
       className="pointer-events-none fixed inset-0 z-[2] h-full w-full"
     >
       <HeroField onCount={onCount} />

@@ -6,7 +6,7 @@ import { BufferAttribute, Color, NormalBlending } from 'three'
 import type { Points, ShaderMaterial } from 'three'
 import { MAX_BANDS, subscribeThread, threadState } from '@/components/motion/threadStore'
 import type { ThreadStreamData } from '@/components/motion/threadStore'
-import { HEAD_LENGTH } from '@/components/motion/threadGeometry'
+import { HEAD_LENGTH, MAX_TEXT_RECTS } from '@/components/motion/threadGeometry'
 import { currentScroll } from '@/components/motion/useLenis'
 import {
   threadFragmentShader,
@@ -44,7 +44,7 @@ const SPIRAL_RADIUS = 16
  * supports. Because the line is derived from scroll every frame, this fraction is the
  * only thing that decides where the head appears, and it cannot drift.
  */
-const REVEAL_OFFSET = 2 / 3
+export const REVEAL_OFFSET = 2 / 3
 
 /**
  * The Thread as a particle stream. Particle brief part 2, ADR 0020.
@@ -108,6 +108,9 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
       // The hero's lower half, which the handoff scatters its origins across. Zero width
       // until a hero is measured, which switches the handoff off rather than branching.
       uHandoffBox: { value: new Float32Array([0, 0, 0, 0]) },
+      // Body copy the trail recedes over. Four floats a box, count alongside.
+      uTextRects: { value: new Float32Array(MAX_TEXT_RECTS * 4) },
+      uTextCount: { value: 0 },
       uSpiralRadius: { value: SPIRAL_RADIUS },
       // The trail rotates at rest, so this scene now needs a clock where it did not.
       uTime: { value: 0 },
@@ -233,6 +236,9 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
       null hero leaves the box zero width, and the shader treats that as the handoff being
       off.
     */
+    ;(live.uTextRects!.value as Float32Array).set(data.text.rects)
+    live.uTextCount!.value = data.text.count
+
     const box = live.uHandoffBox!.value as Float32Array
     if (data.hero) {
       box[0] = 0

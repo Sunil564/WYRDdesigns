@@ -24,6 +24,13 @@ type SceneCanvasProps = {
    * rather than inferred from pixels.
    */
   streamCount?: number
+  /**
+   * Published as `data-thread-band`, so verification asserts the point count against the
+   * band the build actually holds rather than against a copy of it. The band has moved twice
+   * and the copy in `check-home` went stale the second time, failing four criteria on a
+   * correct build. A number the page states about itself cannot drift from itself.
+   */
+  streamBand?: string
   className?: string
 }
 
@@ -87,6 +94,7 @@ export function SceneCanvas({
   onContextLost,
   pointCount,
   streamCount,
+  streamBand,
   className,
 }: SceneCanvasProps) {
   const hostRef = useRef<HTMLDivElement | null>(null)
@@ -125,6 +133,7 @@ export function SceneCanvas({
       data-field="webgl"
       data-field-count={pointCount}
       data-thread-stream={streamCount}
+      data-thread-band={streamBand}
       className={className}
       style={{ pointerEvents: 'none' }}
     >

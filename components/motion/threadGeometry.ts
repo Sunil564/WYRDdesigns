@@ -46,6 +46,8 @@ export type ThreadGeometry = {
   paths: ThreadPath[]
   /** Stretches of page where the ground is dark, in document coordinates. */
   bands: ThreadBand[]
+  /** Body copy the trail recedes behind rather than crossing at full strength. */
+  text: ThreadTextRects
   /** The hero section's document box, which is the field's clip and its handoff cue. */
   hero: ThreadBand | null
   /**
@@ -55,6 +57,12 @@ export type ThreadGeometry = {
    */
   disperse: ThreadDispersion | null
 }
+
+/**
+ * Boxes of body copy the trail dims over, in document coordinates, four floats each as
+ * left, top, right, bottom. Item 1 of the dimming brief.
+ */
+export type ThreadTextRects = { rects: Float32Array; count: number }
 
 export type ThreadDispersion = {
   top: number
@@ -76,13 +84,16 @@ export const HEAD_LENGTH = 240
  *
  * The value is set from the route as measured, not guessed. Trunk plus a weighted
  * branch total is 6,669px at 1024 and 7,637px at 1920, so the whole route costs
- * `density * that`, which puts every width from 1024 up between 10,000 and 11,500
- * points at 1.5. That is mid band for `POINT_BAND` with room on both sides for the
- * page to grow. At the 2.2 this started at, the natural count was 16,181 at 1440 and
- * `MAX_POINTS` was quietly thinning it, which is why the band is now asserted below
- * rather than hoped for.
+ * `density * that`. At the 2.2 this started at, the natural count was 16,181 at 1440 and
+ * `MAX_POINTS` was quietly thinning it, which is why the band is asserted below rather
+ * than hoped for.
+ *
+ * Halved from 1.5 by the dimming brief, which puts the route at 5,000 to 5,730 across the
+ * widths. `POINT_BAND` moved with it, deliberately and in the same commit: a count change
+ * that leaves the tripwire behind is the tripwire firing on a decision rather than on drift,
+ * which teaches everyone to ignore it.
  */
-const TRUNK_DENSITY = 1.5
+const TRUNK_DENSITY = 0.75
 
 /**
  * Branch and strand density, as a fraction of the trunk. Four branches at rather
@@ -90,6 +101,34 @@ const TRUNK_DENSITY = 1.5
  * thread dividing, not as four new threads. Particle brief 2.4.
  */
 const BRANCH_DENSITY = 0.28
+
+/**
+ * Uniform array size for the text boxes the trail dims over.
+ *
+ * 40 is chosen against the guaranteed budget, not against the page. ESSL 1.00 guarantees
+ * only 128 vertex uniform vectors and each rect costs one, so the raw 87 boxes this page
+ * has would have risked a shader that fails to compile on a conforming minimum
+ * implementation, which fails as a thread that silently does not draw.
+ *
+ * Merging adjacent blocks brings 87 down to 36 at 375px and 38 at 1440, 1024 and 1920, so
+ * the cap is not reached and nothing is dropped. If a longer page ever exceeds it, the
+ * largest boxes by area win and `samplePaths` is not the place that says so: the collector
+ * below reports it.
+ */
+export const MAX_TEXT_RECTS = 40
+
+/** Selector for the copy that counts. Headings and body, not decoration and not whitespace. */
+const TEXT_SELECTOR = 'h1,h2,h3,h4,h5,h6,p,li,blockquote,figcaption,dt,dd,label,address'
+
+/**
+ * Vertical and horizontal slack when merging neighbouring boxes into one.
+ *
+ * Merging is what makes the cap reachable, and it is also the better rendering: a box per
+ * line or per list item dims in stripes, where a box per block recedes the trail across the
+ * whole passage. The cost is that the gaps inside a block dim too, which is a smaller error
+ * than half the page not dimming at all.
+ */
+const TEXT_MERGE_GAP = 28
 
 /**
  * How far above and below the logo marks the dispersion band runs.
@@ -131,13 +170,14 @@ const DISPERSE_HEIGHT_FRACTION = 1
 const SPREAD = 1.7
 
 /**
- * The particle brief 2.3 band for the whole route, at full density and any width.
+ * The band for the whole route, at full density and any width. Was 8,000 to 12,000 from
+ * particle brief 2.3, halved with `TRUNK_DENSITY` by the dimming brief.
  * A count outside it is a drift signal, not something to absorb: it means the page
  * has grown or the density is wrong, and either way the number to change is
  * `TRUNK_DENSITY`. Checked at full density only, since the Reduced tier is a third
  * of it by design.
  */
-const POINT_BAND = { min: 8000, max: 12000 }
+export const POINT_BAND = { min: 4000, max: 6000 }
 
 /**
  * Hard ceiling, whatever the page height. Nothing is allowed to run away.
@@ -145,8 +185,87 @@ const POINT_BAND = { min: 8000, max: 12000 }
  * A ceiling that silently rewrites the geometry under you is a trap: the thread was
  * shipped at 16,000 points for two builds looking like a deliberate number when it
  * was the cap engaging. So both this and the band above announce themselves.
+ *
+ * Halved to 8,000 with the band, keeping the same third of headroom above the band's top
+ * that 16,000 had over 12,000. A ceiling that stays put while the band halves stops being a
+ * runaway guard and becomes decoration.
  */
-const MAX_POINTS = 16000
+const MAX_POINTS = 8000
+
+/**
+ * Body copy boxes, merged and capped, in document coordinates.
+ *
+ * Runs in the same layout pass as the route, so the rects and the geometry describe the same
+ * frame. Merging is repeated a few times because one pass leaves neighbours that only became
+ * adjacent through an earlier merge.
+ */
+function collectTextRects(scrollY: number): ThreadTextRects {
+  type Box = { left: number; top: number; right: number; bottom: number }
+  const raw: Box[] = []
+  for (const element of Array.from(document.querySelectorAll(TEXT_SELECTOR))) {
+    if (!element.textContent || !element.textContent.trim()) continue
+    const rect = element.getBoundingClientRect()
+    if (rect.width < 8 || rect.height < 8) continue
+    raw.push({
+      left: rect.left + window.scrollX,
+      right: rect.right + window.scrollX,
+      top: rect.top + scrollY,
+      bottom: rect.bottom + scrollY,
+    })
+  }
+
+  const mergeOnce = (list: Box[]): Box[] => {
+    const out: Box[] = []
+    for (const box of [...list].sort((a, b) => a.top - b.top)) {
+      const near = out.find(
+        (other) =>
+          box.left < other.right + TEXT_MERGE_GAP &&
+          box.right > other.left - TEXT_MERGE_GAP &&
+          box.top < other.bottom + TEXT_MERGE_GAP &&
+          box.bottom > other.top - TEXT_MERGE_GAP,
+      )
+      if (!near) {
+        out.push({ ...box })
+        continue
+      }
+      near.left = Math.min(near.left, box.left)
+      near.right = Math.max(near.right, box.right)
+      near.top = Math.min(near.top, box.top)
+      near.bottom = Math.max(near.bottom, box.bottom)
+    }
+    return out
+  }
+
+  let merged = raw
+  for (let pass = 0; pass < 5; pass += 1) {
+    const next = mergeOnce(merged)
+    if (next.length === merged.length) break
+    merged = next
+  }
+
+  if (merged.length > MAX_TEXT_RECTS) {
+    console.error(
+      `[thread] ${merged.length} text boxes exceeds the ${MAX_TEXT_RECTS} uniform slots. ` +
+        `Keeping the largest by area, so the smallest ${merged.length - MAX_TEXT_RECTS} will ` +
+        `not dim the trail. Raise MAX_TEXT_RECTS in components/motion/threadGeometry.ts and ` +
+        `check it against the vertex uniform budget.`,
+    )
+    merged.sort(
+      (a, b) =>
+        (b.right - b.left) * (b.bottom - b.top) - (a.right - a.left) * (a.bottom - a.top),
+    )
+    merged = merged.slice(0, MAX_TEXT_RECTS)
+  }
+
+  const rects = new Float32Array(MAX_TEXT_RECTS * 4)
+  merged.forEach((box, index) => {
+    rects[index * 4] = box.left
+    rects[index * 4 + 1] = box.top
+    rects[index * 4 + 2] = box.right
+    rects[index * 4 + 3] = box.bottom
+  })
+  return { rects, count: merged.length }
+}
 
 function boxOf(element: Element, scrollY: number) {
   const rect = element.getBoundingClientRect()
@@ -197,6 +316,8 @@ export function measure(host: HTMLElement, wide: boolean): ThreadGeometry | null
       return { top: box.top, bottom: box.bottom }
     },
   )
+
+  const text = collectTextRects(scrollY)
 
   const heroElement = document.querySelector('#hero')
   const heroBox = heroElement ? boxOf(heroElement, scrollY) : null
@@ -256,6 +377,7 @@ export function measure(host: HTMLElement, wide: boolean): ThreadGeometry | null
         },
       ],
       bands,
+      text,
       hero,
       /*
         The narrow route is one straight line down the page centre, and it passes through
@@ -336,6 +458,7 @@ export function measure(host: HTMLElement, wide: boolean): ThreadGeometry | null
       })),
     ],
     bands,
+    text,
     hero,
     disperse,
   }

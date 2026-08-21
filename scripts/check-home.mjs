@@ -213,22 +213,54 @@ async function threadOnColumn(page) {
         const i = (width * y + x) * 4
         return (data[i] + data[i + 1] + data[i + 2]) / 3
       }
-      // The widest control offset that still fits the viewport with its own ground strip.
-      const offset = [200, 150, 100, 80].find(
-        (value) => routeX + value + 76 < width || routeX - value - 76 > 0,
-      )
-      const controlX = routeX + offset + 76 < width ? routeX + offset : routeX - offset
+      /*
+        The control is the emptiest candidate column, not a fixed offset.
+
+        A single offset lands on body copy at some widths: at 1920 the old +200 put the
+        control inside the centred positioning text, which inked 155 of 331 rows on its own
+        and left the thread only 54 rows clear of a threshold needing 60. The control is
+        meant to stand for "this page without a thread on it", so the least inked candidate
+        is the closest thing to that, and picking it costs nothing when none of them is
+        contaminated.
+      */
+      const candidates = []
+      for (const offset of [150, 200, 250, 300]) {
+        for (const sign of [1, -1]) {
+          const x = routeX + sign * offset
+          if (x - 76 > 0 && x + 76 < width) candidates.push(x)
+        }
+      }
+      if (candidates.length === 0) candidates.push(routeX + 80 + 76 < width ? routeX + 80 : routeX - 80)
       const peakNear = (centre, y, ground) => {
         let peak = 0
         for (let x = centre - 6; x <= centre + 6; x += 1) peak = Math.max(peak, Math.abs(lum(x, y) - ground))
         return peak
       }
 
+      const measure = (centre) => {
+        let rows = 0
+        let inked = 0
+        let sum = 0
+        for (let y = 250; y <= 580; y += 1) {
+          const strip = []
+          for (let x = routeX - 70; x <= routeX + 70; x += 1) strip.push(lum(x, y))
+          const ground = [...strip].sort((a, b) => a - b)[Math.floor(strip.length / 2)]
+          const peak = peakNear(centre, y, ground)
+          rows += 1
+          sum += peak
+          if (peak > 15) inked += 1
+        }
+        return { rows, inked, mean: sum / rows }
+      }
+      const controls = candidates.map((x) => ({ x, ...measure(x) }))
+      const control = controls.reduce((best, c) => (c.inked < best.inked ? c : best), controls[0])
+      const controlX = control.x
+
       let rows = 0
       let onRows = 0
-      let ctrlRows = 0
+      let ctrlRows = control.inked
       let onSum = 0
-      let ctrlSum = 0
+      let ctrlSum = control.mean * control.rows
       let redPeak = 0
       for (let y = 250; y <= 580; y += 1) {
         for (let x = routeX - 6; x <= routeX + 6; x += 1) {
@@ -239,12 +271,9 @@ async function threadOnColumn(page) {
         for (let x = routeX - 70; x <= routeX + 70; x += 1) strip.push(lum(x, y))
         const ground = [...strip].sort((a, b) => a - b)[Math.floor(strip.length / 2)]
         const on = peakNear(routeX, y, ground)
-        const control = peakNear(controlX, y, ground)
         rows += 1
         onSum += on
-        ctrlSum += control
         if (on > 15) onRows += 1
-        if (control > 15) ctrlRows += 1
       }
       return {
         routeX,
@@ -313,10 +342,21 @@ for (const width of [1024, 1440, 1920, 2560]) {
   const reported = Number(
     (await page.getAttribute('[data-thread-stream]', 'data-thread-stream')) ?? 0,
   )
+  /*
+    The band comes from the page, not from a copy kept here. It has moved twice, from
+    8,000 to 12,000 down to 4,000 to 6,000, and the copy that used to live on this line
+    went stale the second time and failed four criteria on a correct build. See CLAUDE.md,
+    Verification: assert on what the renderer reports, including what it reports about its
+    own limits.
+  */
+  const band = ((await page.getAttribute('[data-thread-stream]', 'data-thread-band')) ?? '')
+    .split('-')
+    .map(Number)
+  const inBand = band.length === 2 && reported >= band[0] && reported <= band[1]
   record(
     `the Thread paints at ${width}px on the Full tier`,
-    painted(ink) && reported >= 8000 && reported <= 12000,
-    `${inkDetail(ink)}, renderer reports ${reported} points`,
+    painted(ink) && inBand,
+    `${inkDetail(ink)}, renderer reports ${reported} points against its stated band ${band.join(' to ')}`,
   )
   await context.close()
 }
