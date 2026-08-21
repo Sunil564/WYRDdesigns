@@ -32,6 +32,26 @@ import { MAX_BANDS } from '@/components/motion/threadStore'
  */
 const HEAD_SIZE_GAIN = 1.6
 
+/**
+ * How much of the dispersion a particle at full head weight keeps. Item C.
+ *
+ * The brief's first preference is that the head disperses with everything else and blooms
+ * and re-forms. It does not survive that. Undamped, the accent particles scattered evenly
+ * through the cloud and the leading edge stopped reading as a head at all.
+ *
+ * Damped, the bright core of the head holds as a cluster. Its dim trailing edge still
+ * spreads, and by design: damping is proportional to a particle's own head weight, so a
+ * particle 200px back carries little of it. Measured accent bounding width per column is
+ * about 405px against a full spread of 500px, and almost all of that width is the faint
+ * tail rather than the core.
+ *
+ * At 0.14 the head holds together as a tight cluster while the settled stream behind it
+ * blooms, so the thread arrives at the logo row as a line and disperses behind its own
+ * leading edge. That reads better than either extreme, and it is the fallback the brief
+ * names.
+ */
+const HEAD_DISPERSE_DAMP = 0.14
+
 export const threadVertexShader = /* glsl */ `
 uniform float uPixelRatio;
 uniform float uSize;
@@ -66,6 +86,19 @@ uniform float uHeadLength;
 uniform float uBandTops[${MAX_BANDS}];
 uniform float uBandBottoms[${MAX_BANDS}];
 uniform float uBandCount;
+
+/*
+  The dispersion band, item C. Document Y range, and the maximum spread reached at its
+  centre. uDisperseSpread is zero when there is no logo row on the page, which switches
+  the whole effect off without a branch.
+
+  The same mechanism step 6 uses: a Y range as a uniform, tested per particle against its
+  own document Y. Nothing about the route changes for this, so path length, sample count
+  and the density tripwire are all untouched.
+*/
+uniform float uDisperseTop;
+uniform float uDisperseBottom;
+uniform vec2 uDisperseSpread;
 
 attribute float aRandom;
 
@@ -151,9 +184,48 @@ void main() {
   }
   vInverse = inverse;
 
-  // position is in document pixels. The object's matrix carries the scroll, the
-  // page centre, and the pixels to world units scale.
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  /*
+    Dispersion. The stream blooms outward through the client logo band and re-gathers
+    below it, so the thread reads as dispersing around the logos rather than running
+    behind them.
+
+    The ramp is a triangle in Y across the band, 0 at both edges and 1 at the centre, then
+    eased by smoothstep so it has zero slope at the edges and at the peak. That is what
+    makes the bloom and the re-gather both gradual, and it needs no state and no time: it
+    is a function of the particle's own position, so scrolling produces the animation.
+
+    Direction is per particle and hashed off aRandom rather than taken radially from a
+    centre point, which would draw a circle and put us back at the arcs. It is hashed
+    rather than used raw because aRandom already drives size and alpha, and reusing it
+    directly would tie a particle's direction to how big it is.
+
+    The spread is biased horizontally by the shape of the row it surrounds: uDisperseSpread
+    carries a third of the row's width against the row's own height, so the cloud is wide
+    and shallow like the thing it is dispersing around.
+  */
+  float span = max(uDisperseBottom - uDisperseTop, 1.0);
+  float t = clamp((position.y - uDisperseTop) / span, 0.0, 1.0);
+  float ramp = smoothstep(0.0, 1.0, 1.0 - abs(t * 2.0 - 1.0));
+
+  /*
+    The head keeps almost none of the spread, so it stays a head. Without this the accent
+    particles scatter across the full width of the cloud and the leading edge disappears.
+    The result is that the thread arrives as a line and disperses behind its own head.
+  */
+  ramp *= mix(1.0, ${HEAD_DISPERSE_DAMP.toFixed(2)}, head);
+
+  float hash = fract(sin(aRandom * 127.1 + 3.7) * 43758.5453);
+  float angle = hash * 6.2831853;
+  vec2 offset = vec2(cos(angle), sin(angle)) * uDisperseSpread * ramp;
+
+  /*
+    Displaced for drawing only. The reveal test and the head window above both read
+    position.y untouched, and they have to: feeding a displaced Y into the reveal would
+    let a particle that has drifted upward reveal before its neighbours, so the leading
+    edge would fray and the head would smear instead of holding as a head.
+  */
+  vec3 drawn = position + vec3(offset, 0.0);
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(drawn, 1.0);
 
   /*
     Point size is in framebuffer pixels and is not affected by the object's scale,

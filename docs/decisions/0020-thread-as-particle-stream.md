@@ -145,29 +145,35 @@ One thing the brief expects that does not visibly happen: the head does not chan
 
 No blend mode on the canvas. The footer needs nothing: the route terminates at the contact button, inside the band's upper half.
 
-## 10. The client logo loop, and why it only works at one width
+## 10. The client logo loop: arcs tried, reverted, replaced by dispersion
 
-Built as two arcs enclosing the client logo set, per item C of the amending brief, with one clause of C.2 not implemented and one C.3 concern to answer.
+Two arcs were built first, one per strand column, each bowing outward around the logo set and rejoining below it. They are reverted, and the reason is a measurement rather than a preference.
 
-**Not implemented: the single split point.** C.2 asks for a split point above the logo set and a rejoin below, both on the section's centre line, so the two arcs sweep down and meet. The route does not arrive here as one line. It arrives as four strands in two columns, at x 372 and 1068 at 1440, and both columns run inside the logo box horizontally, so today they pass behind the marks. There is nothing to split. So each column bows outward around the set and rejoins itself below. That keeps the arcs attached to the route at both ends, and it conserves weight without a density change because no path is added, which is the outcome C.2's density clause asks for by another route.
+The logo row is 751 by 40 at 1024, 1440 and 1920 alike, because its size is intrinsic to six marks rather than a fraction of the viewport. The strand columns move outward with the viewport and the row does not, so the bow each arc has to make shrinks as the viewport grows:
 
-**Three of item C's premises do not hold**, all measured rather than assumed. There is no marquee: six logos against a threshold of eight, so the section renders one static centred row, which `check-home` already asserts. There is no edge mask on it, so nothing can be cut off mid stroke. And the row is one row, not two moving in opposite directions.
-
-**The logo set is 751 by 40 at every width**, because the row's width is intrinsic to the six marks rather than a fraction of the layout. The strand columns move outward with the viewport and the logo box does not, so the bow each arc has to make shrinks as the viewport grows:
-
-| width | marks box | strand columns | bow needed | reads as |
+| width | marks box | strand columns | bow needed | read as |
 |---|---|---|---|---|
 | 1024 | 137 to 888 | 268, 756 | 191px | one wide ellipse around the set |
 | 1440 | 345 to 1096 | 372, 1068 | 87px | two brackets beside the set |
 | 1920 | 585 to 1336 | 612, 1308 | 87px | two brackets beside the set |
 
-**So the C.3 answer is: it works at 1024 and it does not work at 1440 or 1920.** At 1024 the two lobes are wide enough that they and the row read as a single enclosure. At 1440 and above each lobe is 87px wide and 152px tall, so it is taller than it is wide, and with 700px of open space and four unenclosed logos between them the two read as ornaments beside a logo row rather than as the thread doing something. That is not a tuning problem, it is the aspect ratio: an arc that encloses a 751 by 40 box from a start point only 27px inside its edge cannot be wider than it is tall.
+Above 1024 each lobe came out 87px wide and 152px tall, taller than it is wide, with 700px of open space and four unenclosed logos between the two. An arc enclosing a 751 by 40 box from a start point 27px inside its edge cannot be wider than it is tall, so no arc adjustment fixes it. The section does not support an enclosing shape.
 
-Clearance is measured from the marks box and not from the host, which is a flex row spanning the content column: measuring the host put the arcs at x -12, off the left edge at two of three widths. Closest approach of any arc to a mark, at mark height, is 52px at 1024 and 56px at 1440 and 1920. No horizontal overflow at any width.
+What replaced it is a dispersion, and it is a rendering behaviour rather than a route. Particles travelling the strands spread outward through a band around the logo row and re-gather below it. Three things follow from that which the arcs could not offer: the SVG paths stay straight runs so path length, sample count and the density tripwire are all untouched; a cloud has no aspect ratio it has to satisfy, so it adapts to whatever the row measures at any width; and the particles behave differently in that section, which is the thread doing something rather than an ornament placed near it.
 
-The loop is not inside an inverse band at any width, so the standard rest colour applies and step 6's band test does not touch it.
+The mechanism is step 6's, reused: a document Y range as a uniform, tested per particle against its own Y. The band is the marks box plus 200px above and below, which is 440px of run at every width, long enough for the bloom and the re-gather to read as movement. The ramp is a triangle in Y across the band, eased by smoothstep so it has zero slope at both edges and at the peak. Direction is hashed off `aRandom` rather than taken radially from a centre, which would draw a circle and land back at the arcs, and hashed rather than used raw because `aRandom` already drives size and alpha. Spread is a third of the row's width horizontally against the row's own height vertically, which is about 6:1 rather than the 2:1 the brief names as the bias: the magnitudes win, because 2:1 off a 250px reach would put the cloud 125px above and below a 40px row and produce the blob the brief is trying to avoid.
 
-Point counts after the added arc length: 10,487, 11,209 and 11,632, all inside the brief's band. The first attempt at this ran to 12,132 and 12,554 and the density tripwire from section 5 caught it, which is the first time that guard has earned its place.
+Displacement applies to the drawn position only. The reveal test and the head window both read the undisplaced Y, and have to: a particle that had drifted upward would otherwise reveal before its neighbours and the leading edge would fray.
+
+**The head needed damping.** The brief's first preference is that the head disperses with everything else and blooms and re-forms. It does not survive that: undamped, the accent scattered evenly through the cloud and the leading edge stopped reading as a head. Damped to 14 percent of the ramp at full head weight, the bright core holds together while the settled stream behind it spreads, so the thread arrives at the row as a line and disperses behind its own head. The dim trailing edge of the head still spreads, by construction, because damping is proportional to a particle's own head weight: measured accent bounding width per column is about 405px against a full spread of 500px, and nearly all of that width is faint tail rather than core.
+
+Below 1024 the route is one straight line down the page centre and it passes through the clients section, so it disperses too, at half the horizontal magnitude. There is far less room either side and a full third of the row's width would leave the viewport.
+
+Counts are back to the pre arc figures exactly, 10,003 at 1024, 11,032 at 1440 and 11,454 at 1920, which is the check that the dispersion added nothing to the route. The band does not overlap the single inverse band at any width. Frame time over the same 900 to 7000 sweep used before this work measures 20.7ms median and 27ms at p95, against 23.3 and 23.7ms median measured earlier in the build, so no cost that is separable from headless noise.
+
+Kept from the arc attempt because they stand without it: the density tripwire, which caught the arc version running to 12,132 points, and the correction that measures the marks box from the host's children rather than the host itself. The host is a flex row spanning the content column, 1344px wide at 1440 against the marks' 751, and measuring it put the arcs at x -12, off the left edge at two of three widths. The cloud is sized off that same box.
+
+**What it looks like, which is the part that had to be judged rather than measured.** It reads as dispersion. The shape has structure, a tight strand entering at the top, a wide bloom at the row, a re-gather below, and structure is what separates motion from noise on a light ground. Two things are weaker than that. The clouds are centred on the strand columns rather than on the row, so the two middle logos have open space behind them and the row is flanked rather than surrounded. And the head's faint accent tail leaves a scatter of pink specks near the outer marks, which is the least clean element in the section. All six marks stay legible, and nothing sits on a mark closely enough to read as dirt: `build-logs/screens/itemC-dirt-check-left.png` and `itemC-dirt-check-right.png` are the close crops that judgement is made on.
 
 ## Consequences
 

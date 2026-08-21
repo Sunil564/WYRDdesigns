@@ -84,6 +84,11 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
       uBandTops: { value: new Float32Array(MAX_BANDS) },
       uBandBottoms: { value: new Float32Array(MAX_BANDS) },
       uBandCount: { value: 0 },
+      // The dispersion band. Spread stays at zero until a logo row is measured, which
+      // switches the effect off on any page without one.
+      uDisperseTop: { value: 0 },
+      uDisperseBottom: { value: 1 },
+      uDisperseSpread: { value: new Float32Array([0, 0]) },
       // The reveal line in document pixels, written every frame, and the depth of the
       // head band above it. One scalar each, where step 5 carried an array per path.
       uRevealLine: { value: 0 },
@@ -182,6 +187,17 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
     ;(live.uBandTops!.value as Float32Array).set(data.bandTops)
     ;(live.uBandBottoms!.value as Float32Array).set(data.bandBottoms)
     live.uBandCount!.value = data.bandCount
+
+    const spread = live.uDisperseSpread!.value as Float32Array
+    if (data.disperse) {
+      live.uDisperseTop!.value = data.disperse.top
+      live.uDisperseBottom!.value = data.disperse.bottom
+      spread[0] = data.disperse.spreadX
+      spread[1] = data.disperse.spreadY
+    } else {
+      spread[0] = 0
+      spread[1] = 0
+    }
   })
 
   if (!data) return null

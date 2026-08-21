@@ -48,6 +48,19 @@ export type ThreadGeometry = {
   bands: ThreadBand[]
   /** The hero section's document box, which is the field's clip and its handoff cue. */
   hero: ThreadBand | null
+  /**
+   * Where the stream blooms outward and re-gathers, in document coordinates, with the
+   * maximum spread it reaches at the band's centre. Null when the client logo row is not
+   * on the page. Item C.
+   */
+  disperse: ThreadDispersion | null
+}
+
+export type ThreadDispersion = {
+  top: number
+  bottom: number
+  spreadX: number
+  spreadY: number
 }
 
 /** Length of the accent coloured segment that follows the draw head, in px. */
@@ -76,26 +89,30 @@ const TRUNK_DENSITY = 1.5
 const BRANCH_DENSITY = 0.28
 
 /**
- * The loop around the client logo set. Brief item C.
+ * How far above and below the logo marks the dispersion band runs.
  *
- * `LOOP_CLEARANCE` is how far outside the logo bounding box each arc's widest point
- * sits, and `LOOP_RISE` how far above and below the box each arc leaves and rejoins its
- * strand. Together they set the enclosed shape, which is much wider than it is tall
- * because the logo row is: a true circle would either crop the row or balloon the
- * section, which is what the brief says and what the measurements confirm.
+ * The band is where particles bloom outward and re-gather, so it needs more run than the
+ * 40px the marks themselves occupy or the whole thing happens in one scroll frame. 200px
+ * either side gives a 440px band, which at a viewport height of 900 is about half a
+ * screen: long enough that the bloom and the re-gather are both legible as movement.
  *
- * Clearance is measured from the box, not from a mark, so no arc can come close enough
- * to a logo to compete with it. The client logos are the only real assets on this site.
+ * This was two arcs bowing around the marks first. That is reverted, and why is recorded
+ * in ADR 0020 section 10: the marks are 751 by 40 at every width while the strand columns
+ * move outward with the viewport, so above 1024 each arc came out taller than it was wide
+ * and read as a bracket rather than an enclosure. A cloud has no shape it has to fit.
  */
-const LOOP_CLEARANCE = 60
-const LOOP_RISE = 56
+const DISPERSE_RISE = 200
 
 /**
- * Cubic approximation of a quarter ellipse. The usual constant: control points at
- * 0.5523 of the radius give a curve within a thousandth of a true ellipse, which is
- * three orders of magnitude better than anything visible at this scale.
+ * Maximum spread at the centre of the band, as fractions of the marks box.
+ *
+ * Horizontal is a third of the row's width, vertical is the row's own height, both from
+ * the brief. That comes out around 6:1 rather than the 2:1 the same section names as the
+ * bias, and the magnitudes win: 2:1 off a 250px horizontal reach would put the cloud
+ * 125px above and below a 40px row, which is the blob the brief is trying to avoid.
  */
-const ARC_K = 0.5523
+const DISPERSE_WIDTH_FRACTION = 1 / 3
+const DISPERSE_HEIGHT_FRACTION = 1
 
 /**
  * Static perpendicular scatter, in pixels. A mathematically thin line of points
@@ -180,6 +197,39 @@ export function measure(host: HTMLElement, wide: boolean): ThreadGeometry | null
   const endY = converge ? toLocal(boxOf(converge, scrollY).top) : height
   const convergeX = converge ? boxOf(converge, scrollY).x : centreX
 
+  /*
+    The client logo set, if it is on the page, as the box the dispersion is built from.
+
+    Measured from the DOM like everything else on this route, and from the host's children
+    rather than the host itself: the host is a flex row spanning the content column, 1344px
+    wide at 1440, while the six marks inside it occupy 751. That correction was made during
+    the arc attempt and it stands without it, because the cloud is sized off this box too.
+
+    The row measures 751 by 40 at 1024, 1440 and 1920 alike, since its size is intrinsic to
+    six marks rather than a fraction of the viewport.
+  */
+  const loopHost = document.querySelector('[data-thread-loop]')
+  const disperse = (() => {
+    if (!loopHost) return null
+    const marks = Array.from(loopHost.children).filter((child) => {
+      const rect = child.getBoundingClientRect()
+      return rect.width > 0 && rect.height > 0
+    })
+    if (marks.length === 0) return null
+    const boxes = marks.map((mark) => boxOf(mark, scrollY))
+    const left = Math.min(...boxes.map((box) => box.left))
+    const right = Math.max(...boxes.map((box) => box.right))
+    const marksTop = Math.min(...boxes.map((box) => box.top))
+    const marksBottom = Math.max(...boxes.map((box) => box.bottom))
+    return {
+      // Document coordinates: the shader tests a particle's own document Y against these.
+      top: marksTop - DISPERSE_RISE,
+      bottom: marksBottom + DISPERSE_RISE,
+      spreadX: (right - left) * DISPERSE_WIDTH_FRACTION,
+      spreadY: (marksBottom - marksTop) * DISPERSE_HEIGHT_FRACTION,
+    }
+  })()
+
   // Mobile and anything narrow: one straight vertical line, nothing else.
   if (!wide || targets.length !== 4 || !branchPoint) {
     return {
@@ -196,6 +246,13 @@ export function measure(host: HTMLElement, wide: boolean): ThreadGeometry | null
       ],
       bands,
       hero,
+      /*
+        The narrow route is one straight line down the page centre, and it passes through
+        the clients section like everything else, so it disperses too. At reduced
+        magnitude: there is far less horizontal room, and a cloud reaching a third of the
+        row's width either side would leave the viewport. Half of it, reported in ADR 0020.
+      */
+      disperse: disperse ? { ...disperse, spreadX: disperse.spreadX * 0.5 } : null,
     }
   }
 
@@ -229,77 +286,16 @@ export function measure(host: HTMLElement, wide: boolean): ThreadGeometry | null
   // on the contact button. They pass behind the sections between, which is what
   // makes the page read as one continuous thing.
   const strandStartY = Math.max(...branchTargets.map((target) => toLocal(target.bottom)))
-  /*
-    The client logo set, if it is on the page, as the box the loop encloses.
-
-    Measured from the DOM like everything else on this route: the row's width is
-    intrinsic to the six marks and is not a fraction of the viewport, so it cannot be
-    derived from the layout grid. At 1440 it measures 751 by 40, and 751 by 40 at 1024
-    and 1920 too, which is why the arcs bow much further at the narrow width.
-  */
-  const loopHost = document.querySelector('[data-thread-loop]')
-  const loop = (() => {
-    if (!loopHost) return null
-    /*
-      The union of the host's children, not the host's own box.
-
-      The host is a flex row that spans the content column, so its box is 1344px wide at
-      1440 while the six marks inside it occupy 751. Measuring the host put the arcs at
-      x -12, off the left edge of the viewport at two of three widths. The logo set is the
-      marks, which is what the brief means and what has to be cleared.
-    */
-    const marks = Array.from(loopHost.children).filter((child) => {
-      const rect = child.getBoundingClientRect()
-      return rect.width > 0 && rect.height > 0
-    })
-    if (marks.length === 0) return null
-    const boxes = marks.map((mark) => boxOf(mark, scrollY))
-    return {
-      left: Math.min(...boxes.map((box) => box.left)),
-      right: Math.max(...boxes.map((box) => box.right)),
-      top: toLocal(Math.min(...boxes.map((box) => box.top))),
-      bottom: toLocal(Math.max(...boxes.map((box) => box.bottom))),
-    }
-  })()
-
+  // Straight runs through the clients section. The dispersion is a rendering behaviour,
+  // not a route, so nothing here changes for it: no added length, no density change, and
+  // the tripwire in samplePaths stays quiet.
   const strands = branchTargets.map((target) => {
     const x = target.x
     const settleY = strandStartY + (endY - strandStartY) * 0.25
     const gatherY = endY - (endY - strandStartY) * 0.18
-
-    /*
-      The loop. Each strand bows outward around the logo set and rejoins its own column
-      below it, so the two columns together enclose the row.
-
-      This is not the single split point the brief describes, and the reason is the route
-      rather than a preference: the thread does not arrive here as one line. It arrives as
-      four strands in two columns, at x 372 and 1068 at 1440, both of them inside the
-      logo box horizontally, so today they pass behind the marks. There is nothing to
-      split. Bowing the strands they already are keeps the arcs attached to the route at
-      both ends, conserves weight without a density change because no path is added, and
-      stops the strands crossing the logos on the way. See ADR 0020.
-    */
-    const arc =
-      loop && loop.bottom > toLocal(target.bottom) && loop.top < gatherY
-        ? (() => {
-            const outward =
-              x < centreX ? loop.left - LOOP_CLEARANCE : loop.right + LOOP_CLEARANCE
-            const topY = loop.top - LOOP_RISE
-            const bottomY = loop.bottom + LOOP_RISE
-            const midY = (loop.top + loop.bottom) / 2
-            const reach = (outward - x) * ARC_K
-            return [
-              `L ${x} ${topY}`,
-              `C ${x + reach} ${topY} ${outward} ${midY - (midY - topY) * ARC_K} ${outward} ${midY}`,
-              `C ${outward} ${midY + (bottomY - midY) * ARC_K} ${x + reach} ${bottomY} ${x} ${bottomY}`,
-              `L ${x} ${gatherY}`,
-            ]
-          })()
-        : [`C ${x} ${settleY} ${x} ${settleY} ${x} ${gatherY}`]
-
     return [
       `M ${x} ${toLocal(target.bottom)}`,
-      ...arc,
+      `C ${x} ${settleY} ${x} ${settleY} ${x} ${gatherY}`,
       `C ${x} ${endY} ${convergeX} ${gatherY} ${convergeX} ${endY}`,
     ].join(' ')
   })
@@ -330,6 +326,7 @@ export function measure(host: HTMLElement, wide: boolean): ThreadGeometry | null
     ],
     bands,
     hero,
+    disperse,
   }
 }
 

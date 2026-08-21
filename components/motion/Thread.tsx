@@ -140,6 +140,7 @@ export function Thread() {
       bandBottoms,
       bandCount: bands.length,
       hero: geometry.hero,
+      disperse: geometry.disperse,
     })
 
     return () => clearThread()

@@ -1,6 +1,10 @@
 'use client'
 
-import type { ThreadBand, ThreadSamples } from '@/components/motion/threadGeometry'
+import type {
+  ThreadBand,
+  ThreadDispersion,
+  ThreadSamples,
+} from '@/components/motion/threadGeometry'
 
 /**
  * The handoff between the Thread and whichever renderer is drawing it.
@@ -29,6 +33,8 @@ export type ThreadStreamData = {
   bandCount: number
   /** The hero's document box, which the handoff needs. */
   hero: ThreadBand | null
+  /** Where the stream blooms outward and re-gathers. Null when there is no logo row. */
+  disperse: ThreadDispersion | null
 }
 
 const state = {
