@@ -9,9 +9,28 @@ type ParticleField2DProps = {
   className?: string
 }
 
-/** Hard ceiling from brief 6.1. Never exceeded, whatever the viewport. */
+/** Hard ceiling from brief 6.1 line 243. Never exceeded, whatever the viewport. */
 const MAX_PARTICLES = 400
 const CURSOR_RADIUS = 180
+
+/**
+ * Radians per second per unit of a particle's `speed`, which runs 0.15 to 0.5.
+ *
+ * **This was 0.00012 per millisecond, which is 0.12 rad/s per unit, and it is why the field
+ * looked static.** At that rate a particle took 105 to 349 seconds to complete one drift
+ * cycle and moved at a peak of 0.32 to 1.08 px/s. Measured on the built page: the loop was
+ * running and repainting every frame, but after fifteen seconds only 692 canvas pixels had
+ * changed against a field of 355 ink pixels, so nothing had travelled more than about a
+ * particle's width. It was costing a frame budget to animate below the threshold of sight.
+ *
+ * At 1.1 rad/s per unit the range is 11 to 38 seconds per cycle and 3.0 to 9.9 px/s, which
+ * reads as a slow drift at arm's length.
+ *
+ * Amplitude is deliberately not raised with it. Velocity is amplitude times angular rate, so
+ * either would have made the motion visible, but amplitude is what decides how far a particle
+ * roams from where it was placed, and the field's composition is seeded and worth keeping.
+ */
+const DRIFT_RATE = 0.0011
 /** 1.2s to settle back, expressed as a per frame ease at 60fps. */
 const RETURN_EASE = 0.045
 const DPR_CAP = 2
@@ -75,16 +94,24 @@ export function ParticleField2D({ seed = 'wyrd-hero', className }: ParticleField
 
     const countFor = (w: number) => {
       /*
-        Phase 4b section 5 says halve the count and then tune up if it reads too
-        sparse. Halving landed at 45 on desktop, which measured a third of the ink
-        the shader field puts down and read as a handful of stray dots rather than a
-        field. Tuned back up to 72, which matches the shader field's presence at the
-        same viewport. Still well under the dark build's density per visible pixel,
-        because that field scattered most of its points outside the frustum.
+        These were 72, 48 and 30, set in Phase 4b by halving and then tuning up by eye,
+        before anything had been benchmarked. The caution is retired: measured on a
+        412 by 823 canvas at dpr 2, replicating this exact loop, the draw cost is
+
+          particles    1x      4x      6x
+                 30   0.1ms   0.2ms   0.2ms
+                200   0.2ms   0.4ms   0.6ms
+                400   0.3ms   0.7ms   1.1ms
+                900   0.7ms   1.4ms   2.2ms
+
+        against a 16.7ms frame. The brief's 400 cap is not a performance limit at any
+        throttle this build cares about, it is just the brief's cap, so it stands and
+        these sit under it with room. Viewport culling does not apply here the way it
+        does to the Thread: the whole field is on screen, so every particle is paid for.
       */
-      if (w >= 1024) return 72
-      if (w >= 768) return 48
-      return 30
+      if (w >= 1024) return 360
+      if (w >= 768) return 300
+      return 220
     }
 
     const build = () => {
@@ -130,7 +157,7 @@ export function ParticleField2D({ seed = 'wyrd-hero', className }: ParticleField
       frame = 0
       context.clearRect(0, 0, width, height)
 
-      const t = time * 0.00012
+      const t = time * DRIFT_RATE
 
       for (const particle of particles) {
         // A low amplitude sum of sines, which reads as an organic drift and costs
