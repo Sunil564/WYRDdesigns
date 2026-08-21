@@ -91,12 +91,20 @@ export function ThreadOverlay2D() {
       shader picks up, so the two renderers cannot disagree about what the Thread looks like.
     */
     const styles = getComputedStyle(document.documentElement)
-    const token = (name: string, fallback: string) =>
-      styles.getPropertyValue(name).trim() || fallback
-    const restColour = token('--color-fg-muted', '#5e5e66')
-    const restInverse = token('--color-fg-inverse-muted', '#9a9aa2')
-    const headColour = token('--color-accent', '#4c86db')
-    const headInverse = token('--color-accent-on-inverse', '#4c86db')
+    /*
+      No literal fallbacks, matching ParticleField2D and both shader scenes. The four that
+      used to be here were still `#ff521f` when the accent became blue, so they had gone
+      stale exactly as that file predicted, and they could not have fired anyway: the
+      properties they stand in for are defined on `:root` in the same stylesheet that gives
+      this component its class. A fallback that cannot run is a second source of truth with
+      nothing checking it.
+    */
+    const fallback = getComputedStyle(document.body).color
+    const token = (name: string) => styles.getPropertyValue(name).trim() || fallback
+    const restColour = token('--color-fg-muted')
+    const restInverse = token('--color-fg-inverse-muted')
+    const headColour = token('--color-accent')
+    const headInverse = token('--color-accent-on-inverse')
 
     /** Matches the shader's `fract(sin(x) * k)` so both renderers scatter identically. */
     const hash = (value: number, a: number, b: number, k: number) => {
