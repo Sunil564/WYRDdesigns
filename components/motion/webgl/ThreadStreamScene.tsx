@@ -105,6 +105,9 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
       uDisperseBottom: { value: 1 },
       uDisperseSpread: { value: new Float32Array([0, 0]) },
       uDisperseCentreX: { value: 0 },
+      // The hero's lower half, which the handoff scatters its origins across. Zero width
+      // until a hero is measured, which switches the handoff off rather than branching.
+      uHandoffBox: { value: new Float32Array([0, 0, 0, 0]) },
       uSpiralRadius: { value: SPIRAL_RADIUS },
       // The trail rotates at rest, so this scene now needs a clock where it did not.
       uTime: { value: 0 },
@@ -220,6 +223,27 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
     } else {
       spread[0] = 0
       spread[1] = 0
+    }
+
+    /*
+      The handoff's origin box: the hero's lower half, full page width.
+
+      Width comes from the canvas rather than the geometry because the document has no
+      horizontal scroll, so the two are the same number and this one is already to hand. A
+      null hero leaves the box zero width, and the shader treats that as the handoff being
+      off.
+    */
+    const box = live.uHandoffBox!.value as Float32Array
+    if (data.hero) {
+      box[0] = 0
+      box[1] = size.width
+      box[2] = data.hero.top + (data.hero.bottom - data.hero.top) * 0.5
+      box[3] = data.hero.bottom
+    } else {
+      box[0] = 0
+      box[1] = 0
+      box[2] = 0
+      box[3] = 0
     }
   })
 

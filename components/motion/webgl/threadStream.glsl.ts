@@ -109,6 +109,47 @@ const SPIRAL_WAVELENGTH = 350.0
  * particle visibly travels while the page is still.
  */
 const SPIRAL_SPIN = 0.785
+
+/**
+ * The hero handoff. Step 8 of the parent brief's order of work, built here rather than
+ * across two scenes.
+ *
+ * `HANDOFF_SPAN` is how far below the hero a particle still takes part, in document pixels.
+ * The brief's 600 to 900px of path; the trunk is the only path in that range, so the window
+ * needs no per path test.
+ *
+ * `CONVERGE_SPAN` is how far the reveal line travels while a particle crosses from its
+ * scattered origin to the path, and `CONVERGE_STAGGER` how far apart in that travel
+ * different particles start. Without the stagger the whole stretch snaps into place at once.
+ *
+ * `CONVERGE_LEAD` starts the ramp before the particle is revealed, and is why it is larger
+ * than the stagger. Without it a late starting particle is revealed at converge 0, sits
+ * motionless at its scattered origin for up to a stagger's worth of scroll, and then sets
+ * off, which is the "appears from nothing" the brief warns about. With the lead, every
+ * particle is already moving by the time it can be seen at all, and the part of the ramp
+ * that happens before reveal is spent behind the cull where nothing is drawn.
+ *
+ * `ORIGIN_SIZE_RATIO` is the hero field's rendered point size over the stream's, so a
+ * particle starts at hero size and grows to stream size on the same factor that moves it and
+ * does not pop when it lands. This is the requirement recorded in section 12: the two scenes
+ * carry independent base sizes now, and the migration is where that gets paid for.
+ *
+ * Measured, not assumed. Blob analysis of a text free patch puts the hero field's median
+ * particle at 2.3px across and the stream's at 3.2px, so the ratio is 0.72 and origins start
+ * smaller. Assuming it from the two `uSize` constants instead gave 2.0, which drew a layer of
+ * confetti across the hero: the hero's 6.0 is before its viewport scale and its per point
+ * variance, so it renders far smaller than the number suggests.
+ *
+ * `ORIGIN_SHARE` is the fraction of the window's particles that start scattered at all. The
+ * rest begin on the path. The parent brief's 400 to 800 recruited particles against the
+ * roughly 1,125 the window holds.
+ */
+const HANDOFF_SPAN = 750.0
+const CONVERGE_SPAN = 520.0
+const CONVERGE_STAGGER = 260.0
+const CONVERGE_LEAD = 300.0
+const ORIGIN_SIZE_RATIO = 0.72
+const ORIGIN_SHARE = 0.55
 const SPIRAL_DEPTH = 0.8
 const SPIRAL_IN_CLOUD = 0.15
 const SPIRAL_HEAD_DAMP = 0.25
@@ -163,6 +204,13 @@ uniform vec2 uDisperseSpread;
 /** Document x of the logo row's centre, which decides which way inward is. */
 uniform float uDisperseCentreX;
 
+/*
+  The box the handoff's scattered origins are drawn from: the hero's lower half, in document
+  coordinates, as (left, right, top, bottom). Zero width switches the handoff off, which is
+  what happens on any page with no hero.
+*/
+uniform vec4 uHandoffBox;
+
 uniform float uSpiralRadius;
 uniform float uTime;
 
@@ -177,9 +225,12 @@ varying float vHead;
 varying float vInverse;
 /** sin(phase): where this particle is in its rotation, -1 away, +1 toward the viewer. */
 varying float vDepth;
+/** 0 at a handoff particle's scattered origin, 1 once it has settled onto the path. */
+varying float vSettle;
 
 void main() {
   vRandom = aRandom;
+  vSettle = 1.0;
 
   /*
     Reveal by document Y.
@@ -352,6 +403,55 @@ void main() {
     reveal before its neighbours, so the leading edge would fray and the head would smear.
   */
   vec3 drawn = position + vec3(offset + spiral, 0.0);
+
+  /*
+    The hero handoff.
+
+    Nothing is handed over. The hero scene is untouched and none of its particles move: these
+    are the stream's own particles, and in the first stretch below the hero they start at a
+    scattered point inside the hero's lower half and travel onto the path as the reveal line
+    passes. It reads as the field condensing into the thread because the origins share the
+    field's box and density, not because the same particles moved. Coordinating ownership of
+    particles across two scenes with different attribute counts is the implementation this
+    replaces.
+
+    The target is drawn, which already carries the dispersion and the spiral, not the bare
+    path position. Converging to the path and then springing out into the trail would settle
+    in two visible stages.
+
+    Convergence begins before the particle is revealed, by CONVERGE_LEAD, which is larger than
+    the stagger. So every particle is already in motion on the frame it first becomes visible,
+    and it appears among the hero field's own particles rather than sitting still out in empty
+    space waiting for its turn. The reveal test and this both read undisplaced Y, which is
+    what lets the two be reasoned about together at all.
+  */
+  float handoff = uHandoffBox.y > uHandoffBox.x
+    ? 1.0 - smoothstep(0.0, ${HANDOFF_SPAN.toFixed(1)}, position.y - uHandoffBox.w)
+    : 0.0;
+
+  // Only a share of the window is recruited. The rest start on the path, which keeps the
+  // hero region from carrying the stream's whole first stretch on top of the field's own.
+  float recruitHash = fract(sin(aRandom * 33.19 + 2.6) * 15731.7433);
+  if (handoff > 0.001 && recruitHash < ${ORIGIN_SHARE.toFixed(2)}) {
+    float startHash = fract(sin(aRandom * 91.37 + 5.1) * 31771.4131);
+    float travelled = uRevealLine - position.y + ${CONVERGE_LEAD.toFixed(1)};
+    float begin = startHash * ${CONVERGE_STAGGER.toFixed(1)};
+    float converge = smoothstep(begin, begin + ${CONVERGE_SPAN.toFixed(1)}, travelled);
+
+    float originHashX = fract(sin(aRandom * 63.71 + 11.9) * 19349.2231);
+    float originHashY = fract(sin(aRandom * 21.53 + 7.3) * 27183.8171);
+    vec3 origin = vec3(
+      mix(uHandoffBox.x, uHandoffBox.y, originHashX),
+      mix(uHandoffBox.z, uHandoffBox.w, originHashY),
+      0.0
+    );
+
+    // One factor for all three, so position, size and alpha arrive together.
+    float settle = mix(1.0, converge, handoff);
+    drawn = mix(origin, drawn, settle);
+    vSettle = settle;
+  }
+
   gl_Position = projectionMatrix * modelViewMatrix * vec4(drawn, 1.0);
 
   /*
@@ -362,7 +462,11 @@ void main() {
   */
   float size = uSize * uPixelRatio * (0.72 + aRandom * 0.56);
   // Swelling toward the viewer, ninety degrees out of phase with the swing.
-  size *= 1.0 + ${SPIRAL_DEPTH.toFixed(2)} * vDepth;
+  // Gated on the settle factor: a particle still out at its scattered origin is not on the
+  // spiral yet, so it should not be swelling as though it were.
+  size *= 1.0 + ${SPIRAL_DEPTH.toFixed(2)} * vDepth * vSettle;
+  // Hero size at the origin, stream size on the path, on the same factor as the position.
+  size *= mix(${ORIGIN_SIZE_RATIO.toFixed(2)}, 1.0, vSettle);
   gl_PointSize = size * mix(1.0, ${HEAD_SIZE_GAIN.toFixed(2)}, head);
 }
 `
@@ -380,6 +484,7 @@ varying float vRandom;
 varying float vHead;
 varying float vInverse;
 varying float vDepth;
+varying float vSettle;
 
 void main() {
   float d = length(gl_PointCoord - vec2(0.5));
@@ -412,7 +517,13 @@ void main() {
     band rather than as rotation.
   */
   float alpha = core * mix(restAlpha, headAlpha, vHead) * uOpacity;
-  alpha *= 1.0 + ${SPIRAL_DEPTH.toFixed(2)} * vDepth;
+  alpha *= 1.0 + ${SPIRAL_DEPTH.toFixed(2)} * vDepth * vSettle;
+  /*
+    Alpha rides the settle factor too, faint at the scattered origin and full on the path.
+    Position, size and alpha all on one factor is what stops a migrating particle popping,
+    which is the whole reason this is interpolated rather than switched.
+  */
+  alpha *= mix(0.55, 1.0, vSettle);
   if (alpha < 0.002) discard;
 
   /*

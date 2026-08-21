@@ -250,6 +250,31 @@ Vertical spread is unchanged at the row's own height. The wider horizontal did n
 
 Density counts are unchanged: 10,003, 11,032 and 11,454. Frame time over the standard sweep measures 24.7, 22.1 and 21.8ms median across three runs with p95 at 38.0, 29.4 and 28.4, so the first run's p95 was noise and there is no separable cost.
 
+## 13. The hero handoff, built in one scene
+
+Step 8 of the parent brief's order of work, and the amending brief is right that the obvious implementation is wrong. Lerping particles out of the hero geometry into the thread geometry means two scenes negotiating ownership of the same particles across two draw calls with attribute counts that do not match.
+
+Nothing is handed over. The hero scene is untouched apart from the count reduction in section 12, and none of its particles move. These are the stream's own particles: in the first 750px of trunk below the hero, a share of them start at a scattered point inside the hero's lower half and travel onto the path as the reveal line passes. It reads as the field condensing into the thread because the origins share the field's box and density, not because the same particles moved.
+
+The convergence target is `drawn`, which already carries the dispersion and the spiral, not the bare path position. Converging onto the line and then springing outward into the trail would settle in two visible stages.
+
+Position, size and alpha all interpolate on one factor, which is the requirement section 12 records: the two scenes carry independent base sizes now, and the migration is where that gets paid for.
+
+**The size ratio was measured, and assuming it from the two constants was wrong by a factor of nearly three.** The hero's `uSize` is 6.0 and the stream's is 3.0, so the obvious ratio is 2.0, and at 2.0 the handoff drew a layer of large soft confetti across the hero that read as a separate group of particles rather than as the field. Blob analysis of a text free patch puts the hero field's median particle at 2.3px across against the stream's 3.2px, because the hero's 6.0 is before its viewport scale and its per point variance. The real ratio is 0.72: origins start smaller and grow as they land.
+
+Two other things the first attempt got wrong, both named in the brief's "watch for" list:
+
+- **Double density.** The whole window's worth of particles starting in the hero region put the stream's first stretch on top of the field's own. `ORIGIN_SHARE` is 0.55, so a little over 600 of the roughly 1,125 particles in the window are recruited and the rest begin on the path, which is the parent brief's 400 to 800.
+- **The spiral swell applied at the origin.** A particle still out in the hero is not on the spiral yet, so both the size and the alpha modulation are gated on the settle factor. At 2.0 with the swell compounding, a single origin particle could render 14px across.
+
+**Stagger and the reveal interaction.** Convergence starts `CONVERGE_LEAD` of 300px before the particle is revealed, which is deliberately larger than the 260px stagger. Without the lead, a late starting particle is revealed at converge 0, sits motionless at its scattered origin for up to a stagger's worth of scroll and then sets off, which is precisely the "appears at its scattered origin from nothing" the brief warns against. With it, converge at the instant of reveal is 0.614 for the earliest particle and 0.0168 for the latest, so every particle is already moving on the frame it first becomes visible. The part of the ramp before reveal is spent behind the cull, where nothing is drawn.
+
+Reveal and the head window both read `position.y` before any displacement exists, and all three displacements, dispersion, spiral and handoff, apply to `gl_Position` alone.
+
+**Judged by looking, and the answer is the good one: it reads as the field condensing into the thread**, not as a separate group fading in. At the point where the reveal line is 200px past the hero, the field above holds its own even fine texture and a funnel of particles narrows out of the bottom of it into the trunk; 500px further on, the last of them are still converging as a loose scatter above a stream that has already formed. The origins are not pickable out of the field as a distinct layer, which is the whole test, and it is the measured size ratio that made the difference rather than any change to the scatter itself.
+
+Counts unchanged at 10,003, 11,032 and 11,454. Frame time 24.4ms median and 31.0ms at p95, inside the 21.8 to 24.7 and 28.4 to 38.0 range the same sweep measured before this change.
+
 ## Consequences
 
 - The Thread is the fourth WebGL use on the site. Brief 7b.2's list of three is now a list of four, and this record is the argument 7b.2 requires.
