@@ -23,7 +23,7 @@ const BASE = process.env.SHOOT_BASE ?? 'http://localhost:3000'
   the code under test. See scripts/build-fresh.mjs.
 */
 assertBuildFresh({ base: BASE })
-const ROUTES = ['/', '/tokens', '/tiers']
+const ROUTES = ['/', '/tokens', '/tiers', '/work']
 const WIDTHS = [375, 768, 1440]
 
 const collect = () => {

@@ -32,7 +32,7 @@ All three are generated in the light context: a `--bg-raised` panel with tints o
 
 | Where | Component | What is there now | What replaces it |
 |---|---|---|---|
-| `/work` grid cards | `Placeholder` | One generated visual per project entry | Real project visuals |
+| `/work` grid cards | `Placeholder` | One generated visual per project entry, three today, at 4:5. The grid is exactly as long as `content/projects.ts` and is never padded | Real project visuals |
 | `/work/[slug]` hero and body visuals | `Placeholder` | Generated visuals at the aspect ratios in the template. The hero frame is a dark block per Phase 4b section 4, so its placeholder takes `context="inverse"` | Real project visuals |
 
 ## Content
