@@ -66,9 +66,34 @@ const HEAD_DISPERSE_DAMP = 0.14
  * `SPIRAL_IN_CLOUD` and `SPIRAL_HEAD_DAMP` are the two places the trail has to stand down.
  * Inside the client logo band the dispersion is already displacing the same particles, so
  * the trail collapses toward its core and resolves into the cloud instead of adding to it.
+ * Dropped from 0.3 to 0.15 when the dispersion widened: at the old value the wider cloud
+ * read as a spiral sitting inside a cloud rather than as one form.
  * At the head it collapses for the reason the dispersion does: a spiralled head stops
  * reading as a head.
  */
+/**
+ * Where a particle rides between the centre line and the maximum radius.
+ *
+ * `SPIRAL_RADIUS_FLOOR` is the fraction of the maximum no particle comes inside, so the
+ * centre line itself is empty. That is the change doing most of the work in thinning the
+ * core, and it hollows the dense middle without emptying the band around it.
+ *
+ * `SPIRAL_RADIUS_CURVE` is the exponent on the hash. It was 2, which crowded particles
+ * toward the core on purpose and is what made the centre too dense. At 1.0 the remaining
+ * distribution across the annulus is even. Lowering the floor further, or dropping the
+ * exponent below the brief's 0.8, is what turns this into a visible hollow tube, which is
+ * the failure the exponent was there to avoid in the first place.
+ */
+/**
+ * How much of the inward reach the dispersion keeps on its outward side. The brief asks for
+ * roughly 70/30 and this is 77/23, tighter, because the inward reach it scales grew: at 0.43
+ * the outward side reached x -39 at 1024, off the left edge of the viewport.
+ */
+const DISPERSE_OUTWARD = 0.3
+
+const SPIRAL_RADIUS_FLOOR = 0.3
+const SPIRAL_RADIUS_CURVE = 1.0
+
 const SPIRAL_WAVELENGTH = 350.0
 
 /**
@@ -85,7 +110,7 @@ const SPIRAL_WAVELENGTH = 350.0
  */
 const SPIRAL_SPIN = 0.785
 const SPIRAL_DEPTH = 0.8
-const SPIRAL_IN_CLOUD = 0.3
+const SPIRAL_IN_CLOUD = 0.15
 const SPIRAL_HEAD_DAMP = 0.25
 
 export const threadVertexShader = /* glsl */ `
@@ -135,6 +160,8 @@ uniform float uBandCount;
 uniform float uDisperseTop;
 uniform float uDisperseBottom;
 uniform vec2 uDisperseSpread;
+/** Document x of the logo row's centre, which decides which way inward is. */
+uniform float uDisperseCentreX;
 
 uniform float uSpiralRadius;
 uniform float uTime;
@@ -261,7 +288,21 @@ void main() {
 
   float hash = fract(sin(aRandom * 127.1 + 3.7) * 43758.5453);
   float angle = hash * 6.2831853;
-  vec2 offset = vec2(cos(angle), sin(angle)) * uDisperseSpread * ramp;
+
+  /*
+    Biased inward, so the two clouds throw toward each other and overlap across the middle
+    of the logo row instead of flanking it. A particle left of the row's centre reaches
+    much further right than left, and the mirror on the other side.
+
+    Asymmetric on the horizontal component only, and as a scale rather than a rotation, so
+    the outward side keeps ${(DISPERSE_OUTWARD * 100).toFixed(0)} percent of the reach.
+    Without that the pair reads as two arrows aimed at each other. There is no
+    discontinuity where the sign flips: the horizontal offset is zero there either way.
+  */
+  float inward = position.x < uDisperseCentreX ? 1.0 : -1.0;
+  float swingX = cos(angle);
+  float lean = swingX * inward > 0.0 ? 1.0 : ${DISPERSE_OUTWARD.toFixed(2)};
+  vec2 offset = vec2(swingX * lean, sin(angle)) * uDisperseSpread * ramp;
 
   /*
     Displaced for drawing only. The reveal test and the head window above both read
@@ -281,8 +322,9 @@ void main() {
     Two independent hashes off aRandom. The phase hash spreads particles around the full
     circumference, so the trail is a volume rather than one thin corkscrew. The radius hash
     decides how far out each particle rides, and is squared so the distribution crowds
-    toward the core: uniform radii read as a hollow tube, because the outer band has more
-    circumference to fill and the cosine projection piles up at the extremes as well.
+    toward the core between a floor and the maximum, so the centre line is empty and the
+    band around it is evenly filled. See the constants: the floor does the work, and the
+    exponent is what stops it reading as a hollow tube.
   */
   float phaseHash = fract(sin(aRandom * 78.233 + 1.3) * 43758.5453);
   float phase =
@@ -291,7 +333,9 @@ void main() {
     uTime * ${SPIRAL_SPIN.toFixed(3)};
 
   float radiusHash = fract(sin(aRandom * 45.164 + 9.7) * 24634.6345);
-  float radius = uSpiralRadius * radiusHash * radiusHash;
+  float radius =
+    uSpiralRadius *
+    mix(${SPIRAL_RADIUS_FLOOR.toFixed(2)}, 1.0, pow(radiusHash, ${SPIRAL_RADIUS_CURVE.toFixed(2)}));
 
   // Stand down inside the cloud, and at the head, for the reasons at the constants.
   radius *= mix(1.0, ${SPIRAL_IN_CLOUD.toFixed(2)}, ramp);

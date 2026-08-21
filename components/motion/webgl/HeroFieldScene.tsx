@@ -17,8 +17,15 @@ import { clamp, lerp, seededRandom } from '@/lib/utils'
  *
  * The watchdog below halves it once if the frame rate cannot hold, because the
  * brief's cut order is particle count before anything visual.
+ *
+ * Down 12 percent from 12,000 by the amending brief. That is the whole of the hero change:
+ * size, curl noise, cursor displacement, the one in nine accent ratio and normal blending
+ * are all untouched. It also closes item B of the visibility brief, which had asked for 50
+ * percent more point size against a build where uPixelRatio was stale: the fix in 070edf5
+ * already roughly doubled the points on a 2x display, so the field is thinned instead of
+ * enlarged. Item B is cancelled, not deferred. See ADR 0020 section 12.
  */
-const COUNT = 12000
+const COUNT = 10560
 const MIN_COUNT = 5000
 
 /** Cursor uniform smoothing. Brief 7b.2A fixes this at 0.08. */

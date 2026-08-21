@@ -61,6 +61,9 @@ export type ThreadDispersion = {
   bottom: number
   spreadX: number
   spreadY: number
+  /** Document x of the logo row's centre. Which side of it a particle is on decides
+   * which way its spread leans, so the two clouds throw toward each other. */
+  centreX: number
 }
 
 /** Length of the accent coloured segment that follows the draw head, in px. */
@@ -106,13 +109,20 @@ const DISPERSE_RISE = 200
 /**
  * Maximum spread at the centre of the band, as fractions of the marks box.
  *
- * Horizontal is a third of the row's width, vertical is the row's own height, both from
- * the brief. That comes out around 6:1 rather than the 2:1 the same section names as the
- * bias, and the magnitudes win: 2:1 off a 250px horizontal reach would put the cloud
- * 125px above and below a 40px row, which is the blob the brief is trying to avoid.
+ * Was a third of the row's width, which put each cloud's reach at 405px against a 751px row
+ * with the two strands 696px apart, so the clouds flanked the row and the middle marks had
+ * open space behind them. 0.64 was tried next and measured 0.33 ink per column at the row's
+ * centre against 1.44 at the marks, so the clouds were adjacent rather than overlapping:
+ * reaching the centre needed a particle in the top fifth of the cosine distribution.
+ *
+ * 0.85 puts the inward reach at 638px against a 696px gap between the strands, so roughly
+ * a third of each cloud's particles cross the centre rather than a fifth.
+ *
+ * Vertical stays at the row's own height. The wider horizontal did not make it read flat.
  */
-const DISPERSE_WIDTH_FRACTION = 1 / 3
+const DISPERSE_WIDTH_FRACTION = 0.85
 const DISPERSE_HEIGHT_FRACTION = 1
+
 
 /**
  * Static perpendicular scatter, in pixels. A mathematically thin line of points
@@ -227,6 +237,7 @@ export function measure(host: HTMLElement, wide: boolean): ThreadGeometry | null
       bottom: marksBottom + DISPERSE_RISE,
       spreadX: (right - left) * DISPERSE_WIDTH_FRACTION,
       spreadY: (marksBottom - marksTop) * DISPERSE_HEIGHT_FRACTION,
+      centreX: (left + right) / 2,
     }
   })()
 

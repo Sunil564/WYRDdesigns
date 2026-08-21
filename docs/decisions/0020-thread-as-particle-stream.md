@@ -201,6 +201,55 @@ Base point size goes from 2.0 to 3.0. **Criterion 10 of the parent brief is SUPE
 
 Frame time over the standard 900 to 7000 sweep measures 22.7ms median and 29.2ms at p95, against 20.7 and 27 before this change and 23.3 earlier in the build. Within noise on a headless software renderer.
 
+## 12. Tuning: core density, hero count, wider dispersion
+
+Three tuning items from the handoff brief, ahead of the handoff itself.
+
+### The trail's core
+
+`SPIRAL_RADIUS_FLOOR` 0.3, `SPIRAL_RADIUS_CURVE` 1.0. No particle's orbit comes inside 30 percent of the maximum radius, and the remaining distribution across the annulus is even rather than crowded toward the core.
+
+Measured on a strand at 1440, ink per column at each offset from the centre line, with the 83 count background subtracted:
+
+| offset | -8 | -6 | -4 | -2 | 0 | +2 | +4 | +6 | +8 | +10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| floor 0, curve 2 | 18 | 34 | 51 | 162 | 187 | 92 | 44 | 18 | 11 | 6 |
+| floor 0.3, curve 1 | 52 | 59 | 66 | 87 | 84 | 72 | 68 | 66 | 41 | 21 |
+
+The two central columns fall from 349 to 171, so the core is more than halved, and the ink moves outward: at 6px off centre it roughly doubles, and the profile is close to flat from the centre out to 8px before falling away by 16px. No hole.
+
+**It still peaks slightly at the centre and cannot be made not to**, which is worth recording because the next person will try. The offset is `radius * cos(phase)` while size and alpha ride `sin(phase)`, ninety degrees apart, so a particle is largest and brightest exactly when its offset is zero. The heaviest particles are at the centre line by the same design decision that makes the rotation read at all. A radius floor moves orbits off the centre; it cannot move the swell off it. Emptying the core would mean breaking the ninety degree relationship, which is the one thing the brief says to keep.
+
+### Hero count
+
+12,000 to 10,560, down 12 percent. The entire hero diff is that constant and a comment: size, curl noise, cursor displacement, the one in nine accent ratio and normal blending are untouched.
+
+**Item B is CANCELLED, superseded by this.** It asked for 50 percent more hero point size, against a build where `uPixelRatio` was stale at 1. The fix in `070edf5` already roughly doubled the points on a 2x display, so the complaint was answered before item B could be acted on, and the field is thinned rather than enlarged. Not deferred, not failed: the request no longer describes a problem the build has.
+
+Runtime counts vary below the constant for two reasons that are both intended and worth knowing when reading a measurement: the field scales with viewport area, so a narrow window gets fewer, and the frame rate watchdog halves the count once per mount if it fires, which it does intermittently under headless software rendering. Measured 10,560 at 1440 on one run and 5,280 on another.
+
+### Wider dispersion at the clients section
+
+`DISPERSE_WIDTH_FRACTION` went from a third of the row's width to 0.85, in two steps, because the first was not enough and the measurement said so. Ink per column in the rows just below the marks, at 1440:
+
+| | centre of row | left mark | right mark |
+|---|---|---|---|
+| fraction 1/3 | not measured, clouds visibly flanked | | |
+| fraction 0.64 | 0.33 | 1.44 | 1.38 |
+| fraction 0.85 | 0.54 | 0.69 | 1.40 |
+
+At 0.64 the centre carried a quarter of the ink the mark columns did, because reaching the centre needed a particle in the top fifth of the cosine distribution. At 0.85 the inward reach is 638px against the 696px between the strands, roughly a third of each cloud crosses the centre, and the centre column now matches the left mark. At 1024 the centre reads 1.22 against 1.86 and 2.07; at 1920, 0.65 against 0.63 and 2.14.
+
+The horizontal lean is inward, applied as an asymmetric scale on the cosine component rather than as a rotation, so there is no discontinuity where the sign flips: the horizontal offset is zero there either way. The outward side keeps 30 percent, which is 77/23 rather than the brief's 70/30. Tighter on purpose: at 0.43 of a 638px reach the outward side put particles at x -39 at 1024, off the left edge of the viewport.
+
+Vertical spread is unchanged at the row's own height. The wider horizontal did not make it read flat.
+
+`SPIRAL_IN_CLOUD` drops from 0.3 to 0.15. At 0.3 the wider cloud read as a spiral sitting inside a cloud rather than as one form.
+
+**Judged by looking, it now reads as one form around the logo row**, not as two clouds that happen to touch: a single broad shallow sweep spanning the full width of the row with the two strand columns feeding into it from above, and particles behind and between all six marks. All six stay legible, and the dirt check crops show the scatter clearly separate from the marks. The weakness is the one already recorded in section 10, the head's faint accent tail leaving pink specks near the outer marks, and the wider cloud spreads those over more of the row.
+
+Density counts are unchanged: 10,003, 11,032 and 11,454. Frame time over the standard sweep measures 24.7, 22.1 and 21.8ms median across three runs with p95 at 38.0, 29.4 and 28.4, so the first run's p95 was noise and there is no separable cost.
+
 ## Consequences
 
 - The Thread is the fourth WebGL use on the site. Brief 7b.2's list of three is now a list of four, and this record is the argument 7b.2 requires.

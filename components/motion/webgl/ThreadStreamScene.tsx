@@ -104,6 +104,7 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
       uDisperseTop: { value: 0 },
       uDisperseBottom: { value: 1 },
       uDisperseSpread: { value: new Float32Array([0, 0]) },
+      uDisperseCentreX: { value: 0 },
       uSpiralRadius: { value: SPIRAL_RADIUS },
       // The trail rotates at rest, so this scene now needs a clock where it did not.
       uTime: { value: 0 },
@@ -215,6 +216,7 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
       live.uDisperseBottom!.value = data.disperse.bottom
       spread[0] = data.disperse.spreadX
       spread[1] = data.disperse.spreadY
+      live.uDisperseCentreX!.value = data.disperse.centreX
     } else {
       spread[0] = 0
       spread[1] = 0
