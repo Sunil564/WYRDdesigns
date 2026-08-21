@@ -22,7 +22,15 @@ import { chromium } from 'playwright'
  */
 const DEFAULT_EXPECTED_404 = /_vercel\/(insights|speed-insights)/
 
-export function createHarness({ base, expected404 = DEFAULT_EXPECTED_404 }) {
+/**
+ * @param expectedErrorPaths Pathnames whose own 4xx response is the point rather than a fault.
+ *   Only the 404 route needs this: every check navigates to a page that legitimately answers
+ *   404, and without it the shared response collector reports the page under test as a problem
+ *   with itself. Matched on pathname, so it cannot accidentally excuse a different URL.
+ */
+export function createHarness({ base, expected404 = DEFAULT_EXPECTED_404, expectedErrorPaths = [] }) {
+  const expectedPaths = new Set(expectedErrorPaths)
+
   const results = []
   let browser = null
 
@@ -57,15 +65,28 @@ export function createHarness({ base, expected404 = DEFAULT_EXPECTED_404 }) {
       problems.push(`${message.type()}: ${text}`)
     })
     page.on('response', (response) => {
-      if (response.status() >= 400 && !expected404.test(response.url())) {
-        problems.push(`${response.status()} ${response.url()}`)
+      if (response.status() < 400) return
+      if (expected404.test(response.url())) return
+      let pathname = ''
+      try {
+        pathname = new URL(response.url()).pathname
+      } catch {
+        pathname = ''
       }
+      if (expectedPaths.has(pathname)) return
+      problems.push(`${response.status()} ${response.url()}`)
     })
     return { context, page, problems }
   }
 
-  /** Title, description, canonical, one h1, one of each landmark, and a clean console. */
-  async function checkHead(route, { titlePrefix = 'WYRD Designs, digital' } = {}) {
+  /**
+   * Title, description, canonical, one h1, one of each landmark, and a clean console.
+   *
+   * `expectCanonical: false` inverts the canonical check rather than skipping it. The 404 has
+   * none on purpose, because a canonical says this URL is the preferred address for this
+   * content and a 404 addresses nothing, so the absence is the criterion.
+   */
+  async function checkHead(route, { titlePrefix = 'WYRD Designs, digital', expectCanonical = true } = {}) {
     const { context, page, problems } = await open(1440, 900)
     await page.goto(`${base}${route}`, { waitUntil: 'load' })
     await page.waitForTimeout(2500)
@@ -90,8 +111,12 @@ export function createHarness({ base, expected404 = DEFAULT_EXPECTED_404 }) {
       `title "${head.title}", h1 "${head.h1}", description ${head.description.length} chars`,
     )
     record(
-      `${route} canonical is absolute with no domain hardcoded in it`,
-      head.canonical.startsWith('http') && !/wyrddesigns\.in/.test(head.canonical),
+      expectCanonical
+        ? `${route} canonical is absolute with no domain hardcoded in it`
+        : `${route} declares no canonical, because it addresses nothing`,
+      expectCanonical
+        ? head.canonical.startsWith('http') && !/wyrddesigns\.in/.test(head.canonical)
+        : head.canonical === '',
       `canonical ${head.canonical || '(none)'}`,
     )
     record(
