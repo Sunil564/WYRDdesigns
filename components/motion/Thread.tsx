@@ -48,6 +48,18 @@ import { useRenderTier } from '@/components/motion/useRenderTier'
 
 type Band = { top: number; bottom: number }
 
+/**
+ * Sample density on the Reduced tier, as a fraction of the Full tier's.
+ *
+ * The Full tier samples 5,874 points at 375px. A fifth of that is about 1,200, which is the
+ * number the benchmark was run against: measured under a 6x CPU throttle, sampling 1,200 points
+ * costs 5.2ms once at load, and drawing the roughly 200 to 400 of them that survive viewport
+ * culling costs under 2ms a frame against a 16.7ms budget.
+ *
+ * `POINT_BAND` is not tripped by this, because the tripwire only checks full density.
+ */
+const REDUCED_DENSITY = 0.2
+
 export function Thread() {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const svgRef = useRef<SVGSVGElement | null>(null)
@@ -55,20 +67,21 @@ export function Thread() {
   const { tier } = useRenderTier()
 
   /*
-    Which tiers draw the stroke, and which tier gets the particle stream.
+    Which tier draws the stroke, and which tiers get particles.
 
-    Both the Static and the Reduced tier render the SVG hairline, complete. The Reduced
-    tier's 2D particle overlay was scoped and rejected: see ADR 0020 section 16. It is the
-    tier that exists to stay light, and it had been rendering no Thread at all, which on a
-    coarse pointer is every phone and tablet.
+    The Static tier alone renders the SVG hairline. Both Full and Reduced sample the route and
+    hand it to a renderer: WebGL for Full, a 2D canvas overlay for Reduced.
 
-    `streaming` is the Full tier alone now. It used to include Reduced, which meant the
-    sampler ran its eleven thousand `getPointAtLength` calls on that tier and published them
-    to a renderer that was never mounted. Dead work, and on the one tier that could least
-    afford it.
+    Reduced held the stroke for one phase, after the overlay was scoped and rejected as
+    disproportionate in ADR 0020 section 16. That judgement was made before anyone measured
+    it. Measured under CPU throttling, the overlay is affordable, so ADR 0024 reverses it and
+    the tier gets the real Thread rather than a hairline standing in for one.
+
+    Density is `REDUCED_DENSITY` of the Full tier's, which is what keeps the sampling cost at
+    load small enough to matter to nobody.
   */
-  const stroked = tier === 'static' || tier === 'reduced'
-  const streaming = tier === 'full'
+  const stroked = tier === 'static'
+  const streaming = tier === 'full' || tier === 'reduced'
 
   const remeasure = useCallback(() => {
     const host = hostRef.current
@@ -131,7 +144,7 @@ export function Thread() {
       elements,
       geometry.paths.map((path) => path.kind),
       geometry.hostTop,
-      1,
+      tier === 'reduced' ? REDUCED_DENSITY : 1,
       Math.round(geometry.width),
     )
     if (!samples) return
@@ -155,7 +168,7 @@ export function Thread() {
     })
 
     return () => clearThread()
-  }, [geometry, streaming])
+  }, [geometry, streaming, tier])
 
   const bands: Band[] = geometry?.bands ?? []
   // Bands are measured in document coordinates. The SVG's user space is host local,

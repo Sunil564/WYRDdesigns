@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { ThreadOverlay2D } from '@/components/motion/ThreadOverlay2D'
 import { TierGate } from '@/components/motion/TierGate'
 
 /**
@@ -20,8 +21,9 @@ const SiteScene = dynamic(
  * Mounts whichever renderer the tier calls for, once per page. ADR 0020.
  *
  * Full tier: one canvas, holding the hero field and the Thread stream as two scenes.
- * Reduced tier: no Three.js at all, so the Thread stream is a 2D canvas overlay and
- * the hero keeps its own 2D field inside the hero section.
+ * Reduced tier: no Three.js at all. The Thread stream is a 2D canvas overlay, and the
+ * hero keeps its own 2D field inside the hero section. The overlay imports nothing from
+ * Three, so the zero bytes rule holds by construction rather than by care. ADR 0024.
  * Static tier: nothing. The Thread renders as a plain SVG stroke and no canvas is
  * created anywhere on the page.
  *
@@ -33,7 +35,7 @@ export function SceneLayer() {
   return (
     <TierGate
       full={({ onContextLost }) => <SiteScene onContextLost={onContextLost} />}
-      reduced={null}
+      reduced={<ThreadOverlay2D />}
     />
   )
 }

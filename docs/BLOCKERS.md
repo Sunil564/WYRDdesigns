@@ -29,17 +29,6 @@ Unblocks by: supplying an SVG, AI, EPS or PDF of the mark, a variant for dark gr
 Blocks: nothing. The site ships the raster on light grounds and type on dark ones.
 
 
-### 4. Client logo clearance
-
-**Not affected by the WYRD mark being supplied, and still open.** This item is about the six *client* marks, Bhavani Sarees, G Monisa, Maharaja, SITEO, Seervi Business Expo and Vahini Pipes, not about WYRD's own. `docs/brand.md` says named case studies are pending clearance and that the site uses capability proof rather than logos. Six client logos were supplied anyway and the brief specifies a logo section, so they render. See ADR 0002 section 6.
-
-What is still needed is one sentence from the operator confirming the six are cleared for display. Nothing about the WYRD mark answers it.
-
-Unblocks by: that confirmation. If clearance has not been given, deleting the entries in `content/clients.ts` removes the section, and the row disappears on its own at zero.
-
-Blocks: nothing shipping, but it is the only place on the site that publishes another company's property.
-
-
 ### 5. No real project data
 
 `/work` and `/work/[slug]` render from `content/projects.ts`, which carries placeholder entries flagged as such. No client name, outcome metric, or year is invented. The outcome block does not render without real numbers.
@@ -191,6 +180,15 @@ Blocks: nothing. It costs capable phones some fidelity and costs nobody correctn
 
 ## Resolved
 
+### 4. Client logo clearance
+
+Closed by the operator, 2026-08-21: the six client marks are cleared for display on our site.
+
+They are Bhavani Sarees, G Monisa, Maharaja, SITEO, Seervi Business Expo and Vahini Pipes, rendering in section 5 of the homepage from `content/clients.ts`, five as muted masks and SITEO as original artwork. This item was never about WYRD's own mark, and nothing about that mark being supplied answered it. See ADR 0002 section 6.
+
+`docs/brand.md`'s line about named case studies pending clearance still stands and is a separate thing: it governs project detail on `/work`, which is item 5, not the logo row.
+
+
 ### 10. Lighthouse Performance was unverified
 
 Closed against the deployment, both budgets, both tiers, with the tier each form factor resolved to measured rather than assumed:
@@ -232,7 +230,13 @@ Still open: the documents themselves. Neither can be written by this build.
 
 Deliberately unnumbered. This was item 10 while it was open, and its number was reused for the Lighthouse entry when it closed, which is the same mistake the rule at the top of this file now forbids. Rather than renumber the Lighthouse item and break the ADR that cites it, this one keeps no number and is found by its title. Section 2.3 of the particle brief gave the Reduced tier a 2D canvas overlay and it was never built, so on that tier nothing drew the route: the WebGL scene is not mounted, the SVG carrier sat at `opacity: 0`, and there was no overlay to take its place. Because `useRenderTier` returns Reduced for any coarse pointer before any capability test, that was every phone and every tablet without reduced motion enabled.
 
-Resolved by decision rather than by build. The overlay was scoped and rejected as disproportionate: it would have meant a second implementation of the reveal, the head, the inverse band switch, the dispersion, the spiral, the text dimming and the handoff, each free to drift from the shader's version with nothing comparing them, on the one tier that exists to stay light. The Reduced tier renders the SVG hairline complete instead, exactly as Static does. Measured on an emulated phone and tablet: tier `reduced`, SVG opacity 1, zero Three.js requests, no console output. See ADR 0020 section 16.
+**Resolved twice, and the second answer replaced the first.**
+
+First by decision: the overlay was scoped and rejected as disproportionate, and the Reduced tier was given the SVG hairline complete, exactly as Static renders it. That shipped and was measured: tier `reduced`, SVG opacity 1, zero Three.js requests, no console output. ADR 0020 section 16.
+
+Then by build, 2026-08-21, at the operator's instruction. The rejection had been made on an estimate of the cost, and the estimate was measured and found pessimistic. The overlay now draws 1,154 sampled points, of which 107 survive the reveal line and the viewport cull in any frame, with the full feature set: reveal, head, spiral, dispersion, inverse band switch, text dimming. 60fps at the 4x throttle Lighthouse's mobile profile uses; about 50fps at a pessimistic 6x, where the whole page is 17.4ms even with no canvas mounted. Zero Three.js still holds at 232.7kb over the wire. Every constant the two renderers share now lives in one file so they cannot drift, which was the strongest argument in the original rejection and is the one thing that had to be answered before building. ADR 0024.
+
+The concern that drove the first answer was right in kind and wrong in degree, which is worth keeping visible: a second implementation is a real risk, and it was made survivable by removing the duplication rather than by not building.
 
 
 

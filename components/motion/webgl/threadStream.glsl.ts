@@ -21,6 +21,21 @@
  * frame changes two floats.
  */
 
+import {
+  DISPERSE_OUTWARD,
+  HEAD_DISPERSE_DAMP,
+  HEAD_SIZE_GAIN,
+  SPIRAL_DEPTH,
+  SPIRAL_HEAD_DAMP,
+  SPIRAL_IN_CLOUD,
+  SPIRAL_RADIUS_CURVE,
+  SPIRAL_RADIUS_FLOOR,
+  SPIRAL_SPIN,
+  SPIRAL_WAVELENGTH,
+  TEXT_DIM,
+  TEXT_DIM_HEAD_KEEP,
+  TEXT_PAD,
+} from '@/components/motion/threadConstants'
 import { MAX_TEXT_RECTS } from '@/components/motion/threadGeometry'
 import { MAX_BANDS } from '@/components/motion/threadStore'
 
@@ -31,7 +46,6 @@ import { MAX_BANDS } from '@/components/motion/threadStore'
  * size and base alpha, and a ratio survives that pass where a second absolute would
  * have to be re-tuned with it.
  */
-const HEAD_SIZE_GAIN = 1.6
 
 /**
  * How much of the dispersion a particle at full head weight keeps. Item C.
@@ -51,7 +65,6 @@ const HEAD_SIZE_GAIN = 1.6
  * leading edge. That reads better than either extreme, and it is the fallback the brief
  * names.
  */
-const HEAD_DISPERSE_DAMP = 0.14
 
 /**
  * The spiral trail. Amending brief, superseding section 2.4's 1 to 3px idle offset.
@@ -90,12 +103,8 @@ const HEAD_DISPERSE_DAMP = 0.14
  * roughly 70/30 and this is 77/23, tighter, because the inward reach it scales grew: at 0.43
  * the outward side reached x -39 at 1024, off the left edge of the viewport.
  */
-const DISPERSE_OUTWARD = 0.3
 
-const SPIRAL_RADIUS_FLOOR = 0.3
-const SPIRAL_RADIUS_CURVE = 1.0
 
-const SPIRAL_WAVELENGTH = 350.0
 
 /**
  * Radians per second the whole trail rotates at rest.
@@ -109,7 +118,6 @@ const SPIRAL_WAVELENGTH = 350.0
  * One rotation per eight seconds. Slow enough that it is not a spin, fast enough that a
  * particle visibly travels while the page is still.
  */
-const SPIRAL_SPIN = 0.785
 
 /**
  * How the trail recedes over body copy. Item 1 of the dimming brief.
@@ -126,9 +134,6 @@ const SPIRAL_SPIN = 0.785
  * Nearly none: the head is the moving focal point, and dimming it makes the thread look like
  * it stalls wherever it crosses copy.
  */
-const TEXT_DIM = 0.3
-const TEXT_PAD = 6.0
-const TEXT_DIM_HEAD_KEEP = 0.15
 
 /**
  * The hero handoff. Step 8 of the parent brief's order of work, built here rather than
@@ -170,9 +175,6 @@ const CONVERGE_STAGGER = 260.0
 const CONVERGE_LEAD = 300.0
 const ORIGIN_SIZE_RATIO = 0.72
 const ORIGIN_SHARE = 0.55
-const SPIRAL_DEPTH = 0.8
-const SPIRAL_IN_CLOUD = 0.15
-const SPIRAL_HEAD_DAMP = 0.25
 
 export const threadVertexShader = /* glsl */ `
 uniform float uPixelRatio;

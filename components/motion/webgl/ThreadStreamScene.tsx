@@ -6,6 +6,11 @@ import { BufferAttribute, Color, NormalBlending } from 'three'
 import type { Points, ShaderMaterial } from 'three'
 import { MAX_BANDS, subscribeThread, threadState } from '@/components/motion/threadStore'
 import type { ThreadStreamData } from '@/components/motion/threadStore'
+import {
+  REVEAL_OFFSET,
+  SPIRAL_RADIUS,
+  THREAD_BASE_SIZE,
+} from '@/components/motion/threadConstants'
 import { HEAD_LENGTH, MAX_TEXT_RECTS } from '@/components/motion/threadGeometry'
 import { currentScroll } from '@/components/motion/useLenis'
 import {
@@ -23,7 +28,6 @@ import {
  * brief. Criterion 10 of the parent brief is superseded rather than failed, and ADR 0020
  * records why.
  */
-const BASE_SIZE = 3.0
 
 /**
  * Maximum distance a particle rides from the path centre, in CSS pixels. Amending brief.
@@ -33,7 +37,6 @@ const BASE_SIZE = 3.0
  * 12 to 20 range, and the radius hash squares itself in the shader so most particles ride
  * well inside it.
  */
-const SPIRAL_RADIUS = 16
 
 /**
  * Where the reveal line sits, as a fraction of viewport height from the top.
@@ -44,7 +47,6 @@ const SPIRAL_RADIUS = 16
  * supports. Because the line is derived from scroll every frame, this fraction is the
  * only thing that decides where the head appears, and it cannot drift.
  */
-export const REVEAL_OFFSET = 2 / 3
 
 /**
  * The Thread as a particle stream. Particle brief part 2, ADR 0020.
@@ -78,7 +80,7 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
 
     return {
       uPixelRatio: { value: 1 },
-      uSize: { value: BASE_SIZE },
+      uSize: { value: THREAD_BASE_SIZE },
       uOpacity: { value: 0 },
       uColourRest: { value: pick('--color-fg-muted') },
       // The head is the hero field's accent, the same token, because the stream is
