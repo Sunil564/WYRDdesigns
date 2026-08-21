@@ -179,6 +179,19 @@ What a fix would have to decide: whether the Full tier's cursor behaviour has a 
 
 Blocks: nothing. It costs capable phones some fidelity and costs nobody correctness.
 
+### 18. Descenders arrive late in the hero headline
+
+Reported by the operator 2026-08-21, deferred by the operator, not yet diagnosed. Recorded so it is not lost.
+
+The tails of `j`, `y` and `g` appear only after the whole headline and the lead have finished arriving, rather than with the letter they belong to.
+
+The likely cause, unverified: `.headline-line` carries `overflow: hidden` for the line mask, which is what makes characters rise out of a hard edge. A mask tight to the line box clips anything below the baseline, so descenders are cut for the length of the reveal and appear when the mask goes away on revert. `HeroIntro` already passes `pb-[0.08em]` on the line, which suggests this was met before and only partly compensated.
+
+If that is it, the fix is padding rather than timing: enough bottom padding on the masked line to clear the font's descender, with the mask offset by the same amount so the hard edge still sits on the baseline. That is a measurement against the font's own metrics, not a guessed value.
+
+Blocks: nothing. It is a visual defect in the first two seconds of the homepage.
+
+
 ## Resolved
 
 ### 4. Client logo clearance
