@@ -6,7 +6,7 @@ import { CaseStudyBlocks } from '@/components/sections/CaseStudyBlocks'
 import { ContactCta } from '@/components/sections/ContactCta'
 import { Button } from '@/components/ui/Button'
 import { Eyebrow } from '@/components/ui/Eyebrow'
-import { Placeholder } from '@/components/ui/Placeholder'
+import { ProjectHero } from '@/components/ui/ProjectHero'
 import { Reveal } from '@/components/ui/Reveal'
 import { caseStudy } from '@/content/caseStudy'
 import { projects } from '@/content/projects'
@@ -85,13 +85,12 @@ export default async function CaseStudyPage({ params }: { params: Promise<Params
         rhythm={false}
         className="pt-[calc(var(--gutter)*2)]"
       >
-        <Placeholder
-          seed={project.seed}
-          variant={project.visual}
-          aspect={21 / 9}
-          context="inverse"
-          note={`Hero visual for ${project.title}, pending cleared project imagery`}
-        />
+        {/*
+          Two separate frames, landscape above 1024px and portrait below, chosen by the
+          browser before it fetches. The slot was 21:9 at every width; it is now the ratio
+          of whichever image is served. See ProjectHero.
+        */}
+        <ProjectHero images={project.images} />
       </Section>
 
       <Section label={`${project.title}, detail`}>

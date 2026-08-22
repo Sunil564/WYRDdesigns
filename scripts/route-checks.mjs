@@ -223,6 +223,14 @@ export function createHarness({ base, expected404 = DEFAULT_EXPECTED_404, expect
         about the route.
       */
       placeholders: document.querySelectorAll('main [data-placeholder]').length,
+      /*
+        Images the browser actually decoded. Routes whose visuals became real files no
+        longer have placeholders to count, and an element count would not have told them
+        apart from a broken src anyway.
+      */
+      loadedImages: Array.from(document.querySelectorAll('main img')).filter(
+        (img) => img.complete && img.naturalWidth > 0,
+      ).length,
     }))
     record(
       `${route} renders composed under reduced motion, with nothing mounted`,

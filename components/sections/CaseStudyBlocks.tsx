@@ -1,19 +1,25 @@
 import { Section } from '@/components/layout/Section'
-import { Placeholder } from '@/components/ui/Placeholder'
+import { ProjectImage } from '@/components/ui/ProjectImage'
 import { Reveal } from '@/components/ui/Reveal'
 import type { Project } from '@/content/projects'
 
-/** The variants a body block cycles through, so two neighbours never look alike. */
-const VARIANTS = ['lines', 'mesh', 'gradient'] as const
+/**
+ * The three body frames, in order. Index 1 is the bleed slot, so the 16:9 frame sits there
+ * and the two 4:3 frames take the insets either side of it.
+ */
+const BLOCK_IMAGES = [
+  (project: Project) => project.images.blockInset1,
+  (project: Project) => project.images.blockBleed,
+  (project: Project) => project.images.blockInset2,
+] as const
 
 /**
  * How many body blocks a case study renders. Brief 6.3 asks for three to five.
  *
- * Three, and it is not a choice about rhythm: every block is a generated placeholder, and
- * five empty frames read as a longer apology than three do. When real project imagery
- * arrives this becomes the length of that imagery, not a constant.
+ * Three, which is now the number of body frames each project has rather than a judgement
+ * about how many empty placeholders a reader will tolerate. It was the latter.
  */
-const BLOCK_COUNT = 3
+const BLOCK_COUNT = BLOCK_IMAGES.length
 
 /**
  * The body of a case study: alternating full bleed and inset visuals. Brief 6.3.
@@ -38,11 +44,14 @@ export function CaseStudyBlocks({ project }: { project: Project }) {
           >
             <Reveal y={40}>
               <div className={bleed ? undefined : 'mx-auto max-w-[62rem]'}>
-                <Placeholder
-                  seed={`${project.seed}-block-${index}`}
-                  variant={VARIANTS[index % VARIANTS.length]}
-                  aspect={bleed ? 21 / 9 : 16 / 10}
-                  note={`Body visual ${index + 1} for ${project.title}, pending cleared project imagery`}
+                {/*
+                  Three frames alternating bleed and inset. The bleed slot was 21:9 and the
+                  inset 16:10; both now take the ratio of the image that fills them, 16:9
+                  and 4:3, so nothing is cropped to fit a shape it was not composed for.
+                */}
+                <ProjectImage
+                  image={BLOCK_IMAGES[index]!(project)}
+                  sizes={bleed ? '100vw' : '(min-width: 64rem) 992px, 92vw'}
                 />
               </div>
             </Reveal>

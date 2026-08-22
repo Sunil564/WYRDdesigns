@@ -96,7 +96,7 @@ export function WorkGrid({ projects }: WorkGridProps) {
               transition={{ duration: DURATION, ease: EASE }}
             >
               {/* Directly under the page h1, so the card title is an h2 here. */}
-              <WorkCard project={project} aspect={4 / 5} headingLevel={2} />
+              <WorkCard project={project} aspect={4 / 5} headingLevel={2} sizes="(min-width: 64rem) 646px, 92vw" />
             </motion.li>
           ))}
         </AnimatePresence>

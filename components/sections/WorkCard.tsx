@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRef } from 'react'
 import { CursorLabel } from '@/components/ui/CursorLabel'
-import { Placeholder } from '@/components/ui/Placeholder'
+import { ProjectImage } from '@/components/ui/ProjectImage'
 import type { Project } from '@/content/projects'
 import { cn } from '@/lib/utils'
 
@@ -11,6 +11,8 @@ type WorkCardProps = {
   project: Project
   /** 4 / 5 for the tall lead card, 16 / 9 for the stacked pair. */
   aspect: number
+  /** Rendered width across the breakpoints, so the browser picks sensibly. */
+  sizes?: string
   /**
    * Heading level for the card title, as a number.
    *
@@ -34,7 +36,7 @@ type WorkCardProps = {
  * A placeholder card says so, on the card. No client name, no year, and no outcome
  * is rendered while `placeholder` is true, because none of those facts exist yet.
  */
-export function WorkCard({ project, aspect, headingLevel = 3, className }: WorkCardProps) {
+export function WorkCard({ project, aspect, sizes, headingLevel = 3, className }: WorkCardProps) {
   const Heading = `h${headingLevel}` as const
   const cardRef = useRef<HTMLElement | null>(null)
 
@@ -44,11 +46,14 @@ export function WorkCard({ project, aspect, headingLevel = 3, className }: WorkC
         {/* The fixed frame. The visual scales inside it and never outside it. */}
         <div className="border-border relative overflow-hidden border">
           <div className="work-card-visual">
-            <Placeholder
-              seed={project.seed}
-              variant={project.visual}
-              aspect={aspect}
-              note={`Lead visual for ${project.title}, pending cleared project imagery`}
+            {/*
+              The tall card takes the 4:5 frame and the short card the 3:2. `aspect` is
+              still the prop that decides, so a caller asking for a shape gets the image
+              composed for it rather than that image cropped.
+            */}
+            <ProjectImage
+              image={aspect < 1 ? project.images.cardLarge : project.images.cardSmall}
+              sizes={sizes}
             />
           </div>
         </div>

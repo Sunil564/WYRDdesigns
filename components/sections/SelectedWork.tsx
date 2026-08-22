@@ -40,13 +40,13 @@ export function SelectedWork() {
 
       <div className="mt-16 grid gap-[var(--gutter)] lg:grid-cols-12">
         <Reveal className="lg:col-span-7" y={40}>
-          <WorkCard project={lead} aspect={4 / 5} />
+          <WorkCard project={lead} aspect={4 / 5} sizes="(min-width: 64rem) 762px, 92vw" />
         </Reveal>
 
         <div className="flex flex-col gap-[var(--gutter)] lg:col-span-5">
           {rest.map((project, index) => (
             <Reveal key={project.slug} delay={(index + 1) * 60} y={40}>
-              <WorkCard project={project} aspect={16 / 9} />
+              <WorkCard project={project} aspect={3 / 2} sizes="(min-width: 64rem) 530px, 92vw" />
             </Reveal>
           ))}
         </div>

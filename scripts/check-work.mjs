@@ -30,9 +30,15 @@ await harness.launch()
 // ---------------------------------------------------------------- shared route checks
 await harness.checkHead(ROUTE)
 await harness.checkKeyboardAndTargets(ROUTE)
+/*
+  Under reduced motion the route still has to be composed, which used to be asserted by
+  counting placeholders. The card visuals are real image files now and carry no
+  `data-placeholder`, so that count is permanently zero and the criterion passed on nothing.
+  Loaded images are the equivalent evidence: a composed /work has a visual in every card.
+*/
 await harness.checkReducedMotion(ROUTE, {
-  expect: (state) => state.placeholders > 0,
-  describe: (state) => `${state.placeholders} placeholders`,
+  expect: (state) => state.loadedImages >= 3,
+  describe: (state) => `${state.loadedImages} loaded card images`,
 })
 await harness.checkOverflow(ROUTE)
 
@@ -47,7 +53,18 @@ await harness.checkOverflow(ROUTE)
     return {
       cards: cards.length,
       slugs: cards.map((card) => card.querySelector('a')?.getAttribute('href') ?? ''),
-      placeholders: document.querySelectorAll('main [data-placeholder]').length,
+      /*
+        Every card visual, measured on what the browser actually decoded rather than on the
+        element being present. `naturalWidth` is zero for a broken src, an empty src, and an
+        img that never loaded, all three of which would satisfy a querySelectorAll count.
+      */
+      visuals: Array.from(document.querySelectorAll('article.work-card img')).map((img) => ({
+        loaded: img.complete && img.naturalWidth > 0,
+        natural: `${img.naturalWidth}x${img.naturalHeight}`,
+        shown: `${Math.round(img.getBoundingClientRect().width)}x${Math.round(img.getBoundingClientRect().height)}`,
+        alt: (img.getAttribute('alt') ?? '').trim(),
+        lazy: img.loading === 'lazy',
+      })),
       chips: Array.from(document.querySelectorAll(chipGroup)).map((button) => ({
         label: button.textContent?.trim() ?? '',
         disabled: button.disabled,
@@ -81,10 +98,23 @@ await harness.checkOverflow(ROUTE)
     grid.cards > 0 && distinct.size === grid.cards,
     `${grid.cards} cards, ${distinct.size} distinct slugs: ${[...distinct].join(', ')}`,
   )
+  /*
+    This asserted that every card visual carried `data-placeholder`. The visuals are real
+    files now, so it had to become an assertion about the image rather than about the
+    element: decoded by the browser, carrying alt text, and lazy because none of them is
+    above the fold. Alt text is checked for presence here and for content by hand, since no
+    assertion can tell an honest description from a claim about our work.
+  */
+  const drawn = grid.visuals.filter((visual) => visual.loaded)
   record(
-    'every card visual is tagged as a placeholder',
-    grid.placeholders >= grid.cards,
-    `${grid.placeholders} elements carry data-placeholder against ${grid.cards} cards`,
+    'every card renders a real image, decoded, described and lazy',
+    grid.visuals.length === grid.cards &&
+      drawn.length === grid.cards &&
+      grid.visuals.every((visual) => visual.alt.length > 20) &&
+      grid.visuals.every((visual) => visual.lazy),
+    grid.visuals
+      .map((visual) => `${visual.shown} from ${visual.natural}${visual.loaded ? '' : ' NOT LOADED'}`)
+      .join(', '),
   )
   const enabled = grid.chips.filter((chip) => !chip.disabled).map((chip) => chip.label)
   const disabled = grid.chips.filter((chip) => chip.disabled).map((chip) => chip.label)

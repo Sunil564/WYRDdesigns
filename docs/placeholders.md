@@ -6,7 +6,9 @@ Every placeholder on the site, what it stands in for, and what replaces it. Gene
 grep -o 'data-placeholder="[^"]*"' .next/server/app/*.html
 ```
 
-Kept current at the end of every phase. Updated through Phase 4.
+Kept current at the end of every phase. Updated through Phase 6.
+
+Note that the grep no longer finds the project imagery: those slots render real files rather than `Placeholder` components. `data-placeholder` now appears only in `/tokens`, which is a development harness. Something can be a stand-in without being a `Placeholder`, and this register is the list, not the attribute.
 
 ## Brand
 
@@ -19,23 +21,33 @@ Kept current at the end of every phase. Updated through Phase 4.
 
 ## Home
 
-| Where | Component | Seed | What is there now | What replaces it |
-|---|---|---|---|---|
-| S4 lead card | `Placeholder` | `ecommerce-garments` | Generated abstract visual, 4:5, `gradient` | The lead visual for that project |
-| S4 second card | `Placeholder` | `brand-film-manufacturing` | Generated abstract visual, 16:9, `lines` | The lead visual for that project |
-| S4 third card | `Placeholder` | `exhibition-hospitality` | Generated abstract visual, 16:9, `mesh` | The lead visual for that project |
+**AI-generated, pending real photography.** Not resolved. These are no longer `Placeholder`
+components and no longer carry `data-placeholder`, so the grep above will not find them: they
+are real image files, and the thing standing in is the photography, not the element.
 
-Each S4 card also carries a visible `Pending clearance` tag, because the project itself is a placeholder and not only its visual. The tag disappears when the entry in `content/projects.ts` sets `placeholder: false`.
+| Where | Slot | Source file | What replaces it |
+|---|---|---|---|
+| S4 lead card | `ecommerce-garments-card-large`, 4:5 | `1.1.png` | Real photography from the project |
+| S4 second card | `brand-film-manufacturing-card-small`, 3:2 | `2.2.png` | Same |
+| S4 third card | `exhibition-hospitality-card-small`, 3:2 | `3.2.png` | Same |
 
-All three are generated in the light context: a `--bg-raised` panel with tints of `--bg-sunken` and `--border`, one sparing accent, and the dark grain. A placeholder inside a dark block takes `context="inverse"` and generates from the inverse tokens instead. The context is an explicit prop, never inferred from the parent.
+Each S4 card still carries its visible `Pending clearance` tag, because the project itself is
+unconfirmed and not only its visual. The tag disappears when `content/projects.ts` sets
+`placeholder: false`.
+
+**The images are atmospheric, not evidential, and the alt text is written to match.** None of
+them shows a client's product, a client's premises, or anything this studio delivered. Every
+alt string describes what is in the frame and would be equally true of a stock library
+picture, which is the test applied. See `content/projects.ts` for the strings and
+`docs/image-inventory.md` for how the files were produced.
 
 ## Work
 
 | Where | Component | What is there now | What replaces it |
 |---|---|---|---|
-| `/work` grid cards | `Placeholder` | One generated visual per project entry, three today, at 4:5. The grid is exactly as long as `content/projects.ts` and is never padded | Real project visuals |
-| `/work/[slug]` hero visual | `Placeholder` | One generated visual at 21:9. The hero frame is a dark block per Phase 4b section 4, so it takes `context="inverse"` and generates from the inverse tokens | The real project hero |
-| `/work/[slug]` body visuals | `Placeholder` | Three generated visuals, alternating full bleed 21:9 and inset 16:10. Three rather than the brief's three to five because every one is a placeholder and five empty frames read as a longer apology than three | Real project imagery, and then the count follows the imagery rather than this constant |
+| `/work` grid cards | `ProjectImage` | **AI-generated, pending real photography.** One 4:5 frame per project, `x.1`. The grid is exactly as long as `content/projects.ts` and is never padded | Real photography |
+| `/work/[slug]` hero visual | `ProjectHero` | **AI-generated, pending real photography.** Two separate frames, `x.3` landscape at 16:9 above 1024px and `x.4` portrait at 4:5 below, chosen by the browser. Not one image cropped by CSS | Real photography, both orientations |
+| `/work/[slug]` body visuals | `ProjectImage` | **AI-generated, pending real photography.** Three frames: `x.6` inset 4:3, `x.5` bleed 16:9, `x.7` inset 4:3. Three because that is how many frames each project has, which is now a fact about the imagery rather than a judgement about how many empty placeholders a reader tolerates | Real photography, and then the count follows it |
 | `/work/[slug]` body captions | none | Nothing. A caption on a placeholder visual would be invented copy about a project nobody has described | Real captions, written from the project |
 
 ## Legal
@@ -51,7 +63,8 @@ Neither carries a date, a version, or a retention period, because all three woul
 
 | Where | File | What is there now | What replaces it |
 |---|---|---|---|
-| Project entries | `content/projects.ts` | Entries flagged `placeholder: true`, with no client name, no outcome metric, and a generic sector description | Cleared project data. Until then the outcome block does not render at all, per ADR 0009. |
+| Project entries | `content/projects.ts` | Entries flagged `placeholder: true`, with no client name, no outcome metric, and a generic sector description. **Imagery does not change this.** Supplying pictures supplied no facts: client, year and outcome are all still `null` and still render nothing | Cleared project data. Until then the outcome block does not render at all, per ADR 0009. |
+| Project imagery | `public/work/`, 21 files | AI-generated to `WYRD-IMAGE-PROMPTS.md`, at the source's own resolution. Fifteen of twenty one render softer than a 2x desktop display can show, which is recorded rather than fixed. Every source filename is in `public/work/manifest.json` | Real photography. `docs/image-inventory.md` says exactly what is being replaced and why it was there |
 
 ## What is deliberately absent rather than placeheld
 
