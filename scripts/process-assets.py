@@ -13,6 +13,7 @@ without shipping two files per logo.
 Run: python scripts/process-assets.py
 """
 
+import io
 import json
 import os
 from PIL import Image
@@ -21,10 +22,32 @@ SRC = r"M:\WYRD Projects\WYRD Website\Codebase2"
 CLIENT_SRC = os.path.join(SRC, "Client logos")
 BRAND_SRC = os.path.join(SRC, "Company logo", "Logo_Design_Black final.png")
 BRAND_SRC_WHITE = os.path.join(SRC, "Company logo", "Logo_Design_White.png")
+WORK_SRC = os.path.join(SRC, "Website images")
+
+# Generated project imagery, numbered by WYRD-IMAGE-PROMPTS.md. Project number to the
+# slug in content/projects.ts, and slot number to what the slot is.
+WORK_PROJECTS = {
+    "1": "ecommerce-garments",
+    "2": "brand-film-manufacturing",
+    "3": "exhibition-hospitality",
+}
+WORK_SLOTS = {
+    "1": "card-large",
+    "2": "card-small",
+    "3": "hero-desktop",
+    "4": "hero-mobile",
+    "5": "block-bleed",
+    "6": "block-inset-1",
+    "7": "block-inset-2",
+}
+
+# Each output must come in under this, per the image brief.
+WORK_MAX_BYTES = 400 * 1024
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOGO_OUT = os.path.join(ROOT, "public", "logos")
 BRAND_OUT = os.path.join(ROOT, "public", "brand")
+WORK_OUT = os.path.join(ROOT, "public", "work")
 
 # The canvas the icons and the OG mark sit on. Phase 4b moved this from the old
 # off white value to pure white, matching --color-bg.
@@ -158,6 +181,71 @@ def process_clients():
     return manifest
 
 
+def encode_under(im, path, fmt, ceiling):
+    """
+    Save at the highest quality that fits under `ceiling` bytes.
+
+    Steps down rather than guessing one number, because these frames differ enormously in
+    how they compress: fine film grain over a dark field is far more expensive than a flat
+    studio background, and a single quality that is safe for the worst of them wastes
+    quality on the rest.
+    """
+    for quality in (92, 88, 84, 80, 76, 72, 68, 64, 60):
+        buffer = io.BytesIO()
+        if fmt == "WEBP":
+            im.save(buffer, "WEBP", quality=quality, method=6)
+        else:
+            im.save(buffer, "JPEG", quality=quality, optimize=True, progressive=True)
+        if buffer.tell() <= ceiling:
+            with open(path, "wb") as handle:
+                handle.write(buffer.getvalue())
+            return quality, buffer.tell()
+    with open(path, "wb") as handle:
+        handle.write(buffer.getvalue())
+    return quality, buffer.tell()
+
+
+def process_work():
+    """
+    Project imagery, at the source's own resolution.
+
+    Nothing is upscaled, cropped, recoloured or adjusted. The files arrived smaller than the
+    prompt document asked for and the slots were moved to the images' ratios rather than the
+    images cut to the slots', so every frame here is the generated composition entire. What
+    that costs on a 2x desktop display is recorded in docs/image-inventory.md.
+    """
+    os.makedirs(WORK_OUT, exist_ok=True)
+    manifest = []
+    for name in sorted(os.listdir(WORK_SRC)):
+        if not name.lower().endswith(".png"):
+            continue
+        project_key, slot_key = name[:-4].split(".")
+        slug = WORK_PROJECTS[project_key]
+        slot = WORK_SLOTS[slot_key]
+        im = Image.open(os.path.join(WORK_SRC, name)).convert("RGB")
+        base = "%s-%s" % (slug, slot)
+
+        webp_q, webp_bytes = encode_under(im, os.path.join(WORK_OUT, base + ".webp"), "WEBP", WORK_MAX_BYTES)
+        jpg_q, jpg_bytes = encode_under(im, os.path.join(WORK_OUT, base + ".jpg"), "JPEG", WORK_MAX_BYTES)
+
+        manifest.append({
+            "project": slug,
+            "slot": slot,
+            "webp": "/work/" + base + ".webp",
+            "jpg": "/work/" + base + ".jpg",
+            "width": im.width,
+            "height": im.height,
+            "ratio": round(im.width / im.height, 4),
+            "source": name,
+        })
+        print("work  %-42s %4dx%-4d  webp q%d %3dkb  jpg q%d %3dkb"
+              % (base, im.width, im.height, webp_q, webp_bytes // 1024, jpg_q, jpg_bytes // 1024))
+
+    with open(os.path.join(WORK_OUT, "manifest.json"), "w", encoding="utf-8") as handle:
+        json.dump(manifest, handle, indent=2)
+        handle.write(chr(10))
+
+
 def process_brand():
     """
     Brand mark variants. The supplied mark is black on transparent, so it is
@@ -230,4 +318,5 @@ def process_brand():
 
 if __name__ == "__main__":
     process_clients()
+    process_work()
     process_brand()

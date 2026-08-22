@@ -3,10 +3,14 @@
 Source: `M:\WYRD Projects\WYRD Website\Codebase2\Website images`, 21 files, ingested 2026-08-22.
 Originals are untouched in the source folder and nothing has been processed into `public/`.
 
-**Processing is stopped and nothing was converted.** Two independent problems are reported
-below, both needing an operator decision. Neither is a fault in the generated images: they are
-internally consistent and match the specification they were generated to. The specification
-does not match the site.
+**Processed 2026-08-22 at the operator's instruction: use these files, fit them, and look.**
+The two problems below stand and are not fixed by anything in this document. They were
+answered by moving the slots to the images rather than the images to the slots, so nothing was
+cropped, upscaled, recoloured or adjusted. Every frame ships as the generated composition
+entire, at the source's own resolution.
+
+Neither problem is a fault in the generated images: they are internally consistent and match
+the specification they were generated to. The specification does not match the site.
 
 ## Every file, as supplied
 
@@ -100,3 +104,23 @@ Nothing arrived at those sizes: the 4:5 files are 1122x1402, the 3:2 are 1536x10
 are 1672x941 and the 4:3 are 1448x1086. Between 62 and 87 percent of what the slots need.
 
 Upscaling is not an option and was not done.
+
+## What shipped
+
+Every file converted at its own resolution into `public/work/`, WebP with a JPG fallback, each
+under 400kb. `public/work/manifest.json` records the source filename for every output, the way
+the client logo manifest does.
+
+Encoding steps quality down from 92 until the file fits rather than fixing one number, because
+these frames differ enormously in how they compress: fine film grain over a dark field costs
+far more than a flat background. Nineteen of twenty one held quality 92. Only
+`ecommerce-garments-block-inset-2` (from `1.7.png`, the saree border detail, all raised thread
+and shadow) needed q76 for WebP and q72 for JPG, and `exhibition-hospitality-hero-desktop`
+needed q88 for its JPG.
+
+The slots were changed to the images' ratios: card small to 3:2, case study hero and bleed
+block to 16:9, inset blocks to 4:3. That is a composition change to pages already approved and
+it is visible on the page rather than buried here.
+
+The 2x shortfall is unresolved and unresolvable from these files. Fifteen of twenty one render
+softer than a 2x desktop display can show. On a phone every one of them is fully resolved.

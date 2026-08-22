@@ -1,0 +1,212 @@
+[
+  {
+    "project": "ecommerce-garments",
+    "slot": "card-large",
+    "webp": "/work/ecommerce-garments-card-large.webp",
+    "jpg": "/work/ecommerce-garments-card-large.jpg",
+    "width": 1122,
+    "height": 1402,
+    "ratio": 0.8003,
+    "source": "1.1.png"
+  },
+  {
+    "project": "ecommerce-garments",
+    "slot": "card-small",
+    "webp": "/work/ecommerce-garments-card-small.webp",
+    "jpg": "/work/ecommerce-garments-card-small.jpg",
+    "width": 1536,
+    "height": 1024,
+    "ratio": 1.5,
+    "source": "1.2.png"
+  },
+  {
+    "project": "ecommerce-garments",
+    "slot": "hero-desktop",
+    "webp": "/work/ecommerce-garments-hero-desktop.webp",
+    "jpg": "/work/ecommerce-garments-hero-desktop.jpg",
+    "width": 1672,
+    "height": 941,
+    "ratio": 1.7768,
+    "source": "1.3.png"
+  },
+  {
+    "project": "ecommerce-garments",
+    "slot": "hero-mobile",
+    "webp": "/work/ecommerce-garments-hero-mobile.webp",
+    "jpg": "/work/ecommerce-garments-hero-mobile.jpg",
+    "width": 1122,
+    "height": 1402,
+    "ratio": 0.8003,
+    "source": "1.4.png"
+  },
+  {
+    "project": "ecommerce-garments",
+    "slot": "block-bleed",
+    "webp": "/work/ecommerce-garments-block-bleed.webp",
+    "jpg": "/work/ecommerce-garments-block-bleed.jpg",
+    "width": 1672,
+    "height": 941,
+    "ratio": 1.7768,
+    "source": "1.5.png"
+  },
+  {
+    "project": "ecommerce-garments",
+    "slot": "block-inset-1",
+    "webp": "/work/ecommerce-garments-block-inset-1.webp",
+    "jpg": "/work/ecommerce-garments-block-inset-1.jpg",
+    "width": 1448,
+    "height": 1086,
+    "ratio": 1.3333,
+    "source": "1.6.png"
+  },
+  {
+    "project": "ecommerce-garments",
+    "slot": "block-inset-2",
+    "webp": "/work/ecommerce-garments-block-inset-2.webp",
+    "jpg": "/work/ecommerce-garments-block-inset-2.jpg",
+    "width": 1448,
+    "height": 1086,
+    "ratio": 1.3333,
+    "source": "1.7.png"
+  },
+  {
+    "project": "brand-film-manufacturing",
+    "slot": "card-large",
+    "webp": "/work/brand-film-manufacturing-card-large.webp",
+    "jpg": "/work/brand-film-manufacturing-card-large.jpg",
+    "width": 1122,
+    "height": 1402,
+    "ratio": 0.8003,
+    "source": "2.1.png"
+  },
+  {
+    "project": "brand-film-manufacturing",
+    "slot": "card-small",
+    "webp": "/work/brand-film-manufacturing-card-small.webp",
+    "jpg": "/work/brand-film-manufacturing-card-small.jpg",
+    "width": 1535,
+    "height": 1024,
+    "ratio": 1.499,
+    "source": "2.2.png"
+  },
+  {
+    "project": "brand-film-manufacturing",
+    "slot": "hero-desktop",
+    "webp": "/work/brand-film-manufacturing-hero-desktop.webp",
+    "jpg": "/work/brand-film-manufacturing-hero-desktop.jpg",
+    "width": 1672,
+    "height": 941,
+    "ratio": 1.7768,
+    "source": "2.3.png"
+  },
+  {
+    "project": "brand-film-manufacturing",
+    "slot": "hero-mobile",
+    "webp": "/work/brand-film-manufacturing-hero-mobile.webp",
+    "jpg": "/work/brand-film-manufacturing-hero-mobile.jpg",
+    "width": 1122,
+    "height": 1402,
+    "ratio": 0.8003,
+    "source": "2.4.png"
+  },
+  {
+    "project": "brand-film-manufacturing",
+    "slot": "block-bleed",
+    "webp": "/work/brand-film-manufacturing-block-bleed.webp",
+    "jpg": "/work/brand-film-manufacturing-block-bleed.jpg",
+    "width": 1672,
+    "height": 941,
+    "ratio": 1.7768,
+    "source": "2.5.png"
+  },
+  {
+    "project": "brand-film-manufacturing",
+    "slot": "block-inset-1",
+    "webp": "/work/brand-film-manufacturing-block-inset-1.webp",
+    "jpg": "/work/brand-film-manufacturing-block-inset-1.jpg",
+    "width": 1448,
+    "height": 1086,
+    "ratio": 1.3333,
+    "source": "2.6.png"
+  },
+  {
+    "project": "brand-film-manufacturing",
+    "slot": "block-inset-2",
+    "webp": "/work/brand-film-manufacturing-block-inset-2.webp",
+    "jpg": "/work/brand-film-manufacturing-block-inset-2.jpg",
+    "width": 1448,
+    "height": 1086,
+    "ratio": 1.3333,
+    "source": "2.7.png"
+  },
+  {
+    "project": "exhibition-hospitality",
+    "slot": "card-large",
+    "webp": "/work/exhibition-hospitality-card-large.webp",
+    "jpg": "/work/exhibition-hospitality-card-large.jpg",
+    "width": 1122,
+    "height": 1402,
+    "ratio": 0.8003,
+    "source": "3.1.png"
+  },
+  {
+    "project": "exhibition-hospitality",
+    "slot": "card-small",
+    "webp": "/work/exhibition-hospitality-card-small.webp",
+    "jpg": "/work/exhibition-hospitality-card-small.jpg",
+    "width": 1537,
+    "height": 1023,
+    "ratio": 1.5024,
+    "source": "3.2.png"
+  },
+  {
+    "project": "exhibition-hospitality",
+    "slot": "hero-desktop",
+    "webp": "/work/exhibition-hospitality-hero-desktop.webp",
+    "jpg": "/work/exhibition-hospitality-hero-desktop.jpg",
+    "width": 1672,
+    "height": 941,
+    "ratio": 1.7768,
+    "source": "3.3.png"
+  },
+  {
+    "project": "exhibition-hospitality",
+    "slot": "hero-mobile",
+    "webp": "/work/exhibition-hospitality-hero-mobile.webp",
+    "jpg": "/work/exhibition-hospitality-hero-mobile.jpg",
+    "width": 1122,
+    "height": 1402,
+    "ratio": 0.8003,
+    "source": "3.4.png"
+  },
+  {
+    "project": "exhibition-hospitality",
+    "slot": "block-bleed",
+    "webp": "/work/exhibition-hospitality-block-bleed.webp",
+    "jpg": "/work/exhibition-hospitality-block-bleed.jpg",
+    "width": 1672,
+    "height": 941,
+    "ratio": 1.7768,
+    "source": "3.5.png"
+  },
+  {
+    "project": "exhibition-hospitality",
+    "slot": "block-inset-1",
+    "webp": "/work/exhibition-hospitality-block-inset-1.webp",
+    "jpg": "/work/exhibition-hospitality-block-inset-1.jpg",
+    "width": 1448,
+    "height": 1086,
+    "ratio": 1.3333,
+    "source": "3.6.png"
+  },
+  {
+    "project": "exhibition-hospitality",
+    "slot": "block-inset-2",
+    "webp": "/work/exhibition-hospitality-block-inset-2.webp",
+    "jpg": "/work/exhibition-hospitality-block-inset-2.jpg",
+    "width": 1448,
+    "height": 1086,
+    "ratio": 1.3333,
+    "source": "3.7.png"
+  }
+]
