@@ -170,6 +170,32 @@ If that is it, the fix is padding rather than timing: enough bottom padding on t
 Blocks: nothing. It is a visual defect in the first two seconds of the homepage.
 
 
+### 19. Mobile Performance is 73, and the cause is the Thread weave
+
+Found 2026-08-22 while verifying the project imagery. Not caused by the imagery, and not fixed, pending an operator decision.
+
+Measured on the deployment: **mobile Performance 73, TBT 1,730ms**, against a budget of 90 and a previous measurement of 100 with TBT 0ms. FCP 0.8s, LCP 0.8s and CLS 0 are all unchanged or better, so nothing about paint regressed. The whole loss is main thread blocking after paint.
+
+**The imagery is cleared by two controls.** Blocking every `/work/` image locally left TBT identical, 1740ms against 1781ms, with image decode at 0ms. And the deployment one commit earlier, with the files processed into `public/` but wired into nothing, scored 72 with TBT 1,840ms. The regression predates the imagery entirely.
+
+**The cause is `samplePaths` on the woven route.** Timed in the page, on the route the build produced, against a straight line of the same length in the same document:
+
+| | 1,211 `getPointAtLength` calls |
+|---|---|
+| Woven path, 16 cubic segments | **294.6ms** |
+| Straight line it replaced | **0.8ms** |
+
+368 times more expensive, unthrottled. At the 4x throttle Lighthouse's mobile profile uses that is roughly 1,200ms, and it runs more than once: on mount, again on `document.fonts.ready`, and again on every `ResizeObserver` fire.
+
+**The verification of that change measured the wrong half.** Item 3's benchmark compared the overlay's *draw* cost before and after and found 0.4ms either way, which was true and irrelevant. Drawing 112 particles was never going to be expensive. Sampling a 16-segment cubic 1,211 times is, and it was not measured, so the change shipped reported as costing nothing measurable.
+
+The hero field density increase in the same session, 30 to 220 particles, is a second candidate contributing to the same number and has not been separated out.
+
+Options, none taken: cache the sampled points rather than re-deriving them on every measure; sample from the path data arithmetically rather than through `getPointAtLength`; reduce the segment count; or revert the weave.
+
+Blocks: the plan's mobile Performance budget, section 602. Nothing else. The page renders correctly and CLS is 0.
+
+
 ## Resolved
 
 ### 15. The USD budget brackets have no source
