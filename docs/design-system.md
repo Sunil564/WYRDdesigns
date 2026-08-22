@@ -22,8 +22,8 @@ Tokens are named by **role**, not by appearance, so no component knows or cares 
 | `--color-border` | `#E2DFDA` | hairlines, dividers, the Thread at rest | Phase 4b |
 | `--color-fg` | `#0A0A0C` | primary text | Phase 4b |
 | `--color-fg-muted` | `#5E5E66` | secondary text, labels, meta | Phase 4b |
-| `--color-accent` | `#FF521F` | large text and non text graphics only | brief, restricted |
-| `--color-accent-strong` | `#C93C0E` | any accent at text size | Phase 4b |
+| `--color-accent` | `#4C86DB` | large text and non text graphics only | brief, restricted, ADR 0025 |
+| `--color-accent-strong` | `#336BC8` | any accent at text size | Phase 4b, ADR 0025 |
 
 ### 1.2 Inverse context, the dark blocks
 
@@ -33,13 +33,31 @@ Tokens are named by **role**, not by appearance, so no component knows or cares 
 | `--color-fg-inverse` | `#F7F6F4` | text on a dark block | Phase 4b |
 | `--color-fg-inverse-muted` | `#9A9AA2` | secondary text on a dark block | Phase 4b |
 | `--color-border-inverse` | `#24242A` | hairline on a dark block | Phase 4b |
-| `--color-accent-on-inverse` | `#FF521F` | accent inside a dark block | Phase 4b |
+| `--color-accent-on-inverse` | `#4C86DB` | accent inside a dark block | Phase 4b, ADR 0025 |
 
-`--color-accent` and `--color-accent-on-inverse` hold the same value today and are deliberately separate tokens. The orange that works on white is not the orange that works on black, and one day one of them changes without the other.
+`--color-accent` and `--color-accent-on-inverse` hold the same value today and are deliberately separate tokens. The blue that works on white is not the blue that works on black, and one day one of them changes without the other. Both were orange until ADR 0025 took the accent from the supplied mark; this table said `#FF521F` for longer than it was true, which is the argument for citing the ADR in the origin column.
 
 `brand.md` is silent on colour. Its section 1 fixes identity, not palette.
 
-One accent. No second accent, no gradient palette. Emphasis that cannot use the accent uses scale and weight.
+### 1.2b Cluster grounds
+
+| Token | Value | Use | Origin |
+|---|---|---|---|
+| `--neon-01` | `#00E5FF` | Build cluster card ground | ADR 0029 |
+| `--neon-02` | `#CCFF00` | Reach cluster card ground | ADR 0029 |
+| `--neon-03` | `#FF7AF7` | Show cluster card ground | ADR 0029 |
+| `--neon-04` | `#00FF9C` | Stage cluster card ground | ADR 0029 |
+| `--color-fg-neon-muted` | `#33333A` | secondary text on a cluster ground | ADR 0029 |
+
+A neon card is a **light context** block on a coloured ground, not a third context. It reads `--fg` and the light set. White is unusable on all four, measuring 1.18:1 to 2.66:1, so the direction of contrast is not a choice. `--color-fg-neon-muted` exists because `--color-fg-muted` fails on two of the four grounds.
+
+**The single accent rule is retired, and replaced rather than deleted.**
+
+It read: *One accent. No second accent, no gradient palette. Emphasis that cannot use the accent uses scale and weight.* It was protecting hierarchy, and it was right to: a site that reaches for a new colour whenever something needs emphasis ends up with no hierarchy at all.
+
+It is now: **one accent, plus four cluster grounds, and nothing else.** The four clusters are the one place on this site where four things are genuinely peers and genuinely different, and scale and weight cannot express that without ranking them. Colour can. Section 1.3 of the neon brief fences where they may appear, and ADR 0029 records why the fence is where it is.
+
+No accent may appear inside a neon card. It measures 1.15:1 to 3.11:1 on the four grounds.
 
 ### 1.3 Contrast, every pair enumerated
 

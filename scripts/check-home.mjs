@@ -552,32 +552,53 @@ for (const width of [375, 768, 1023]) {
     return span ? getComputedStyle(span).transform : null
   })
   /*
-    Read the token the page resolved rather than a colour copied into this file. This
-    criterion held `rgb(255, 82, 31)` as a literal and would have failed on a correct build
-    the moment the accent changed, which is the stale-copied-constant fault the Verification
-    rules in CLAUDE.md name. The comparison is done in the page so both sides come from the
-    same computed-style pass and the format matches without parsing.
+    Read the tokens the page resolved rather than colours copied into this file, and resolve
+    them through a canvas because `color-mix(in oklab, ...)` computes to an `oklab()` value
+    that no string comparison and no naive rgb parser handles.
   */
   const indexColour = await block.evaluate((el) => {
     const label = el.querySelector('.label')
     if (!label) return null
+    const canvas = document.createElement('canvas')
+    canvas.width = 4
+    canvas.height = 4
+    const context = canvas.getContext('2d', { willReadFrequently: true })
+    const toRgb = (value) => {
+      context.clearRect(0, 0, 4, 4)
+      context.fillStyle = value
+      context.fillRect(0, 0, 4, 4)
+      const data = context.getImageData(1, 1, 1, 1).data
+      return `${data[0]},${data[1]},${data[2]}`
+    }
     const probe = document.createElement('span')
-    probe.style.color = 'var(--color-accent-on-inverse)'
     el.append(probe)
-    const expected = getComputedStyle(probe).color
+    const token = (name) => {
+      probe.style.color = `var(${name})`
+      return toRgb(getComputedStyle(probe).color)
+    }
+    const fg = token('--color-fg')
+    const muted = token('--color-fg-neon-muted')
+    const accent = token('--color-accent-on-inverse')
     probe.remove()
-    return { actual: getComputedStyle(label).color, expected }
+    return { actual: toRgb(getComputedStyle(label).color), fg, muted, accent }
   })
 
+  /*
+    The cards are neon now, so this asserts the opposite of what it did. It required the
+    index to turn `--accent-on-inverse`, which measures 1.61:1 on the magenta card and
+    cannot appear inside any of them. The index goes muted to `--fg` instead, and the accent
+    being ABSENT is now part of the criterion rather than the thing it looked for.
+  */
   record(
-    'S3 hover lifts the dark card a step, sweeps the hairline, and turns the index accent',
+    'S3 hover lifts the neon card toward white, sweeps the hairline, and turns the index to fg',
     restBackground !== hoverBackground &&
       sweep !== null &&
-      !/matrix\(0,/.test(sweep ?? '') &&
+      !sweep.startsWith('matrix(0,') &&
       indexColour !== null &&
-      indexColour.actual === indexColour.expected,
-    `${restBackground} to ${hoverBackground}, sweep ${sweep}, index ${indexColour?.actual}` +
-      ` against --accent-on-inverse ${indexColour?.expected}`,
+      indexColour.actual === indexColour.fg &&
+      indexColour.actual !== indexColour.accent,
+    `${restBackground} to ${hoverBackground}, sweep ${sweep}, index rgb(${indexColour?.actual})` +
+      ` which is --fg rgb(${indexColour?.fg}), not the accent rgb(${indexColour?.accent})`,
   )
 
   const pointerVars = await page.evaluate(() => {

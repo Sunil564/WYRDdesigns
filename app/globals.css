@@ -39,6 +39,36 @@
   /* 5.15:1 on white. This is the accent for anything text sized. */
   --color-accent-strong: #336bc8;
 
+  /*
+    Neon grounds, one per capability cluster. These reverse the design system's single
+    accent rule, deliberately and only here. ADR 0029.
+
+    Every one is a LIGHT context: dark text on a bright ground. That is not a preference,
+    it is the only thing that measures. White on the dimmest of them is 3.19:1 and on the
+    brightest 1.18:1, so a neon bright enough to read as neon cannot carry white text.
+
+    03 is #FF7AF7 and not the #FF10F0 the brief proposed. That magenta measures 6.20:1
+    against --fg where the other three measure 12.86, 16.83 and 14.87, and it left no room
+    at all beneath it: the lightest possible muted grey cleared 4.5:1 on it by 0.04, and on
+    a hover state it could not clear it at any value. Raised to 8.83:1, which keeps the hue
+    and gives the muted token 5.60:1.
+  */
+  --neon-01: #00e5ff;
+  --neon-02: #ccff00;
+  --neon-03: #ff7af7;
+  --neon-04: #00ff9c;
+
+  /*
+    Muted text inside a neon card. A parallel token, which the brief allowed only if a
+    measurement forced it, and the measurement forced it: --fg-muted #5E5E66 is 4.18:1 on
+    cyan and 2.01:1 on the original magenta, so it fails on the ground it exists to sit on.
+
+    #33333A is the lightest neutral that clears 4.5:1 on all four, worst case 5.60:1 on 03.
+    It is the only token this change adds beyond the four grounds. Everything else a neon
+    card renders comes from the light set unchanged.
+  */
+  --color-fg-neon-muted: #33333a;
+
   /* Inverse context, the dark blocks. */
   --color-bg-inverse: #0a0a0c;
   --color-fg-inverse: #f7f6f4;
@@ -609,39 +639,88 @@
     tint is a no op, which is why the effect reads only where it should.
   */
   z-index: 1;
-  mix-blend-mode: screen;
+  /*
+    Multiply, not screen. Screening near white onto a dark card lifted it; screening the
+    same onto neon washes the colour out toward white and the highlight stops reading as a
+    highlight. Multiplying a light grey deepens the neon under the cursor and is very
+    nearly a no op on the white gutters between the cards, which is the property the screen
+    version had and the reason it was chosen.
+  */
+  mix-blend-mode: multiply;
   background: radial-gradient(
     360px circle at var(--pointer-x) var(--pointer-y),
-    color-mix(in oklab, var(--color-fg-inverse) 14%, transparent),
+    color-mix(in oklab, var(--color-fg) 10%, transparent),
     transparent 70%
   );
 }
 
 .capability-block {
   transition: background-color var(--dur-fast) var(--ease-out);
+  background-color: var(--neon);
 }
 
 /*
-  The blocks are inverse, so the hover lifts a step off the dark ground rather than
-  moving to --bg-sunken, which is a light token. Mixed from tokens rather than
-  introducing a hex value for one state.
+  Hover LIGHTENS. The inverse version mixed toward --fg-inverse to lift a dark card off
+  its ground, and the same instinct on a bright card darkens it, which reads as pressed
+  rather than raised. Measured either way: mixing 03 toward --fg gives a hovered ground
+  of #E20FD5, on which --fg itself only reaches 4.96:1 and no muted value clears 4.5 at
+  all. Mixing toward white gives #FF8AF8, where --fg is 9.2 and the muted token is 5.9.
+  The direction of the hover is a contrast decision, not a taste one.
 */
 .capability-block:hover,
 .capability-block:focus-within {
-  background-color: color-mix(in oklab, var(--color-bg-inverse) 88%, var(--color-fg-inverse));
+  background-color: color-mix(in oklab, var(--neon) 88%, #ffffff);
 }
 
-/* The hairline that sweeps left to right across the top edge on hover. */
+/*
+  Separators inside a neon card. --border is 1.13:1 on 02 and 1.00:1 on 04, which is not
+  a faint hairline, it is no hairline. A tint of --fg is the only thing that reads on all
+  four, and it stays derived from a token rather than introducing a hex for one edge.
+*/
+.capability-block hr,
+.capability-block .capability-rule {
+  border-color: color-mix(in oklab, var(--color-fg) 22%, transparent);
+}
+
+/*
+  The hairline that sweeps left to right across the top edge on hover.
+
+  --accent-on-inverse is 1.61:1 on 03 and never above 3.35 on any of them, so the accent
+  cannot appear inside these cards at all. --fg is 6.20 at worst. Item 1.2.
+*/
 .capability-sweep {
   position: absolute;
   inset-inline: 0;
   top: 0;
   z-index: 1;
   height: 1px;
-  background-color: var(--color-accent-on-inverse);
+  background-color: var(--color-fg);
   transform: scaleX(0);
   transform-origin: left center;
   transition: transform var(--dur-base) var(--ease-out);
+}
+
+/*
+  Focus inside a neon card. The site's ring is --accent-strong, which measures 1.61:1 on
+  03: invisible on the one card most likely to be tabbed into by accident. --fg clears 3:1
+  on every ground with the worst at 6.20.
+*/
+.capability-block :focus-visible {
+  outline-color: var(--color-fg);
+}
+
+/*
+  Grain on a neon ground.
+
+  The inverse grain screens light noise onto near black, which is what gives a dark card
+  texture. Screening the same noise onto #CCFF00 lifts an already near maximum channel and
+  reads as a haze over the colour rather than as grain in it. Multiplying the same file
+  darkens instead, so the texture sits in the ink. Same asset, same opacity, inverted
+  operation, for the same reason everything else here inverted.
+*/
+.capability-block .grain-inverse {
+  mix-blend-mode: multiply;
+  opacity: 0.06;
 }
 
 .capability-block:hover .capability-sweep,
