@@ -53,9 +53,17 @@ const first = slugs[0]
 // ---------------------------------------------------------------- shared route checks
 await harness.checkHead(first)
 await harness.checkKeyboardAndTargets(first)
+/*
+  Under reduced motion the route still has to be composed, which used to be asserted by
+  counting placeholders. The case study visuals are real image files now and carry no
+  `data-placeholder`, so that count is permanently zero and the criterion passed on nothing.
+  Loaded images are the equivalent evidence: a composed case study has its hero and its three
+  visuals decoded. Four is measured rather than assumed, at the 1440x900 this opens and
+  inside the wait it already had, with no scroll.
+*/
 await harness.checkReducedMotion(first, {
-  expect: (state) => state.placeholders > 0,
-  describe: (state) => `${state.placeholders} placeholders`,
+  expect: (state) => state.loadedImages >= 4,
+  describe: (state) => `${state.loadedImages} loaded case study images`,
 })
 await harness.checkOverflow(first)
 
@@ -109,7 +117,15 @@ await harness.checkOverflow(first)
           emptyMetaValues: Array.from(main?.querySelectorAll('dd') ?? []).filter(
             (value) => (value.textContent ?? '').trim().length === 0,
           ).length,
-          placeholders: document.querySelectorAll('main [data-placeholder]').length,
+          /*
+            Images the browser actually decoded, not elements present: `naturalWidth` is zero
+            for a broken src, an empty src and an image that never loaded, all three of which
+            satisfy an element count. Replaces a `data-placeholder` count that ccd35a0 left
+            permanently zero here when the generated imagery replaced Placeholder.
+          */
+          loadedImages: Array.from(document.querySelectorAll('main img')).filter(
+            (img) => img.complete && img.naturalWidth > 0,
+          ).length,
           h1: document.querySelector('h1')?.textContent?.trim() ?? '',
         }
       }, slug),
@@ -123,7 +139,7 @@ await harness.checkOverflow(first)
     withOutcome.length
       ? `${withOutcome.map((entry) => entry.slug).join(', ')} rendered one`
       : `${pages.length} pages, none has an outcome section. Sections on the first: ` +
-        `${pages[0].labels.join(' | ')}`,
+          `${pages[0].labels.join(' | ')}`,
   )
 
   const numbered = pages.filter((entry) => entry.numbers.length > 0)
@@ -144,13 +160,19 @@ await harness.checkOverflow(first)
       : `meta labels rendered: ${pages[0].metaTerms.join(', ') || '(none)'}`,
   )
 
-  const untagged = pages.filter((entry) => entry.placeholders === 0)
+  /*
+    Every slot filled, asserted on the browser's own decode rather than on a tag. These are
+    generated stand-ins pending real photography and docs/placeholders.md records them as
+    such: something can be a stand-in without being a Placeholder, so the evidence that the
+    route is composed is the image, not the attribute.
+  */
+  const unfilled = pages.filter((entry) => entry.loadedImages < 4)
   record(
-    'every case study tags its generated visuals as placeholders',
-    untagged.length === 0,
-    untagged.length
-      ? `${untagged.map((entry) => entry.slug).join(', ')} tagged none`
-      : `${pages[0].placeholders} on the first page, ${pages.length} pages checked`,
+    'every case study renders all four of its generated visuals',
+    unfilled.length === 0,
+    unfilled.length
+      ? unfilled.map((entry) => `${entry.slug}: ${entry.loadedImages} of 4`).join(', ')
+      : `${pages[0].loadedImages} decoded on the first page, ${pages.length} pages checked`,
   )
 
   const titled = pages.every((entry) => entry.h1.length > 0)
