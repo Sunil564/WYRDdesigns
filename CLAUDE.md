@@ -115,6 +115,28 @@ A 2D canvas can be asked what it drew. `getImageData` on its own context returns
 renderer's pixels with no text, grain, or neighbouring element in them, and alpha
 separates "mounted and drawing nothing" from "filled solid" from "a sparse field".
 
+## Deployment
+
+Vercel builds `main`, and every build on `main` is a production deploy. There is no
+preview step: the push is the deploy.
+
+**A force-push backwards to an already-built SHA deploys nothing.** Vercel deduplicates by
+commit SHA, so resetting `main` to an earlier commit that already has a deployment moves
+the git ref and leaves production exactly where it was. It does not fail, and it does not
+warn: the push succeeds, the dashboard shows nothing new, and the old build keeps serving.
+
+This cost a revert in this build. `main` was force-pushed back to `4aa5ed8` to remove the
+neon cards and the audio, the push reported success, and production carried on serving
+`32ba2fe` because `4aa5ed8` had been built an hour earlier. It was caught by fetching the
+live page and grepping it, not by reading the push output.
+
+So: after any revert by reset, confirm the deploy against the running site rather than
+against the push. To actually ship a reverted state, put a new commit on top so Vercel has
+a SHA it has never seen, or redeploy that SHA explicitly from the dashboard or the CLI.
+
+The same rule as everywhere else in this file. Assert on what is served, not on what the
+tool reported.
+
 ## Commits
 
 Conventional commits. One commit per meaningful unit, not one per phase. Commit before starting risky work so there is an undo point.
