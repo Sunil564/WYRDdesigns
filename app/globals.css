@@ -52,7 +52,24 @@
   --color-accent-on-inverse: #4c86db;
 
   /* Type scale. Fluid, clamped. Brief section 4.2, mega adjusted, see docs. */
-  --text-mega: clamp(2.25rem, 7vw, 5rem);
+  /*
+    The cap is 4.75rem rather than 5rem, and the 0.25rem buys a font swap that does not
+    move the page. Measured on the hero at 1440px: at 5rem the second headline line needs
+    1234.9px in Satoshi Black and 1221.03px in the metric fallback, against a content
+    column that caps at 1228px. The cap sits inside that 13.9px gap, so the fallback fits
+    on one line, Satoshi does not, and every viewport at 1440px and above reflowed by one
+    76px line when the face swapped. That was the whole of the homepage's CLS 0.02220.
+
+    Satoshi Black runs about 1.1 percent wider than the fallback next/font derives, so a
+    gap of that width exists at every size. What made 5rem pathological is that the column
+    stops growing at exactly 1228px, which parks every wide viewport permanently inside it.
+    At 4.75rem the gap is 1159.89px to 1173.14px, which 1228px clears with 54.86px to
+    spare in the tighter face.
+
+    Sized from the tighter face, not the fallback, and with room for a copy edit: the
+    brief's headline is the longest string this has to hold.
+  */
+  --text-mega: clamp(2.25rem, 7vw, 4.75rem);
   --text-mega--line-height: 0.95;
   --text-mega--letter-spacing: -0.03em;
 

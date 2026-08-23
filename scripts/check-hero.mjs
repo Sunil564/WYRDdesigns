@@ -108,7 +108,17 @@ async function open(tier, viewport, options = {}) {
   await page.waitForTimeout(5000)
 
   const cls = await page.evaluate(() => window.__cls ?? 0)
-  record('the type animation causes no layout shift', cls < 0.01, `CLS ${cls.toFixed(5)}`)
+  /*
+    Named for what it measures, which is every layout shift from navigation to 5s, not the
+    GSAP reveal alone. It was called "the type animation causes no layout shift" and a font
+    swap failed it, which sent the diagnosis after split.revert() for an hour. The reveal is
+    covered: it runs at 384ms and reverts at 2436ms, both inside this window.
+  */
+  record(
+    'the page settles from load through the headline reveal with no layout shift',
+    cls < 0.01,
+    `CLS ${cls.toFixed(5)}`,
+  )
 
   const lcp = await page.evaluate(() => window.__lcp)
   record(
