@@ -45,6 +45,8 @@ export type ThreadStreamData = {
    * disagree about the page they are drawing.
    */
   spiralRadius: number
+  /** The contact button in document coordinates, the point the burst throws outward from. */
+  converge: { x: number; y: number } | null
 }
 
 const state = {

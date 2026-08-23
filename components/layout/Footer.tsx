@@ -20,7 +20,18 @@ export function Footer() {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="bg-bg-inverse relative z-10 overflow-hidden">
+    <footer
+      className="bg-bg-inverse relative z-10 overflow-hidden"
+      /*
+        The Thread reads this to know the ground went dark here. It was missing, which is why
+        the trail stayed in its light ground colours all the way down and disappeared into the
+        footer: every other dark block on the page is a Section with variant inverse and gets
+        the attribute from there, and the footer is not a Section. `measure` collects these in
+        document coordinates precisely so it can include the footer, which sits outside the
+        Thread's own host.
+      */
+      data-inverse-band
+    >
       {/* The light grain, so the dark base carries texture rather than flat ink. */}
       <span aria-hidden="true" className="grain-inverse" />
 

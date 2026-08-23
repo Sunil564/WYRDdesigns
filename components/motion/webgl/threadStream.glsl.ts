@@ -34,6 +34,9 @@ import {
   SPIRAL_WAVELENGTH,
   TEXT_DIM,
   TEXT_DIM_HEAD_KEEP,
+  BURST_REACH,
+  BURST_RUN,
+  BURST_ZONE,
   TEXT_PAD,
 } from '@/components/motion/threadConstants'
 import { MAX_TEXT_RECTS } from '@/components/motion/threadGeometry'
@@ -103,8 +106,6 @@ import { MAX_BANDS } from '@/components/motion/threadStore'
  * roughly 70/30 and this is 77/23, tighter, because the inward reach it scales grew: at 0.43
  * the outward side reached x -39 at 1024, off the left edge of the viewport.
  */
-
-
 
 /**
  * Radians per second the whole trail rotates at rest.
@@ -240,6 +241,15 @@ uniform vec4 uHandoffBox;
 uniform vec4 uTextRects[${MAX_TEXT_RECTS}];
 uniform float uTextCount;
 
+/*
+  The contact button in document pixels, and whether it is on the page at all.
+
+  The route already ended here; nothing downstream knew where "here" was, so the trail simply
+  stopped. uBurstAt is the point the last stretch is thrown outward from.
+*/
+uniform vec2 uBurstAt;
+uniform float uBurstOn;
+
 uniform float uSpiralRadius;
 uniform float uTime;
 
@@ -258,6 +268,7 @@ varying float vDepth;
 varying float vSettle;
 /** Alpha multiplier from the body copy this particle is drawn over, 1 where there is none. */
 varying float vTextDim;
+varying float vBlast;
 
 void main() {
   vRandom = aRandom;
@@ -424,6 +435,31 @@ void main() {
   radius *= mix(1.0, ${SPIRAL_IN_CLOUD.toFixed(2)}, ramp);
   radius *= mix(1.0, ${SPIRAL_HEAD_DAMP.toFixed(2)}, head);
 
+  /*
+    The burst at the arrival.
+
+    Two ramps multiplied: how far the reveal line has travelled past the button, and how near
+    this particle is to the end of the route. Everything above the zone is untouched, so the
+    page keeps its spine and only the arrival throws itself apart.
+
+    The direction is a per particle angle, not the vector away from the button. Particles at
+    the button sit on top of it, so that vector collapses exactly where the throw has to be
+    widest.
+  */
+  float blast = 0.0;
+  if (uBurstOn > 0.5) {
+    float past = clamp((uRevealLine - uBurstAt.y) / ${BURST_RUN.toFixed(1)}, 0.0, 1.0);
+    float zone = clamp(1.0 - (uBurstAt.y - position.y) / ${BURST_ZONE.toFixed(1)}, 0.0, 1.0);
+    blast = past * zone * zone;
+  }
+  vBlast = blast;
+  vec2 burst = vec2(0.0);
+  if (blast > 0.0) {
+    float burstAngle = fract(sin(aRandom * 269.5 + 183.3) * 43758.5453) * 6.28318530718;
+    float reach = ${BURST_REACH.toFixed(1)} * blast * (0.4 + aRandom * 0.6);
+    burst = vec2(cos(burstAngle), sin(burstAngle)) * reach;
+  }
+
   float swing = cos(phase);
   vDepth = sin(phase);
   vec2 spiral = aNormal * swing * radius;
@@ -434,7 +470,7 @@ void main() {
     feeding a displaced Y into the reveal would let a particle that has drifted upward
     reveal before its neighbours, so the leading edge would fray and the head would smear.
   */
-  vec3 drawn = position + vec3(offset + spiral, 0.0);
+  vec3 drawn = position + vec3(offset + spiral + burst, 0.0);
 
   /*
     The hero handoff.
@@ -545,6 +581,7 @@ varying float vInverse;
 varying float vDepth;
 varying float vSettle;
 varying float vTextDim;
+varying float vBlast;
 
 void main() {
   float d = length(gl_PointCoord - vec2(0.5));
@@ -590,6 +627,11 @@ void main() {
   alpha *= mix(0.55, 1.0, vSettle);
   // Receded over body copy. Computed per particle in the vertex shader.
   alpha *= vTextDim;
+  /*
+    Thrown, then gone, in that order. Squaring holds the alpha up through the first half of
+    the throw so the spread is seen, then drops it away quickly.
+  */
+  alpha *= 1.0 - vBlast * vBlast;
   if (alpha < 0.002) discard;
 
   /*

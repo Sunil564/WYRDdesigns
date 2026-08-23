@@ -78,3 +78,18 @@ export const REST_ALPHA_RANGE = 0.13
 /** Head alpha floor and range. A floor rather than a multiplier, so the head is not mottled. */
 export const HEAD_ALPHA_BASE = 0.86
 export const HEAD_ALPHA_RANGE = 0.14
+
+/**
+ * The burst at the converge point, where the Thread meets the contact button.
+ *
+ * The route already ends at `[data-thread-converge]`. What it did there was stop, which reads
+ * as the trail running out rather than arriving. These three make it arrive: the last stretch
+ * throws itself outward as the reveal line passes the button and fades to nothing.
+ *
+ * `BURST_ZONE` is how much of the route's end takes part, in document pixels above the button.
+ * `BURST_RUN` is how far the reveal line travels past the button while the burst completes.
+ * `BURST_REACH` is the furthest a particle is thrown, before its own random scales it down.
+ */
+export const BURST_ZONE = 300.0
+export const BURST_RUN = 260.0
+export const BURST_REACH = 260.0

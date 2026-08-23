@@ -6,11 +6,7 @@ import { BufferAttribute, Color, NormalBlending } from 'three'
 import type { Points, ShaderMaterial } from 'three'
 import { MAX_BANDS, subscribeThread, threadState } from '@/components/motion/threadStore'
 import type { ThreadStreamData } from '@/components/motion/threadStore'
-import {
-  REVEAL_OFFSET,
-  SPIRAL_RADIUS,
-  THREAD_BASE_SIZE,
-} from '@/components/motion/threadConstants'
+import { REVEAL_OFFSET, SPIRAL_RADIUS, THREAD_BASE_SIZE } from '@/components/motion/threadConstants'
 import { HEAD_LENGTH, MAX_TEXT_RECTS } from '@/components/motion/threadGeometry'
 import { currentScroll } from '@/components/motion/useLenis'
 import {
@@ -93,8 +89,12 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
         gave the accent no twin, so the visible switch at a band edge is the rest colour
         alone. Read from tokens regardless, so a future divergence needs no code here.
       */
-      uColourRestInverse: { value: pick('--color-fg-inverse-muted') },
-      uColourHeadInverse: { value: pick('--color-accent-on-inverse') },
+      /*
+        The Thread's own dark ground colours, not the muted text tokens. A grey point at 32
+        percent alpha on the near black footer is not visible, which is what these fix.
+      */
+      uColourRestInverse: { value: pick('--color-thread-inverse') },
+      uColourHeadInverse: { value: pick('--color-thread-head-inverse') },
       // Dark ground ranges in document pixels, from the same measurement pass that
       // samples the paths. Sized at the uniform array length, not the live band count,
       // so a relayout cannot change the array length and force a recompile.
@@ -107,6 +107,9 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
       uDisperseBottom: { value: 1 },
       uDisperseSpread: { value: new Float32Array([0, 0]) },
       uDisperseCentreX: { value: 0 },
+      /* The contact button, and whether there is one. Written per frame below. */
+      uBurstAt: { value: new Float32Array([0, 0]) },
+      uBurstOn: { value: 0 },
       // The hero's lower half, which the handoff scatters its origins across. Zero width
       // until a hero is measured, which switches the handoff off rather than branching.
       uHandoffBox: { value: new Float32Array([0, 0, 0, 0]) },
@@ -224,6 +227,19 @@ export function ThreadStream({ onCount }: { onCount?: (value: number) => void })
       data-derived uniform, for the reason in the comment above.
     */
     live.uSpiralRadius!.value = data.spiralRadius
+
+    /*
+      The burst target. Zero means no button on this page, and the shader leaves the route
+      ending the way it used to rather than throwing particles at the origin.
+    */
+    const burstAt = live.uBurstAt!.value as Float32Array
+    if (data.converge) {
+      burstAt[0] = data.converge.x
+      burstAt[1] = data.converge.y
+      live.uBurstOn!.value = 1
+    } else {
+      live.uBurstOn!.value = 0
+    }
 
     const spread = live.uDisperseSpread!.value as Float32Array
     if (data.disperse) {

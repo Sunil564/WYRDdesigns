@@ -60,6 +60,17 @@
   */
   --color-card-ground: #0a0a0c;
 
+  /*
+    The Thread's own colours on a dark ground.
+
+    Separate from the text tokens because they answer a different question. `--fg-inverse-muted`
+    is right for secondary copy on black and wrong for a particle: at 32 to 45 percent alpha a
+    grey point on a near black footer is not there. These are near white and white, so the trail
+    stays readable the whole way down.
+  */
+  --color-thread-inverse: #f7f6f4;
+  --color-thread-head-inverse: #ffffff;
+
   /* Type scale. Fluid, clamped. Brief section 4.2, mega adjusted, see docs. */
   /*
     The cap is 4.75rem rather than 5rem, and the 0.25rem buys a font swap that does not

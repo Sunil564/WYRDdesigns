@@ -64,6 +64,15 @@ export type ThreadGeometry = {
    * on different values for the same page.
    */
   spiralRadius: number
+  /**
+   * The contact button, in document coordinates, where the route ends.
+   *
+   * The path already ends here, but only the path did: the renderers had no idea where the
+   * end was, so the trail simply stopped. They need the point itself to throw the last
+   * stretch outward from it. Null when the button is not on the page, in which case nothing
+   * bursts and the route ends as it used to.
+   */
+  converge: { x: number; y: number } | null
 }
 
 /**
@@ -445,6 +454,16 @@ export function measure(host: HTMLElement, wide: boolean): ThreadGeometry | null
   const startY = origin ? toLocal(boxOf(origin, scrollY).bottom) : 0
   const endY = converge ? toLocal(boxOf(converge, scrollY).top) : height
   const convergeX = converge ? boxOf(converge, scrollY).x : centreX
+  /*
+    Document coordinates, and the centre of the button rather than its corner: the burst
+    throws outward from where the trail arrives, which is the middle of the target.
+  */
+  const convergePoint = converge
+    ? (() => {
+        const box = boxOf(converge, scrollY)
+        return { x: (box.left + box.right) / 2, y: (box.top + box.bottom) / 2 }
+      })()
+    : null
 
   /*
     The client logo set, if it is on the page, as the box the dispersion is built from.
@@ -519,6 +538,7 @@ export function measure(host: HTMLElement, wide: boolean): ThreadGeometry | null
       text,
       hero,
       spiralRadius: SPIRAL_RADIUS_NARROW,
+      converge: convergePoint,
       /*
         The narrow route is one straight line down the page centre, and it passes through
         the clients section like everything else, so it disperses too. At reduced
@@ -602,6 +622,7 @@ export function measure(host: HTMLElement, wide: boolean): ThreadGeometry | null
     hero,
     disperse,
     spiralRadius: SPIRAL_RADIUS,
+    converge: convergePoint,
   }
 }
 

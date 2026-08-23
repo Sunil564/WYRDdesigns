@@ -21,6 +21,9 @@ import {
   TEXT_DIM_HEAD_KEEP,
   TEXT_PAD,
   THREAD_BASE_SIZE,
+  BURST_REACH,
+  BURST_RUN,
+  BURST_ZONE,
 } from '@/components/motion/threadConstants'
 import { HEAD_LENGTH } from '@/components/motion/threadGeometry'
 import { subscribeThread, threadState } from '@/components/motion/threadStore'
@@ -83,7 +86,8 @@ export function ThreadOverlay2D() {
     const context = canvas.getContext('2d')
     if (!context) return
 
-    const { samples, bandTops, bandBottoms, bandCount, disperse, text, spiralRadius } = data
+    const { samples, bandTops, bandBottoms, bandCount, disperse, text, spiralRadius, converge } =
+      data
     const { positions, distance, normals, random, count } = samples
 
     /*
@@ -102,9 +106,13 @@ export function ThreadOverlay2D() {
     const fallback = getComputedStyle(document.body).color
     const token = (name: string) => styles.getPropertyValue(name).trim() || fallback
     const restColour = token('--color-fg-muted')
-    const restInverse = token('--color-fg-inverse-muted')
+    /*
+      Near white and white, not the muted text tokens. A grey particle at 32 percent alpha on
+      the near black footer is not visible, which is the whole reason these exist.
+    */
+    const restInverse = token('--color-thread-inverse')
     const headColour = token('--color-accent')
-    const headInverse = token('--color-accent-on-inverse')
+    const headInverse = token('--color-thread-head-inverse')
 
     /** Matches the shader's `fract(sin(x) * k)` so both renderers scatter identically. */
     const hash = (value: number, a: number, b: number, k: number) => {
@@ -213,10 +221,41 @@ export function ThreadOverlay2D() {
         radius *= 1 + (SPIRAL_IN_CLOUD - 1) * ramp
         radius *= 1 + (SPIRAL_HEAD_DAMP - 1) * head
 
+        /*
+          The burst. The last stretch of the route throws itself outward from the contact
+          button as the reveal line passes it, and fades to nothing.
+
+          `blast` is two ramps multiplied: how far the line has travelled past the button, and
+          how near this particle is to the end of the route. Everything above the zone is
+          untouched, so the spine of the page keeps its trail and only the arrival bursts.
+
+          The direction is a per particle angle rather than the vector away from the button.
+          Particles at the button are on top of it, so that vector is near zero exactly where
+          the throw needs to be widest.
+        */
+        let blast = 0
+        if (converge) {
+          const run = (revealLine - converge.y) / BURST_RUN
+          const past = run > 0 ? (run < 1 ? run : 1) : 0
+          if (past > 0) {
+            const near = 1 - (converge.y - y) / BURST_ZONE
+            const zone = near > 0 ? (near < 1 ? near : 1) : 0
+            blast = past * zone * zone
+          }
+        }
+        let burstX = 0
+        let burstY = 0
+        if (blast > 0) {
+          const burstAngle = hash(rand, 269.5, 183.3, 43758.5453) * Math.PI * 2
+          const reach = BURST_REACH * blast * (0.4 + rand * 0.6)
+          burstX = Math.cos(burstAngle) * reach
+          burstY = Math.sin(burstAngle) * reach
+        }
+
         const swing = Math.cos(phase)
         const depth = Math.sin(phase)
-        const drawX = x + offsetX + normals[i * 2]! * swing * radius
-        const drawY = y + offsetY + normals[i * 2 + 1]! * swing * radius
+        const drawX = x + offsetX + burstX + normals[i * 2]! * swing * radius
+        const drawY = y + offsetY + burstY + normals[i * 2 + 1]! * swing * radius
 
         /* Which ground this particle is on, from its undisplaced Y, as the shader does. */
         let inverse = false
@@ -242,8 +281,7 @@ export function ThreadOverlay2D() {
           const dy = Math.max(boxTop - drawY, drawY - boxBottom)
           const outside = Math.max(dx, dy)
           if (outside >= TEXT_PAD) continue
-          const near =
-            outside <= -TEXT_PAD ? 1 : 1 - (outside + TEXT_PAD) / (TEXT_PAD * 2)
+          const near = outside <= -TEXT_PAD ? 1 : 1 - (outside + TEXT_PAD) / (TEXT_PAD * 2)
           if (near > dim) dim = near
           if (dim >= 1) break
         }
@@ -251,7 +289,15 @@ export function ThreadOverlay2D() {
 
         const restAlpha = REST_ALPHA_BASE + rand * REST_ALPHA_RANGE
         const headAlpha = HEAD_ALPHA_BASE + rand * HEAD_ALPHA_RANGE
-        let alpha = (restAlpha + (headAlpha - restAlpha) * head) * (1 + SPIRAL_DEPTH * depth) * textDim
+        let alpha =
+          (restAlpha + (headAlpha - restAlpha) * head) * (1 + SPIRAL_DEPTH * depth) * textDim
+        /*
+          Thrown, then gone, in that order. Squaring the fade holds the alpha up through the
+          first half of the throw so the spread is seen, then drops it away quickly. Fading on
+          `blast` directly made the particles vanish about as fast as they spread, which read
+          as the trail running out rather than as an arrival.
+        */
+        if (blast > 0) alpha *= 1 - blast * blast
         if (alpha < 0.01) continue
         if (alpha > 1) alpha = 1
 

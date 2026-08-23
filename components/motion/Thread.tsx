@@ -177,6 +177,7 @@ export function Thread() {
         disperse: geometry.disperse,
         text: geometry.text,
         spiralRadius: geometry.spiralRadius,
+        converge: geometry.converge,
       })
     }
 
