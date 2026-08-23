@@ -80,7 +80,13 @@ const PERFORMANCE_BUDGETS = [
  */
 const DESKTOP_SETTINGS = {
   formFactor: 'desktop',
-  screenEmulation: { mobile: false, width: 1350, height: 940, deviceScaleFactor: 1, disabled: false },
+  screenEmulation: {
+    mobile: false,
+    width: 1350,
+    height: 940,
+    deviceScaleFactor: 1,
+    disabled: false,
+  },
   throttling: {
     rttMs: 40,
     throughputKbps: 10 * 1024,
@@ -126,7 +132,41 @@ async function authHeader() {
 
 const extraHeaders = IS_REMOTE ? await authHeader() : null
 
-if (IS_REMOTE && !extraHeaders) {
+/**
+ * Whether the deployment answers on its own, with no share token.
+ *
+ * The share URL exists for a protected deployment. A public production alias needs no cookie,
+ * and refusing to score one would leave the budget the plan actually cares about unmeasured
+ * because of a precondition that does not apply to it. That happened: a run scored
+ * Accessibility 100 on all seven routes, which it could only have done by loading the real
+ * pages, and skipped Performance in the same breath for want of an auth cookie.
+ *
+ * Probed, not assumed, and the probe is the guard rather than a weakening of it. A protected
+ * deployment answers the homepage with a redirect off origin to Vercel's SSO, so what is
+ * checked is a same origin 200 with the site's own `main` in it. A login page satisfies none
+ * of those three.
+ */
+async function reachableWithoutAuth() {
+  const context = await browser.newContext()
+  const page = await context.newPage()
+  try {
+    const response = await page.goto(`${BASE}/`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60_000,
+    })
+    const sameOrigin = new URL(page.url()).host === new URL(BASE).host
+    const hasMain = (await page.locator('main').count()) > 0
+    return Boolean(response?.ok()) && sameOrigin && hasMain
+  } catch {
+    return false
+  } finally {
+    await context.close()
+  }
+}
+
+const openAccess = IS_REMOTE && !extraHeaders ? await reachableWithoutAuth() : false
+
+if (IS_REMOTE && !extraHeaders && !openAccess) {
   console.error(
     'This deployment needs an auth cookie and none was obtained. Set VERCEL_SHARE_URL to a ' +
       'Vercel share link, or the run will score the login redirect rather than the site.',
@@ -264,7 +304,7 @@ console.log(
   the plan writes its budgets for. The homepage is the right page to measure: it is the heaviest
   route on the site, the only one carrying WebGL, and the one a visitor arrives on.
 */
-if (IS_REMOTE && extraHeaders) {
+if (IS_REMOTE && (extraHeaders || openAccess)) {
   console.log('\nPerformance, against the deployment\n')
   for (const budget of PERFORMANCE_BUDGETS) {
     const resolved = await tierUnder(budget.formFactor)
@@ -277,8 +317,8 @@ if (IS_REMOTE && extraHeaders) {
         settings: {
           onlyCategories: ['performance'],
           ...(budget.formFactor === 'desktop' ? DESKTOP_SETTINGS : { formFactor: 'mobile' }),
-          extraHeaders,
-          disableStorageReset: true,
+          ...(extraHeaders ? { extraHeaders } : {}),
+          disableStorageReset: Boolean(extraHeaders),
         },
       },
     )
