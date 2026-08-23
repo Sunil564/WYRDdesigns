@@ -170,7 +170,6 @@ const DISPERSE_RISE = 200
 const DISPERSE_WIDTH_FRACTION = 0.85
 const DISPERSE_HEIGHT_FRACTION = 1
 
-
 /**
  * Static perpendicular scatter, in pixels. A mathematically thin line of points
  * reads as a dashed rule. A little width across the path makes it a stream.
@@ -259,8 +258,7 @@ function collectTextRects(scrollY: number): ThreadTextRects {
         `check it against the vertex uniform budget.`,
     )
     merged.sort(
-      (a, b) =>
-        (b.right - b.left) * (b.bottom - b.top) - (a.right - a.left) * (a.bottom - a.top),
+      (a, b) => (b.right - b.left) * (b.bottom - b.top) - (a.right - a.left) * (a.bottom - a.top),
     )
     merged = merged.slice(0, MAX_TEXT_RECTS)
   }
@@ -493,8 +491,8 @@ export function measure(host: HTMLElement, wide: boolean): ThreadGeometry | null
       passes. Nothing here is a Y value written into this file.
     */
     const anchors = [
-      ...Array.from(document.querySelectorAll('main section')).map(
-        (section) => toLocal(boxOf(section, scrollY).top),
+      ...Array.from(document.querySelectorAll('main section')).map((section) =>
+        toLocal(boxOf(section, scrollY).top),
       ),
       ...WEAVE_ANCHOR_SELECTORS.flatMap((selector) =>
         Array.from(document.querySelectorAll(selector)).map((element) => {
@@ -630,6 +628,187 @@ export type ThreadSamples = {
 }
 
 /**
+ * A path flattened to a polyline, with the cumulative arc length at every vertex.
+ *
+ * This exists to replace `getPointAtLength`, not to second guess it. That call is correct and
+ * it is also a DOM round trip per point, which measured 2,115ms for 1,222 points at the 4x
+ * throttle Lighthouse's mobile profile uses: one long task and 84 percent of the page's whole
+ * blocking time. See docs/BLOCKERS.md item 19.
+ *
+ * The route is still defined once, in the path data, and still read from the DOM. What
+ * changes is who walks it. The same `d` the browser would have sampled is flattened here and
+ * walked arithmetically, so nothing about the geometry moves.
+ */
+type FlatPath = {
+  xs: Float64Array
+  ys: Float64Array
+  /** Cumulative arc length at vertex i. Index 0 is 0, the last entry is the total. */
+  lengths: Float64Array
+  total: number
+}
+
+/**
+ * Subdivisions per cubic.
+ *
+ * An accuracy knob, not a speed one: flattening happens once per path and every sample after
+ * it is a binary search. Chord sums underestimate a curve, and the underestimate falls as the
+ * square of this number.
+ *
+ * 512 is where refining stops paying, established by refining until the answer stopped moving.
+ * On the narrow route our total arc length goes 8145.691182 at 128, 8145.708863 at 256,
+ * 8145.713283 at 512, and 8145.714733 at 4096, so 512 is within 1.5e-3px of our own converged
+ * value and 4096 buys another 1.4e-3px for eight times the memory.
+ *
+ * The browser reports 8145.726074 for the same path. That 1.13e-2px gap does not close at any
+ * subdivision, so it is `getPointAtLength`'s own flattening error rather than ours, and it is
+ * the floor on how closely the two can ever agree. Both numbers are far below the size of the
+ * point each sample draws. See scripts/check-thread-sampler.mjs.
+ */
+const FLATTEN_STEPS = 512
+
+/**
+ * Flatten `M`, `L` and `C` path data. Absolute commands only, which is all `measure` emits.
+ *
+ * An unexpected command throws rather than being skipped. Skipping one would produce a route
+ * that is subtly short and perfectly plausible, which is the failure this file has been bitten
+ * by before: a tool quietly substituting something for what was asked for.
+ */
+function flattenPathData(d: string): FlatPath {
+  const tokens = d
+    .trim()
+    .split(/[\s,]+/)
+    .filter(Boolean)
+  const xs: number[] = []
+  const ys: number[] = []
+
+  let index = 0
+  let command = ''
+  let x = 0
+  let y = 0
+
+  const number = () => {
+    const value = Number(tokens[index])
+    if (!Number.isFinite(value)) {
+      throw new Error(`[thread] unreadable number "${tokens[index]}" in path data`)
+    }
+    index += 1
+    return value
+  }
+
+  while (index < tokens.length) {
+    const token = tokens[index]!
+    if (/^[A-Za-z]$/.test(token)) {
+      command = token
+      index += 1
+      // A lone trailing command letter is malformed rather than empty.
+      if (index >= tokens.length) throw new Error(`[thread] path data ends on "${command}"`)
+    }
+
+    switch (command) {
+      case 'M': {
+        x = number()
+        y = number()
+        xs.push(x)
+        ys.push(y)
+        // Repeated coordinates after a moveto are linetos, per the SVG grammar.
+        command = 'L'
+        break
+      }
+      case 'L': {
+        x = number()
+        y = number()
+        xs.push(x)
+        ys.push(y)
+        break
+      }
+      case 'C': {
+        const x1 = number()
+        const y1 = number()
+        const x2 = number()
+        const y2 = number()
+        const x3 = number()
+        const y3 = number()
+        const x0 = x
+        const y0 = y
+        for (let step = 1; step <= FLATTEN_STEPS; step += 1) {
+          const t = step / FLATTEN_STEPS
+          const u = 1 - t
+          const a = u * u * u
+          const b = 3 * u * u * t
+          const c = 3 * u * t * t
+          const e = t * t * t
+          xs.push(a * x0 + b * x1 + c * x2 + e * x3)
+          ys.push(a * y0 + b * y1 + c * y2 + e * y3)
+        }
+        x = x3
+        y = y3
+        break
+      }
+      default:
+        throw new Error(
+          `[thread] path command "${command}" is not handled. measure emits M, L and C only, ` +
+            `so this is a new command that needs flattening rather than one to skip.`,
+        )
+    }
+  }
+
+  const count = xs.length
+  const outX = new Float64Array(count)
+  const outY = new Float64Array(count)
+  const lengths = new Float64Array(count)
+  outX[0] = xs[0] ?? 0
+  outY[0] = ys[0] ?? 0
+  let total = 0
+  for (let i = 1; i < count; i += 1) {
+    outX[i] = xs[i]!
+    outY[i] = ys[i]!
+    total += Math.hypot(xs[i]! - xs[i - 1]!, ys[i]! - ys[i - 1]!)
+    lengths[i] = total
+  }
+
+  return { xs: outX, ys: outY, lengths, total }
+}
+
+/**
+ * The point at an arc length along a flattened path. The shape of `getPointAtLength`, and
+ * clamped at both ends the same way.
+ */
+function pointAtLength(path: FlatPath, distance: number, out: { x: number; y: number }) {
+  const { xs, ys, lengths } = path
+  const last = lengths.length - 1
+  if (last <= 0) {
+    out.x = xs[0] ?? 0
+    out.y = ys[0] ?? 0
+    return out
+  }
+  if (distance <= 0) {
+    out.x = xs[0]!
+    out.y = ys[0]!
+    return out
+  }
+  if (distance >= path.total) {
+    out.x = xs[last]!
+    out.y = ys[last]!
+    return out
+  }
+
+  let low = 0
+  let high = last
+  while (low < high) {
+    const mid = (low + high) >> 1
+    if (lengths[mid]! < distance) low = mid + 1
+    else high = mid
+  }
+  const upper = low === 0 ? 1 : low
+  const before = lengths[upper - 1]!
+  const span = lengths[upper]! - before
+  const t = span > 0 ? (distance - before) / span : 0
+  out.x = xs[upper - 1]! + (xs[upper]! - xs[upper - 1]!) * t
+  out.y = ys[upper - 1]! + (ys[upper]! - ys[upper - 1]!) * t
+  return out
+}
+
+/**
  * Turn the paths into particles, distributed by arc length.
  *
  * Arc length, not segments and not the parameter: `getPointAtLength` walks the real
@@ -654,10 +833,13 @@ export function samplePaths(
 
   const lengths = new Float32Array(groupCount)
   const counts: number[] = []
+  const flats: FlatPath[] = []
   let total = 0
 
   for (let group = 0; group < groupCount; group += 1) {
-    const length = elements[group]!.getTotalLength()
+    const flat = flattenPathData(elements[group]!.getAttribute('d') ?? '')
+    flats.push(flat)
+    const length = flat.total
     lengths[group] = length
     const perPixel = TRUNK_DENSITY * (kinds[group] === 'trunk' ? 1 : BRANCH_DENSITY) * density
     const count = Math.max(2, Math.round(length * perPixel))
@@ -674,7 +856,9 @@ export function samplePaths(
     deliberately a third of the band.
   */
   if (density === 1 && (total < POINT_BAND.min || total > POINT_BAND.max)) {
-    const suggestion = ((TRUNK_DENSITY * ((POINT_BAND.min + POINT_BAND.max) / 2)) / total).toFixed(2)
+    const suggestion = ((TRUNK_DENSITY * ((POINT_BAND.min + POINT_BAND.max) / 2)) / total).toFixed(
+      2,
+    )
     console.error(
       `[thread] ${total} points is outside the ${POINT_BAND.min} to ${POINT_BAND.max} band. ` +
         `The route has changed length. Set TRUNK_DENSITY to about ${suggestion} in ` +
@@ -727,12 +911,12 @@ export function samplePaths(
   const scratchY = new Float64Array(Math.max(...counts) + 1)
 
   for (let index = 0; index < groupCount; index += 1) {
-    const element = elements[index]!
     const length = lengths[index]!
     const count = counts[index]!
-
+    const flat = flats[index]!
+    const point = { x: 0, y: 0 }
     for (let step = 0; step < count; step += 1) {
-      const point = element.getPointAtLength(((step + 0.5) / count) * length)
+      pointAtLength(flat, ((step + 0.5) / count) * length, point)
       scratchX[step] = point.x
       scratchY[step] = point.y
     }

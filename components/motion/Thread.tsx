@@ -61,14 +61,6 @@ type Band = { top: number; bottom: number }
  */
 const REDUCED_DENSITY = 0.2
 
-/**
- * How long sampling may wait for an idle moment before it runs anyway.
- *
- * Long enough that it lands after the load has settled on a slow phone, short enough that a
- * page which never idles still has its thread well before the hero is scrolled past.
- */
-const SAMPLE_IDLE_TIMEOUT = 2000
-
 export function Thread() {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const svgRef = useRef<SVGSVGElement | null>(null)
@@ -165,10 +157,6 @@ export function Thread() {
     */
     const key = `${density}|${seed}|${elements.map((element) => element.getAttribute('d') ?? '').join('~')}`
 
-    let cancelled = false
-    let idle = 0
-    let timer = 0
-
     const publish = (samples: ThreadSamples) => {
       cache.current = { key, samples }
 
@@ -203,37 +191,26 @@ export function Thread() {
       return () => clearThread()
     }
 
-    const run = () => {
-      if (cancelled) return
-      const samples = samplePaths(
-        elements,
-        geometry.paths.map((path) => path.kind),
-        geometry.hostTop,
-        density,
-        seed,
-      )
-      if (samples) publish(samples)
-    }
-
     /*
-      A miss is the expensive one and it does not belong in the load. The host sits below the
-      hero and draws nothing until the page is scrolled, so nothing observes these points for
-      as long as it takes to read the first screen, and running them inline put the whole cost
-      inside the window TBT measures. Idle, with a timeout so a page that never goes idle
-      still gets its thread. See docs/BLOCKERS.md item 19.
-    */
-    if (typeof window.requestIdleCallback === 'function') {
-      idle = window.requestIdleCallback(run, { timeout: SAMPLE_IDLE_TIMEOUT })
-    } else {
-      timer = window.setTimeout(run, 0)
-    }
+      Inline, and it was briefly not. Deferring to `requestIdleCallback` was the wrong shape of
+      fix: it moved the sampling without shrinking it, and a long task inside the window TBT
+      measures counts whether it starts at 400ms or 3,500ms. Measured on the deployment, the
+      deferred run was still one 2,155ms task and 84 percent of the page's blocking time.
 
-    return () => {
-      cancelled = true
-      if (idle && typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(idle)
-      if (timer) window.clearTimeout(timer)
-      clearThread()
-    }
+      With the arc length table the sampling is cheap enough to belong where it reads, and
+      waiting for an idle moment would only cost the thread up to two seconds on a page that
+      never gets one. See docs/BLOCKERS.md item 19.
+    */
+    const samples = samplePaths(
+      elements,
+      geometry.paths.map((path) => path.kind),
+      geometry.hostTop,
+      density,
+      seed,
+    )
+    if (samples) publish(samples)
+
+    return () => clearThread()
   }, [geometry, streaming, tier])
 
   const bands: Band[] = geometry?.bands ?? []

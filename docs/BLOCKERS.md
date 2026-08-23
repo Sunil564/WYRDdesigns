@@ -29,7 +29,6 @@ Unblocks by: supplying an SVG, AI, EPS or PDF of the mark, and ideally a square 
 
 Blocks: nothing. Both grounds now carry the real mark.
 
-
 ### 5. No real project data
 
 `/work` and `/work/[slug]` render from `content/projects.ts`, which carries placeholder entries flagged as such. No client name, outcome metric, or year is invented. The outcome block does not render without real numbers.
@@ -64,8 +63,6 @@ Unblocks by: creating a Resend account, adding `RESEND_API_KEY` to the Vercel pr
 
 Blocks: the form actually delivering. Nothing else. Every other path on `/contact` works without it.
 
-
-
 ### 11. Sustained frame rate on real hardware is unverified
 
 **Not closed by the Lighthouse run, and worth being precise about why.** Lighthouse scores page
@@ -89,7 +86,6 @@ scrolling. `scripts/check-hero.mjs` already reports an fps figure and asserts on
 floor, which passes headless and is not the criterion.
 
 Blocks: closing plan criterion 21. Nothing ships differently because of it.
-
 
 ### 12. Two rendering judgements need a real display
 
@@ -119,7 +115,6 @@ Also recorded here because it was introduced by this build rather than inherited
 Unblocks by: an operator decision to upgrade, taken as its own piece of work. ADR 0021 recommends a deployed preview first, so Performance and real device behaviour become measurable, because the upgrade swaps webpack for Turbopack and Performance is precisely what the suite cannot verify. That ordering also closes items 10 and 11.
 
 Blocks: nothing. Neither advisory is reachable with attacker controlled input.
-
 
 ### 16. The Full tier page transition is the plain one
 
@@ -169,7 +164,6 @@ If that is it, the fix is padding rather than timing: enough bottom padding on t
 
 Blocks: nothing. It is a visual defect in the first two seconds of the homepage.
 
-
 ### 19. Mobile Performance is 73, and the cause is the Thread weave
 
 Found 2026-08-22 while verifying the project imagery. Not caused by the imagery, and not fixed, pending an operator decision.
@@ -180,21 +174,32 @@ Measured on the deployment: **mobile Performance 73, TBT 1,730ms**, against a bu
 
 **The cause is `samplePaths` on the woven route.** Timed in the page, on the route the build produced, against a straight line of the same length in the same document:
 
-| | 1,211 `getPointAtLength` calls |
-|---|---|
-| Woven path, 16 cubic segments | **294.6ms** |
-| Straight line it replaced | **0.8ms** |
+|                               | 1,211 `getPointAtLength` calls |
+| ----------------------------- | ------------------------------ |
+| Woven path, 16 cubic segments | **294.6ms**                    |
+| Straight line it replaced     | **0.8ms**                      |
 
-368 times more expensive, unthrottled. At the 4x throttle Lighthouse's mobile profile uses that is roughly 1,200ms, and it runs more than once: on mount, again on `document.fonts.ready`, and again on every `ResizeObserver` fire.
+368 times more expensive, unthrottled.
 
-**The verification of that change measured the wrong half.** Item 3's benchmark compared the overlay's *draw* cost before and after and found 0.4ms either way, which was true and irrelevant. Drawing 112 particles was never going to be expensive. Sampling a 16-segment cubic 1,211 times is, and it was not measured, so the change shipped reported as costing nothing measurable.
+**The verification of that change measured the wrong half.** Item 3's benchmark compared the overlay's _draw_ cost before and after and found 0.4ms either way, which was true and irrelevant. Drawing 112 particles was never going to be expensive. Sampling a 16-segment cubic 1,211 times is, and it was not measured, so the change shipped reported as costing nothing measurable.
 
-The hero field density increase in the same session, 30 to 220 particles, is a second candidate contributing to the same number and has not been separated out.
+### Worked 2026-08-23. Two of the hypotheses above are now measured false.
 
-Options, none taken: cache the sampled points rather than re-deriving them on every measure; sample from the path data arithmetically rather than through `getPointAtLength`; reduce the segment count; or revert the weave.
+**"It runs three times, on mount, on `fonts.ready` and on every `ResizeObserver` fire."** False as written. Instrumented on the real 412px page with no tier forced, the events are `fonts.ready` at 20ms, before the component mounts, so its remeasure coalesces with the mount one; then `ResizeObserver` at 216ms and again at 589ms as the page settles. Two sampling runs, not three, and both were driven by the observer. No trigger was wrong. Resampling an unchanged route was: both runs walked byte identical path data, 1,252 characters of `d`, same density, same seed, because `remeasure` returns a new geometry object every call and the effect keyed on identity. Fixed by keying on the path data itself.
 
-Blocks: the plan's mobile Performance budget, section 602. Nothing else. The page renders correctly and CLS is 0.
+**"Reduce the segment count."** Retired, and it was the wrong instinct. The reduced tier overlay draws a median of 113 points a frame of 1,222 sampled, which reads as 90 percent waste and is not: the cull is spatial, the points are spread along the whole document route, and each frame draws the ones inside the viewport. Cutting to 400 would not draw the same thread cheaper, it would thin it about threefold. Sampling less is giving up the feature to pay for an implementation cost.
 
+**The hero density is cleared.** Held on the hero for 9s at the 4x throttle with no scroll, the field costs 343ms across 1,075 rAF callbacks, roughly 1.1ms each. TBT counts only tasks over 50ms, so continuous per frame work at that size contributes essentially nothing to it. The 220 particles are a sustained frame rate question, item 11, not a TBT one.
+
+**What actually fixed it: an arc length table.** `getPointAtLength` is a DOM round trip per point, and the loop was never the cost. The `d` string is parsed once, its cubics flattened to a polyline with cumulative arc length, and each sample is then a binary search. Same route, same point count, same arc length parameterisation, no DOM call. `getPointAtLength` calls during load went from 1,222 to **0**.
+
+Deferring to `requestIdleCallback` was tried first and was the wrong shape of fix. It moved the sampling without shrinking it, and a long task inside the window TBT measures counts whether it starts at 400ms or 3,500ms: on the deployment the deferred run was still one 2,155ms task and 84 percent of the page's whole blocking time. Reverted once the sampling was cheap, because it only bought the thread up to two seconds of delay on a page that never idles.
+
+**Verified, because it is a numerical reimplementation of a browser primitive.** `scripts/check-thread-sampler.mjs` runs both samplers in the same document at the same arc lengths. Byte identical is not achievable and the reason is worth keeping: refining our subdivision drives our total to 8145.714733 on the narrow route and it stays there, while the browser reports 8145.726074, so the 1.13e-2px between them is `getTotalLength`'s own flattening error rather than ours. Worst sample deviation is 1.48e-2px, mean 5.3e-3px, on a point drawn several px across.
+
+Local blocking at the 4x throttle went from 2,511ms across 6 tasks to **204ms across 4**, and the 2,155ms task is gone.
+
+Blocks: the plan's mobile Performance budget, section 602. Whether it still does is measured against the deployment rather than claimed here.
 
 ## Resolved
 
@@ -222,15 +227,14 @@ They are Bhavani Sarees, G Monisa, Maharaja, SITEO, Seervi Business Expo and Vah
 
 `docs/brand.md`'s line about named case studies pending clearance still stands and is a separate thing: it governs project detail on `/work`, which is item 5, not the logo row.
 
-
 ### 10. Lighthouse Performance was unverified
 
 Closed against the deployment, both budgets, both tiers, with the tier each form factor resolved to measured rather than assumed:
 
-| | budget | scored | tier | |
-|---|---|---|---|---|
-| mobile | 90 or above | **100** | `reduced`, `pointer:fine false` | FCP 0.9s, LCP 0.9s, TBT 40ms, CLS 0, SI 2.1s |
-| desktop | 85 or above | **89** | `full`, `pointer:fine true` | FCP 0.2s, LCP 0.3s, TBT 270ms, CLS 0, SI 1.0s |
+|         | budget      | scored  | tier                            |                                               |
+| ------- | ----------- | ------- | ------------------------------- | --------------------------------------------- |
+| mobile  | 90 or above | **100** | `reduced`, `pointer:fine false` | FCP 0.9s, LCP 0.9s, TBT 40ms, CLS 0, SI 2.1s  |
+| desktop | 85 or above | **89**  | `full`, `pointer:fine true`     | FCP 0.2s, LCP 0.3s, TBT 270ms, CLS 0, SI 1.0s |
 
 Re-measured 2026-08-21 after the Reduced tier Thread overlay landed, because that is the one change in this build capable of moving the mobile number. It did not. Mobile TBT went from 0ms to 40ms and the score stayed at 100; nothing else moved. The animation was taken with a stated willingness to accept 96 for it, and did not cost anything.
 
@@ -242,8 +246,6 @@ Accessibility is 100 on all seven routes against the deployment as well as local
 
 Still open and not closed by this: item 11, sustained frame rate, which Lighthouse does not measure.
 
-
-
 ### 3. `Vaihini.png` spelling
 
 The artwork read `Vahini PIPES` and the supplied filename read `Vaihini`. The site used `Vahini Pipes`, taken from the artwork rather than from the filename, and tracked the discrepancy rather than assuming the choice was right.
@@ -252,7 +254,6 @@ Confirmed correct by the operator. `Vahini Pipes` is the real company name, it i
 
 The filename keeps its original spelling in `manifest.json` under `source`, because it is the name of a supplied file and renaming a source asset to match a decision about a different field would lose the link back to what was handed over.
 
-
 ### 14. The footer linked to two routes that did not exist
 
 `content/site.ts` gave `legalNav` a Privacy and a Terms entry, the footer rendered both on every page, and both returned 404. It was the only place on the site where a visible link was known to fail, and it surfaced while removing an expired 404 mask from `scripts/check-hero.mjs` rather than by looking at the footer.
@@ -260,7 +261,6 @@ The filename keeps its original spelling in `manifest.json` under `source`, beca
 Resolved by building both routes with holding text rather than by deleting the links. `/privacy` and `/terms` render through one shared `LegalPage` layout and take their prose from `content/legal/privacy.mdx` and `terms.mdx`, so supplying the real documents is a change to two `.mdx` files and one flag. Both pages say on the page that they are not the published document, state no date or period they cannot support, and give the direct address. `scripts/check-legal.mjs` follows the footer's own links and asserts all of it, 25 of 25.
 
 Still open: the documents themselves. Neither can be written by this build.
-
 
 ### Reduced tier rendered no Thread
 
@@ -273,7 +273,5 @@ First by decision: the overlay was scoped and rejected as disproportionate, and 
 Then by build, 2026-08-21, at the operator's instruction. The rejection had been made on an estimate of the cost, and the estimate was measured and found pessimistic. The overlay now draws 1,154 sampled points, of which 107 survive the reveal line and the viewport cull in any frame, with the full feature set: reveal, head, spiral, dispersion, inverse band switch, text dimming. 60fps at the 4x throttle Lighthouse's mobile profile uses; about 50fps at a pessimistic 6x, where the whole page is 17.4ms even with no canvas mounted. Zero Three.js still holds at 232.7kb over the wire. Every constant the two renderers share now lives in one file so they cannot drift, which was the strongest argument in the original rejection and is the one thing that had to be answered before building. ADR 0024.
 
 The concern that drove the first answer was right in kind and wrong in degree, which is worth keeping visible: a second implementation is a real risk, and it was made survivable by removing the duplication rather than by not building.
-
-
 
 Nothing yet.
