@@ -97,7 +97,7 @@ export function Process() {
 
   return (
     <Section id="process" label="How we work" divider>
-      <Eyebrow marker>How we work</Eyebrow>
+      <Eyebrow>How we work</Eyebrow>
 
       <div ref={hostRef} className="relative mt-16" data-thread-node>
         {/* The horizontal thread through the nodes. Desktop only. */}

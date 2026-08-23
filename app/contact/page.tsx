@@ -27,7 +27,7 @@ export default function ContactPage() {
     <main className="relative">
       <Section id="contact" label={contactPage.meta.title}>
         <Reveal>
-          <Eyebrow marker>{contactPage.eyebrow}</Eyebrow>
+          <Eyebrow>{contactPage.eyebrow}</Eyebrow>
         </Reveal>
         <Reveal delay={60}>
           <h1 className="text-display text-fg mt-8 font-black">{contactPage.headline}</h1>

@@ -18,7 +18,7 @@ export function Capabilities() {
   return (
     <Section id="capabilities" label="What we do" divider>
       <Reveal>
-        <Eyebrow marker>What we do</Eyebrow>
+        <Eyebrow>What we do</Eyebrow>
       </Reveal>
 
       {/* The spine. Full width, above the four, and the branch point of the Thread. */}

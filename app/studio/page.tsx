@@ -35,7 +35,7 @@ export default function StudioPage() {
     <main className="relative">
       <Section id="studio" label={studioPage.headline}>
         <Reveal>
-          <Eyebrow marker>{studioPage.eyebrow}</Eyebrow>
+          <Eyebrow>{studioPage.eyebrow}</Eyebrow>
         </Reveal>
         <Reveal delay={60}>
           <h1 className="text-mega text-fg mt-8 font-black">{studioPage.headline}</h1>

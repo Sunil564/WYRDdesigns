@@ -25,7 +25,7 @@ export function Clients() {
   return (
     <Section id="clients" label="Worked with" divider>
       <Reveal>
-        <Eyebrow marker>{clientsIntro.eyebrow}</Eyebrow>
+        <Eyebrow>{clientsIntro.eyebrow}</Eyebrow>
       </Reveal>
 
       {useMarquee ? (

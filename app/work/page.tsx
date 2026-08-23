@@ -31,7 +31,7 @@ export default function WorkPage() {
     <main className="relative">
       <Section id="work-index" label={workPage.headline}>
         <Reveal>
-          <Eyebrow marker>{workPage.eyebrow}</Eyebrow>
+          <Eyebrow>{workPage.eyebrow}</Eyebrow>
         </Reveal>
         <Reveal delay={60}>
           <h1 className="text-mega text-fg mt-8 font-black">{workPage.headline}</h1>

@@ -28,7 +28,7 @@ export function LegalPage({ title, pending = false, children }: LegalPageProps) 
     <main className="relative">
       <Section id="legal" label={title}>
         <Reveal>
-          <Eyebrow marker>{title}</Eyebrow>
+          <Eyebrow>{title}</Eyebrow>
         </Reveal>
         <Reveal delay={60}>
           <h1 className="text-display text-fg mt-8 font-black">{title}</h1>

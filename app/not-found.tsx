@@ -33,7 +33,7 @@ export default function NotFound() {
       <Section id="not-found" label={notFoundPage.meta.title} className="flex min-h-[70svh] items-center">
         <div className="w-full">
           <Reveal>
-            <Eyebrow marker>{notFoundPage.eyebrow}</Eyebrow>
+            <Eyebrow>{notFoundPage.eyebrow}</Eyebrow>
           </Reveal>
           <Reveal delay={60}>
             <h1 className="text-mega text-fg mt-8 font-black">{notFoundPage.headline}</h1>

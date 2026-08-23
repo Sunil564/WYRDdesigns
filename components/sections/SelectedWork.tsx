@@ -24,7 +24,7 @@ export function SelectedWork() {
   return (
     <Section id="work" label="Selected work" divider>
       <Reveal>
-        <Eyebrow marker>{workIntro.eyebrow}</Eyebrow>
+        <Eyebrow>{workIntro.eyebrow}</Eyebrow>
       </Reveal>
 
       <Reveal delay={60}>

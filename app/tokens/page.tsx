@@ -138,7 +138,7 @@ const motion = [
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <Section divider>
-      <Eyebrow marker>{title}</Eyebrow>
+      <Eyebrow>{title}</Eyebrow>
       <div className="mt-12">{children}</div>
     </Section>
   )

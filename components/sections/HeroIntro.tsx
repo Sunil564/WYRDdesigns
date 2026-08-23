@@ -41,7 +41,7 @@ export function HeroIntro({ eyebrow, lines, lead, primary, secondary }: HeroIntr
   return (
     <div>
       <div className="hero-enter" data-enter={mounted ? 'in' : 'out'}>
-        <Eyebrow marker>{eyebrow}</Eyebrow>
+        <Eyebrow>{eyebrow}</Eyebrow>
       </div>
 
       <SplitHeadline

@@ -95,7 +95,7 @@ export default async function CaseStudyPage({ params }: { params: Promise<Params
 
       <Section label={`${project.title}, detail`}>
         <Reveal>
-          <Eyebrow marker>{caseStudy.nav.label}</Eyebrow>
+          <Eyebrow>{caseStudy.nav.label}</Eyebrow>
         </Reveal>
         <Reveal delay={60}>
           <h1 className="text-display text-fg mt-8 font-black">{project.title}</h1>
