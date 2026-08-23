@@ -115,6 +115,20 @@ A 2D canvas can be asked what it drew. `getImageData` on its own context returns
 renderer's pixels with no text, grain, or neighbouring element in them, and alpha
 separates "mounted and drawing nothing" from "filled solid" from "a sparse field".
 
+Scale verification to the change. Run the full suite before a push to production, and at the
+end of a phase. For an intermediate commit, run only the harnesses that touch what changed,
+plus typecheck, lint and dashes. State which you ran and why. A colour change does not need
+Lighthouse and fourteen route harnesses.
+
+**What the full suite costs**, measured end to end on the operator's machine, 2026-08-23:
+**653s, close to eleven minutes.** Gates 114s (dashes 5, typecheck 16, lint 50, build 43),
+verify server 6s, the fifteen route harnesses 423s, local Lighthouse 110s. The slowest single
+harness is `check-home` at 73s, then `check-contact` at 58s and `check-contrast` at 47s. A
+remote Lighthouse run against a deployment is another 2 to 3 minutes on top and needs one.
+
+That number is the argument for the paragraph above. Eleven minutes is right before a
+production push and wrong after a token rename.
+
 ## Deployment
 
 Vercel builds `main`, and every build on `main` is a production deploy. There is no

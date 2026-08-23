@@ -164,7 +164,11 @@ If that is it, the fix is padding rather than timing: enough bottom padding on t
 
 Blocks: nothing. It is a visual defect in the first two seconds of the homepage.
 
+## Resolved
+
 ### 19. Mobile Performance is 73, and the cause is the Thread weave
+
+Closed 2026-08-23. Mobile Performance 100, TBT 60ms on the reduced tier, against a budget of 90.
 
 Found 2026-08-22 while verifying the project imagery. Not caused by the imagery, and not fixed, pending an operator decision.
 
@@ -199,9 +203,13 @@ Deferring to `requestIdleCallback` was tried first and was the wrong shape of fi
 
 Local blocking at the 4x throttle went from 2,511ms across 6 tasks to **204ms across 4**, and the 2,155ms task is gone.
 
-Blocks: the plan's mobile Performance budget, section 602. Whether it still does is measured against the deployment rather than claimed here.
+**The result, on the deployment.** Mobile Performance 73 to **100**, TBT 1,730ms to **60ms**, on the reduced tier with 2 canvases and `pointer:fine false`, so it is the tier the budget is written for. Desktop 93 with TBT 200ms on the full tier. CLS 0 on both.
 
-## Resolved
+Two runs minutes apart scored 100 with TBT 60ms and 98 with TBT 110ms, so the number moves run to run and the honest reading is high nineties rather than a flat 100.
+
+What is left is not the Thread. Lighthouse's trace attributes the whole of the remaining blocking to two long tasks: 152ms in the React chunk `4bd1b696` at 2,131ms, and 73ms in `c15bf2b0` at 3,031ms, which is 125ms of blocking against the 110ms TBT that run. Framework hydration and one lazy chunk. No thread work appears at all.
+
+The plan's mobile budget, section 602, is met. Item 11, sustained frame rate while scrolling, is untouched by this and still open: no Lighthouse run of any kind reports it.
 
 ### 15. The USD budget brackets have no source
 
