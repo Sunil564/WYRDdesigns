@@ -95,6 +95,8 @@ export const clients: Client[] = [
     file: '/logos/siteo.webp',
     width: 284,
     height: 71,
+    /* Down 20 percent from the base. It is the densest mark and carried the row. */
+    scale: 0.8,
   },
   {
     name: 'Seervi Business Expo',
