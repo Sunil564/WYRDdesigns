@@ -4,7 +4,7 @@ import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Marquee } from '@/components/ui/Marquee'
 import { Reveal } from '@/components/ui/Reveal'
 import { clientsIntro } from '@/content/home'
-import { MARQUEE_THRESHOLD, clients } from '@/content/clients'
+import { CLIENT_ROW_ALLOWANCE, MARQUEE_THRESHOLD, clients } from '@/content/clients'
 
 /**
  * S5. The only section that uses real supplied assets. Brief 6.1 S5.
@@ -45,8 +45,17 @@ export function Clients() {
               is nothing for it to tint: these are their owners' artwork and we do not
               restyle it on hover. ADR 0027.
             */}
+            {/*
+              Each cell is the row's allowance tall and centres its mark in it, so the row's
+              height is the allowance rather than whichever mark is scaled most. Marks differ
+              in rendered height by design and their centre line still agrees.
+            */}
             {clients.map((client) => (
-              <li key={client.name}>
+              <li
+                key={client.name}
+                className="flex items-center"
+                style={{ height: `${CLIENT_ROW_ALLOWANCE}px` }}
+              >
                 <ClientLogo client={client} />
               </li>
             ))}

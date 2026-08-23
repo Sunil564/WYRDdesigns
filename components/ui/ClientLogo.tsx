@@ -1,9 +1,15 @@
-import type { Client } from '@/content/clients'
+import { CLIENT_MARK_HEIGHT, CLIENT_ROW_ALLOWANCE, type Client } from '@/content/clients'
 import { cn } from '@/lib/utils'
 
 type ClientLogoProps = {
   client: Client
-  /** Rendered height in px. The row normalises on optical height, not bounding box. */
+  /**
+   * Rendered height in px at scale 1. The mark's own `scale` multiplies it.
+   *
+   * The row used to normalise on optical height alone, which is not enough: every file is
+   * already trimmed to its ink, so a shared height gives equal boxes and unequal weight. See
+   * the `scale` note on `Client`.
+   */
   height?: number
   className?: string
 }
@@ -22,8 +28,14 @@ type ClientLogoProps = {
  *
  * The real company name is the accessible name, and nothing is renamed.
  */
-export function ClientLogo({ client, height = 40, className }: ClientLogoProps) {
-  const width = Math.round((client.width / client.height) * height)
+export function ClientLogo({ client, height = CLIENT_MARK_HEIGHT, className }: ClientLogoProps) {
+  /*
+    Clamped, so the allowance is a real ceiling rather than a comment. A scale edited past it
+    renders at the allowance instead of making the row taller, which is the failure this is
+    here to prevent.
+  */
+  const rendered = Math.min(Math.round(height * (client.scale ?? 1)), CLIENT_ROW_ALLOWANCE)
+  const width = Math.round((client.width / client.height) * rendered)
 
   return (
     /*
@@ -38,8 +50,13 @@ export function ClientLogo({ client, height = 40, className }: ClientLogoProps) 
       src={client.file}
       alt={client.name}
       width={width}
-      height={height}
-      className={cn('block h-10 w-auto', className)}
+      height={rendered}
+      /*
+        The height is per mark now, so it cannot be a utility class. Width stays auto and the
+        attributes above still reserve the box, so nothing shifts as the files load.
+      */
+      style={{ height: `${rendered}px` }}
+      className={cn('block w-auto', className)}
     />
   )
 }

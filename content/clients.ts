@@ -28,7 +28,42 @@ export type Client = {
   /** Intrinsic size, so the row reserves its box before the file loads. */
   width: number
   height: number
+  /**
+   * Rendered height multiplier on `CLIENT_MARK_HEIGHT`, tuned per mark.
+   *
+   * Not a nicety. Every file here is already trimmed to its own ink, so all six share an
+   * optical height, and at that shared height SITEO still reads far larger than the rest.
+   * SITEO is a solid colour block whose bounding box is 86.5 percent inked; the other five
+   * are line art and fill 30 to 53 percent of theirs. Equal boxes, unequal ink.
+   *
+   * So the row matches apparent weight rather than bounding box, and the amount is per mark
+   * because the five are not equally light. Measured coverage of the ink box, which is what
+   * set the ordering before the eye tuned it:
+   *
+   *   SITEO      86.5%   the reference, untouched at 1.0
+   *   Seervi     53.4%
+   *   Maharaja   52.1%
+   *   G Monisa   47.6%
+   *   Vahini     39.4%
+   *   Bhavani    30.4%   the lightest, and it needs the most
+   *
+   * Absent means 1. Clamped to `CLIENT_ROW_ALLOWANCE` in `ClientLogo`, so a future edit here
+   * cannot silently make the row taller.
+   */
+  scale?: number
 }
+
+/** Rendered height of a mark at scale 1, in px. SITEO renders here and nowhere else. */
+export const CLIENT_MARK_HEIGHT = 40
+
+/**
+ * The tallest any mark may render, in px, and therefore the height of the row.
+ *
+ * The row is pinned to this rather than to its tallest child, so the section's rhythm is set
+ * by a number that is written down instead of by whichever mark happens to be scaled most.
+ * Raising a `scale` past it clamps rather than growing the row.
+ */
+export const CLIENT_ROW_ALLOWANCE = 50
 
 /** Below this count the marquee is replaced by a static centred row. */
 export const MARQUEE_THRESHOLD = 8
@@ -39,18 +74,21 @@ export const clients: Client[] = [
     file: '/logos/bhavani-sarees.webp',
     width: 115,
     height: 96,
+    scale: 1.25,
   },
   {
     name: 'G Monisa',
     file: '/logos/g-monisa.webp',
     width: 113,
     height: 90,
+    scale: 1.18,
   },
   {
     name: 'Maharaja',
     file: '/logos/maharaja.webp',
     width: 135,
     height: 88,
+    scale: 1.16,
   },
   {
     name: 'SITEO',
@@ -63,11 +101,13 @@ export const clients: Client[] = [
     file: '/logos/seervi-business-expo.webp',
     width: 87,
     height: 96,
+    scale: 1.24,
   },
   {
     name: 'Vahini Pipes',
     file: '/logos/vahini-pipes.webp',
     width: 201,
     height: 83,
+    scale: 1.18,
   },
 ]
