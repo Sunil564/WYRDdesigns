@@ -5,6 +5,7 @@ import {
   measure,
   samplePaths,
   type ThreadGeometry,
+  type ThreadSamples,
 } from '@/components/motion/threadGeometry'
 import { clearThread, MAX_BANDS, publishThread } from '@/components/motion/threadStore'
 import { useRenderTier } from '@/components/motion/useRenderTier'
@@ -60,9 +61,24 @@ type Band = { top: number; bottom: number }
  */
 const REDUCED_DENSITY = 0.2
 
+/**
+ * How long sampling may wait for an idle moment before it runs anyway.
+ *
+ * Long enough that it lands after the load has settled on a slow phone, short enough that a
+ * page which never idles still has its thread well before the hero is scrolled past.
+ */
+const SAMPLE_IDLE_TIMEOUT = 2000
+
 export function Thread() {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const svgRef = useRef<SVGSVGElement | null>(null)
+  /*
+    The last sampling, kept so an unchanged route is never walked twice. `remeasure` hands
+    back a new geometry object on every call, so the effect below re-ran on identity rather
+    than on change, and measured 1,222 `getPointAtLength` calls twice per load for a
+    bit-for-bit identical result. See docs/BLOCKERS.md item 19.
+  */
+  const cache = useRef<{ key: string; samples: ThreadSamples } | null>(null)
   const [geometry, setGeometry] = useState<ThreadGeometry | null>(null)
   const { tier } = useRenderTier()
 
@@ -140,35 +156,84 @@ export function Thread() {
     const elements = Array.from(svg.querySelectorAll<SVGPathElement>('[data-thread-body]'))
     if (elements.length !== geometry.paths.length) return
 
-    const samples = samplePaths(
-      elements,
-      geometry.paths.map((path) => path.kind),
-      geometry.hostTop,
-      tier === 'reduced' ? REDUCED_DENSITY : 1,
-      Math.round(geometry.width),
-    )
-    if (!samples) return
+    const density = tier === 'reduced' ? REDUCED_DENSITY : 1
+    const seed = Math.round(geometry.width)
+    /*
+      Everything `samplePaths` reads. The path data is the route, and the other two are its
+      only other inputs, so equal keys mean an identical result: the sampler is deterministic
+      by construction and the LCG seed is part of the key.
+    */
+    const key = `${density}|${seed}|${elements.map((element) => element.getAttribute('d') ?? '').join('~')}`
 
-    const bandTops = new Float32Array(MAX_BANDS)
-    const bandBottoms = new Float32Array(MAX_BANDS)
-    const bands = geometry.bands.slice(0, MAX_BANDS)
-    bands.forEach((band, index) => {
-      bandTops[index] = band.top
-      bandBottoms[index] = band.bottom
-    })
+    let cancelled = false
+    let idle = 0
+    let timer = 0
 
-    publishThread({
-      samples,
-      bandTops,
-      bandBottoms,
-      bandCount: bands.length,
-      hero: geometry.hero,
-      disperse: geometry.disperse,
-      text: geometry.text,
-      spiralRadius: geometry.spiralRadius,
-    })
+    const publish = (samples: ThreadSamples) => {
+      cache.current = { key, samples }
 
-    return () => clearThread()
+      const bandTops = new Float32Array(MAX_BANDS)
+      const bandBottoms = new Float32Array(MAX_BANDS)
+      const bands = geometry.bands.slice(0, MAX_BANDS)
+      bands.forEach((band, index) => {
+        bandTops[index] = band.top
+        bandBottoms[index] = band.bottom
+      })
+
+      publishThread({
+        samples,
+        bandTops,
+        bandBottoms,
+        bandCount: bands.length,
+        hero: geometry.hero,
+        disperse: geometry.disperse,
+        text: geometry.text,
+        spiralRadius: geometry.spiralRadius,
+      })
+    }
+
+    /*
+      A hit costs nothing, so it publishes on the spot rather than waiting for idle. This is
+      the common case: the observer below fires at least twice on a normal load and the route
+      is identical every time, so all but the first are free.
+    */
+    const hit = cache.current
+    if (hit?.key === key) {
+      publish(hit.samples)
+      return () => clearThread()
+    }
+
+    const run = () => {
+      if (cancelled) return
+      const samples = samplePaths(
+        elements,
+        geometry.paths.map((path) => path.kind),
+        geometry.hostTop,
+        density,
+        seed,
+      )
+      if (samples) publish(samples)
+    }
+
+    /*
+      A miss is the expensive one and it does not belong in the load. The host sits below the
+      hero and draws nothing until the page is scrolled, so nothing observes these points for
+      as long as it takes to read the first screen, and running them inline put the whole cost
+      inside the window TBT measures. Idle, with a timeout so a page that never goes idle
+      still gets its thread. See docs/BLOCKERS.md item 19.
+    */
+    if (typeof window.requestIdleCallback === 'function') {
+      idle = window.requestIdleCallback(run, { timeout: SAMPLE_IDLE_TIMEOUT })
+    } else {
+      timer = window.setTimeout(run, 0)
+    }
+
+    return () => {
+      cancelled = true
+      if (idle && typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(idle)
+      if (timer) window.clearTimeout(timer)
+      clearThread()
+    }
   }, [geometry, streaming, tier])
 
   const bands: Band[] = geometry?.bands ?? []
@@ -306,7 +371,6 @@ function ThreadGroup({
           clipPath="url(#wyrd-thread-inverse)"
         />
       )}
-
     </g>
   )
 }
