@@ -51,6 +51,17 @@
   */
   --color-accent-on-inverse: #4c86db;
 
+  /*
+    The two cluster card grounds. These are the second and third grounds on the site and
+    their addition retires the single accent rule: see docs/decisions/0029.
+
+    They are grounds, not accents. Nothing else on the site may use them, and neither is a
+    text colour anywhere. Each one comes with the text pair it is legal against, and the
+    pairs are opposite: royal takes the inverse set, lime takes the light set.
+  */
+  --color-card-royal: #4461e4;
+  --color-card-lime: #e4fdb8;
+
   /* Type scale. Fluid, clamped. Brief section 4.2, mega adjusted, see docs. */
   /*
     The cap is 4.75rem rather than 5rem, and the 0.25rem buys a font swap that does not
@@ -621,11 +632,13 @@
   opacity: var(--pointer-opacity);
   transition: opacity var(--dur-base) var(--ease-out);
   /*
-    Painted above the blocks with a screen blend, so the highlight lifts a dark
-    block instead of tinting the gutter between them. On white, screen with a light
-    tint is a no op, which is why the effect reads only where it should.
+    Below the cards now, not above them. It screened over the whole grid, which was free when
+    every card was near black and is not when one is a 4.77:1 ground: 14 percent of mist
+    screened over royal takes its text under the AA floor while the pointer is near it. At
+    z-index 0 it lights the gutter between the cards and leaves the grounds alone, which is
+    the effect it was for.
   */
-  z-index: 1;
+  z-index: 0;
   mix-blend-mode: screen;
   background: radial-gradient(
     360px circle at var(--pointer-x) var(--pointer-y),
@@ -634,28 +647,93 @@
   );
 }
 
+/*
+  A card selects its ground and the text pair that is legal on it together, in one place.
+
+  Every colour below is read from `--card-ground` and `--card-ink`, so a card is described by
+  which variant it is and nothing else. The previous version hardcoded the inverse set on
+  every card, which is why adding a second ground needed this rather than a class swap.
+
+  The two pairs are opposite. Royal is a mid dark ground taking the inverse text set; lime is
+  a light ground taking the light set. See docs/decisions/0029.
+*/
 .capability-block {
+  --card-ground: var(--color-card-royal);
+  --card-ink: var(--color-fg-inverse);
+  /*
+    Royal has no room for a muted tier and the measurement is the reason, not a preference.
+    `--color-fg-inverse-muted` is 1.84:1 on royal, and the lightest grey that clears 4.5:1
+    there is about #f0f0f0, which is within 0.3:1 of the main text and reads as the same
+    colour. So royal drops the tier rather than inventing a token that is muted in name only,
+    and hierarchy comes from scale and weight, which is what docs/design-system.md already
+    says to do when the accent is unavailable.
+  */
+  --card-ink-muted: var(--color-fg-inverse);
+  --card-hairline: color-mix(in oklab, var(--card-ink) 22%, var(--card-ground));
+  background-color: var(--card-ground);
+  border-color: var(--card-hairline);
+  color: var(--card-ink);
   transition: background-color var(--dur-fast) var(--ease-out);
 }
 
+.capability-block[data-variant='lime'] {
+  --card-ground: var(--color-card-lime);
+  --card-ink: var(--color-fg);
+  /* Lime has the room royal does not: `--color-fg-muted` measures 5.82:1 on it. */
+  --card-ink-muted: var(--color-fg-muted);
+}
+
+/* The second tier, where the ground affords one. */
+.capability-block .card-muted {
+  color: var(--card-ink-muted);
+}
+
 /*
-  The blocks are inverse, so the hover lifts a step off the dark ground rather than
-  moving to --bg-sunken, which is a light token. Mixed from tokens rather than
-  introducing a hex value for one state.
+  Hover deepens rather than lifts, and that is a measured direction rather than a taste.
+  Lifting royal toward its own ink was the inherited behaviour and it costs the tightest pair
+  on the page: royal to mist is 4.77:1 at rest, and 12 percent of mist mixed into the ground
+  takes it under the 4.5 floor. Mixing toward `--color-fg` moves both grounds away from their
+  text instead, so the hover state is the higher contrast one on both.
 */
 .capability-block:hover,
 .capability-block:focus-within {
-  background-color: color-mix(in oklab, var(--color-bg-inverse) 88%, var(--color-fg-inverse));
+  background-color: color-mix(in oklab, var(--card-ground) 92%, var(--color-fg));
 }
 
-/* The hairline that sweeps left to right across the top edge on hover. */
+/*
+  The focus ring inside a card is the card's own ink.
+
+  `--color-accent-strong` is the site ring and it measures 1.00:1 on royal, which is not a
+  weakened ring but an absent one: #336bc8 and #4461e4 have almost the same relative
+  luminance. The ink is 4.77:1 on royal and 17.94:1 on lime, both clear of the 3:1 floor for
+  a non text indicator.
+*/
+.capability-block :focus-visible {
+  outline-color: var(--card-ink);
+}
+
+/*
+  Lime takes the dark grain. `grain-inverse` screens light noise, which is a near no op on a
+  ground this light and would leave lime the only flat surface in the grid. Multiplied dark
+  noise at the same 3 percent gives it the same texture the rest of the site has.
+*/
+.capability-block[data-variant='lime'] .grain-inverse {
+  background-image: url('/noise-dark.png');
+  mix-blend-mode: multiply;
+}
+
+/*
+  The hairline that sweeps left to right across the top edge on hover. It was the accent, and
+  the accent is unusable on both grounds: 1.41:1 on royal, 3.32:1 on lime. It is the card's
+  ink now, which is the strongest thing legal on either.
+*/
 .capability-sweep {
   position: absolute;
   inset-inline: 0;
   top: 0;
   z-index: 1;
   height: 1px;
-  background-color: var(--color-accent-on-inverse);
+  background-color: var(--card-ink);
   transform: scaleX(0);
   transform-origin: left center;
   transition: transform var(--dur-base) var(--ease-out);
@@ -793,4 +871,3 @@
     display: none !important;
   }
 }
-

@@ -274,12 +274,16 @@ async function threadOnColumn(page) {
         }
       }
       if (candidates.length === 0) {
-        const fallback = maxRoute + 80 + 76 < width ? { offset: 80, x: maxRoute + 80 } : { offset: -80, x: minRoute - 80 }
+        const fallback =
+          maxRoute + 80 + 76 < width
+            ? { offset: 80, x: maxRoute + 80 }
+            : { offset: -80, x: minRoute - 80 }
         candidates.push(fallback)
       }
       const peakNear = (centre, y, ground) => {
         let peak = 0
-        for (let x = centre - 6; x <= centre + 6; x += 1) peak = Math.max(peak, Math.abs(lum(x, y) - ground))
+        for (let x = centre - 6; x <= centre + 6; x += 1)
+          peak = Math.max(peak, Math.abs(lum(x, y) - ground))
         return peak
       }
 
@@ -386,7 +390,10 @@ for (const width of [1024, 1440, 1920, 2560]) {
 
   const route = await page.evaluate(() => {
     const bodies = Array.from(document.querySelectorAll('[data-thread-body]'))
-    return { count: bodies.length, lengths: bodies.map((path) => Math.round(path.getTotalLength())) }
+    return {
+      count: bodies.length,
+      lengths: bodies.map((path) => Math.round(path.getTotalLength())),
+    }
   })
   record(
     `the Thread route is nine sampled paths at ${width}px`,
@@ -543,41 +550,160 @@ for (const width of [375, 768, 1023]) {
   await block.scrollIntoViewIfNeeded()
   await page.waitForTimeout(800)
 
+  /*
+    Resolve colours through a canvas rather than comparing strings. `color-mix()` computes to
+    an `oklab(...)` value, and a string compare against an `rgb(...)` token would fail on a
+    correct build while a digit scrape would read the three oklab components as RGB. The
+    canvas returns the pixel the renderer produced.
+  */
+  await page.evaluate(() => {
+    const cv = document.createElement('canvas')
+    cv.width = 1
+    cv.height = 1
+    const ctx = cv.getContext('2d', { willReadFrequently: true })
+    window.__resolve = (colour) => {
+      ctx.fillStyle = '#000'
+      ctx.fillStyle = colour
+      ctx.fillRect(0, 0, 1, 1)
+      const d = ctx.getImageData(0, 0, 1, 1).data
+      return `${d[0]},${d[1]},${d[2]}`
+    }
+    window.__token = (name) => {
+      const probe = document.createElement('span')
+      probe.style.color = `var(${name})`
+      document.body.append(probe)
+      const value = window.__resolve(getComputedStyle(probe).color)
+      probe.remove()
+      return value
+    }
+  })
+
+  /*
+    Each card selects a ground and the text pair legal on it together. Asserted against the
+    tokens the page publishes, never against a hex copied into this file: the criterion this
+    replaced held the accent as a literal and the Verification rules in CLAUDE.md name that as
+    a second source of truth that goes stale silently.
+  */
+  const grounds = await page.evaluate(() => {
+    const expected = {
+      royal: {
+        ground: window.__token('--color-card-royal'),
+        ink: window.__token('--color-fg-inverse'),
+      },
+      lime: { ground: window.__token('--color-card-lime'), ink: window.__token('--color-fg') },
+    }
+    return Array.from(document.querySelectorAll('[data-thread-branch-target]')).map((card) => {
+      const variant = card.getAttribute('data-variant')
+      const heading = card.querySelector('h3')
+      return {
+        variant,
+        ground: window.__resolve(getComputedStyle(card).backgroundColor),
+        ink: heading ? window.__resolve(getComputedStyle(heading).color) : null,
+        want: expected[variant] ?? null,
+      }
+    })
+  })
+  const wrongPair = grounds.filter(
+    (card) => !card.want || card.ground !== card.want.ground || card.ink !== card.want.ink,
+  )
+  record(
+    'S3 every cluster card renders its own ground with the text pair legal on it',
+    grounds.length === 4 &&
+      wrongPair.length === 0 &&
+      new Set(grounds.map((card) => card.variant)).size === 2,
+    grounds.map((card) => `${card.variant}: ground ${card.ground}, ink ${card.ink}`).join(' | '),
+  )
+
   const restBackground = await block.evaluate((el) => getComputedStyle(el).backgroundColor)
+  const restIndex = await block.evaluate((el) => {
+    const label = el.querySelector('.label')
+    return label ? window.__resolve(getComputedStyle(label).color) : null
+  })
   await block.hover()
   await page.waitForTimeout(500)
   const hoverBackground = await block.evaluate((el) => getComputedStyle(el).backgroundColor)
+  const hoverIndex = await block.evaluate((el) => {
+    const label = el.querySelector('.label')
+    return label ? window.__resolve(getComputedStyle(label).color) : null
+  })
   const sweep = await block.evaluate((el) => {
     const span = el.querySelector('.capability-sweep')
     return span ? getComputedStyle(span).transform : null
   })
-  /*
-    Read the token the page resolved rather than a colour copied into this file. This
-    criterion held `rgb(255, 82, 31)` as a literal and would have failed on a correct build
-    the moment the accent changed, which is the stale-copied-constant fault the Verification
-    rules in CLAUDE.md name. The comparison is done in the page so both sides come from the
-    same computed-style pass and the format matches without parsing.
-  */
-  const indexColour = await block.evaluate((el) => {
-    const label = el.querySelector('.label')
-    if (!label) return null
-    const probe = document.createElement('span')
-    probe.style.color = 'var(--color-accent-on-inverse)'
-    el.append(probe)
-    const expected = getComputedStyle(probe).color
-    probe.remove()
-    return { actual: getComputedStyle(label).color, expected }
-  })
 
+  /*
+    The index used to turn accent on hover and the accent is now unusable on both grounds,
+    1.41:1 on royal and 3.32:1 on lime, so the assertion is that it does not move. The sweep
+    carries the hover signal alone. See docs/decisions/0029.
+  */
   record(
-    'S3 hover lifts the dark card a step, sweeps the hairline, and turns the index accent',
+    'S3 hover deepens the card and sweeps the hairline, and the index does not change colour',
     restBackground !== hoverBackground &&
       sweep !== null &&
       !/matrix\(0,/.test(sweep ?? '') &&
-      indexColour !== null &&
-      indexColour.actual === indexColour.expected,
-    `${restBackground} to ${hoverBackground}, sweep ${sweep}, index ${indexColour?.actual}` +
-      ` against --accent-on-inverse ${indexColour?.expected}`,
+      restIndex !== null &&
+      restIndex === hoverIndex,
+    `${restBackground} to ${hoverBackground}, sweep ${sweep}, index ${restIndex} at rest and ${hoverIndex} hovered`,
+  )
+
+  /* Read the accent inside the page so nothing here holds a copy of it. */
+  const accentAudit = async () =>
+    page.evaluate(() => {
+      const accents = [window.__token('--color-accent'), window.__token('--color-accent-strong')]
+      const hits = []
+      for (const card of document.querySelectorAll('[data-thread-branch-target]')) {
+        for (const el of [card, ...card.querySelectorAll('*')]) {
+          const cs = getComputedStyle(el)
+          for (const prop of ['color', 'backgroundColor', 'borderTopColor']) {
+            const value = cs[prop]
+            if (value === 'rgba(0, 0, 0, 0)' || value === 'transparent') continue
+            if (accents.includes(window.__resolve(value))) {
+              hits.push(`${el.tagName.toLowerCase()} ${prop}`)
+            }
+          }
+        }
+      }
+      return hits
+    })
+
+  const accentHits = await accentAudit()
+  record(
+    'S3 no accent coloured element remains inside a cluster card',
+    accentHits.length === 0,
+    accentHits.length
+      ? accentHits.join(', ')
+      : 'nothing inside the four cards resolves to --accent or --accent-strong',
+  )
+
+  /*
+    Negative control, because a criterion that cannot fail proves nothing. One element inside a
+    card is painted with the accent and the same audit is run again: it has to find it. The
+    element is removed afterwards, so nothing later in this file sees a page the site does not
+    serve.
+  */
+  const controlHits = await page
+    .evaluate(async () => {
+      const card = document.querySelector('[data-thread-branch-target]')
+      const planted = document.createElement('span')
+      planted.style.color = 'var(--color-accent)'
+      planted.textContent = 'control'
+      card.append(planted)
+      return planted
+    })
+    .then(() => accentAudit())
+  await page.evaluate(() => {
+    const card = document.querySelector('[data-thread-branch-target]')
+    const planted = Array.from(card.querySelectorAll('span')).find(
+      (el) => el.textContent === 'control',
+    )
+    planted?.remove()
+  })
+  record(
+    'S3 the accent audit can still fail, proved by planting one',
+    controlHits.length > 0,
+    controlHits.length
+      ? `planted one accent element and the audit found ${controlHits.length}: ${controlHits.join(', ')}`
+      : 'planted an accent element and the audit found nothing, so it proves nothing',
   )
 
   const pointerVars = await page.evaluate(() => {
@@ -725,10 +851,7 @@ for (const width of [375, 768, 1023]) {
 
   record(
     'reduced motion renders the whole page in final state with nothing mounted',
-    state.canvases === 0 &&
-      !state.lenis &&
-      state.hiddenReveals === 0 &&
-      state.sections === 8,
+    state.canvases === 0 && !state.lenis && state.hiddenReveals === 0 && state.sections === 8,
     JSON.stringify(state),
   )
   /*

@@ -4,23 +4,46 @@ import { useCallback, useRef, type PointerEvent } from 'react'
 import { Reveal } from '@/components/ui/Reveal'
 import type { Cluster } from '@/content/services'
 
+/** Which ground a cluster card renders on, and with it the text pair that is legal there. */
+export type CapabilityVariant = 'royal' | 'lime'
+
 /**
- * The 2x2 cluster grid. Brief 6.1 S3, inverted in Phase 4b section 4.
+ * The 2x2 cluster grid. Brief 6.1 S3, inverted in Phase 4b section 4, coloured in 0029.
  *
- * These four are dark cards on a white canvas. They are the section that most
- * benefits from the contrast, and it gives the four strands of the Thread somewhere
- * with weight to land.
+ * The four cards alternate between two grounds, royal and lime, and the two take opposite
+ * contrast pairs: royal reads the inverse text set, lime reads the light set. A card names
+ * its variant and nothing else, and the pair follows from it in `app/globals.css`. That is
+ * the point of the change rather than a detail of it, because the version before this
+ * hardcoded the inverse set on every card and had no way to say which ground a card was on.
  *
- * Hover: the block lifts a step off `--bg-inverse`, the index digit goes to
- * `--accent-on-inverse`, and a hairline sweeps left to right across the top edge.
- * No scale transform, no shadow. All of it is CSS on `:hover` and `:focus-within`,
- * so there is no JavaScript on the hover path.
+ * `variant` is named for `Section`'s, which does the same job one level up, though the values
+ * differ because a section chooses a token set and a card chooses a ground.
+ *
+ * Hover: the block deepens a step, and a hairline sweeps left to right across the top edge.
+ * No scale transform, no shadow. All of it is CSS on `:hover` and `:focus-within`, so there
+ * is no JavaScript on the hover path.
+ *
+ * No accent appears anywhere inside these cards. `--accent` measures 1.41:1 on royal and
+ * 3.32:1 on lime and is unusable on both, so the index digit that used to turn accent on
+ * hover no longer changes colour and the sweep carries the hover signal on its own.
  *
  * The pointer highlight is a soft radial that follows the cursor across the grid.
  * It writes two CSS custom properties on `pointermove` and lets the compositor
  * paint the gradient. There is no per frame JavaScript repaint, which is the
  * requirement in brief 6.1 S3 and in criterion 6.
  */
+/** Royal first, then alternating. The table in CLUSTER-CARD-COLOURS.md section 1. */
+function variantFor(index: number): CapabilityVariant {
+  return index % 2 === 0 ? 'royal' : 'lime'
+}
+
+/*
+  The service row rule, taking the card's own hairline rather than a fixed token. Inline
+  because the divider is one declaration and a utility class for it would be a second name
+  for `--card-hairline`.
+*/
+const hairline = { borderColor: 'var(--card-hairline)' }
+
 export function CapabilityGrid({ clusters }: { clusters: Cluster[] }) {
   const gridRef = useRef<HTMLDivElement | null>(null)
   const frame = useRef(0)
@@ -59,26 +82,30 @@ export function CapabilityGrid({ clusters }: { clusters: Cluster[] }) {
         <Reveal key={cluster.slug} delay={index * 60}>
           <article
             data-thread-branch-target={cluster.slug}
-            className="capability-block group border-border-inverse bg-bg-inverse relative flex h-full flex-col overflow-hidden border p-8 md:p-12"
+            /*
+              Alternating, so 01 and 03 are royal and 02 and 04 are lime. Derived from the
+              position rather than stored on the cluster: the colour is a property of the
+              grid's rhythm, not a fact about the service.
+            */
+            data-variant={variantFor(index)}
+            className="capability-block group relative flex h-full flex-col overflow-hidden border p-8 md:p-12"
           >
-            {/* The light grain, so a dark card carries texture rather than flat ink. */}
+            {/* Grain, so a card carries texture rather than flat ink. Dark on lime, light on royal. */}
             <span aria-hidden="true" className="grain-inverse" />
 
             {/* The hairline that sweeps the top edge on hover. */}
             <span aria-hidden="true" className="capability-sweep" />
 
-            <p className="label text-fg-inverse-muted group-hover:text-accent-on-inverse relative transition-colors duration-[var(--dur-fast)]">
-              {cluster.index}
-            </p>
+            <p className="label card-muted relative">{cluster.index}</p>
 
-            <h3 className="text-title text-fg-inverse relative mt-8 font-bold">{cluster.name}</h3>
-            <p className="measure text-lead text-fg-inverse-muted relative mt-4">{cluster.line}</p>
+            <h3 className="text-title relative mt-8 font-bold">{cluster.name}</h3>
+            <p className="measure text-lead card-muted relative mt-4">{cluster.line}</p>
 
             <ul className="relative mt-10 flex flex-col gap-4">
               {cluster.services.map((service) => (
-                <li key={service.name} className="border-border-inverse border-t pt-4">
-                  <p className="text-body text-fg-inverse">{service.name}</p>
-                  <p className="measure text-body text-fg-inverse-muted mt-1">{service.line}</p>
+                <li key={service.name} className="border-t pt-4" style={hairline}>
+                  <p className="text-body">{service.name}</p>
+                  <p className="measure text-body card-muted mt-1">{service.line}</p>
                 </li>
               ))}
             </ul>
