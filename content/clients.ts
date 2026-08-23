@@ -63,7 +63,7 @@ export const CLIENT_MARK_HEIGHT = 40
  * by a number that is written down instead of by whichever mark happens to be scaled most.
  * Raising a `scale` past it clamps rather than growing the row.
  */
-export const CLIENT_ROW_ALLOWANCE = 50
+export const CLIENT_ROW_ALLOWANCE = 60
 
 /** Below this count the marquee is replaced by a static centred row. */
 export const MARQUEE_THRESHOLD = 8
@@ -74,21 +74,21 @@ export const clients: Client[] = [
     file: '/logos/bhavani-sarees.webp',
     width: 115,
     height: 96,
-    scale: 1.25,
+    scale: 1.5,
   },
   {
     name: 'G Monisa',
     file: '/logos/g-monisa.webp',
     width: 113,
     height: 90,
-    scale: 1.18,
+    scale: 1.42,
   },
   {
     name: 'Maharaja',
     file: '/logos/maharaja.webp',
     width: 135,
     height: 88,
-    scale: 1.16,
+    scale: 1.39,
   },
   {
     name: 'SITEO',
@@ -101,7 +101,7 @@ export const clients: Client[] = [
     file: '/logos/seervi-business-expo.webp',
     width: 87,
     height: 96,
-    scale: 1.24,
+    scale: 1.49,
   },
   {
     name: 'Vahini Pipes',
