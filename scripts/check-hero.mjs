@@ -104,7 +104,8 @@ async function open(tier, viewport, options = {}) {
   })
 
   await page.goto(`${BASE}/`, { waitUntil: 'load' })
-  // Long enough for the whole 62 character reveal plus the lead and the actions.
+  // Long enough for the whole character reveal plus the lead and the actions. The
+  // headline is 37 characters since ADR 0030, down from 62, so this is now slack.
   await page.waitForTimeout(5000)
 
   const cls = await page.evaluate(() => window.__cls ?? 0)
@@ -308,7 +309,9 @@ async function open(tier, viewport, options = {}) {
 
 // ------------------------------------------------------------------ breakpoints
 {
-  const widths = [320, 375, 768, 1024, 1440, 1920, 2560]
+  // 412 is the Pixel class width and the one the repositioning brief named that this
+  // list did not already carry. 320 stays because it is stricter than any of them.
+  const widths = [320, 375, 412, 768, 1024, 1440, 1920, 2560]
   const { context, page } = await open('reduced', { width: 320, height: 800 })
   const report = []
 

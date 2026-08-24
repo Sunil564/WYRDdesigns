@@ -32,7 +32,13 @@ Mapping used:
 
 ### 2. Positioning and hero headline
 
-Both agree on `We don't just build websites. We build everything around them.` No conflict. The brief's hero lead paragraph is connective copy and is kept, since `brand.md` permits connective copy that does not rewrite the locked lines.
+**Superseded on 2026-08-24 by ADR 0030.** The finding below was correct when written and is no longer the site's position. `docs/brand.md` section 2 has since been amended by operator decision, and the headline it locked has been replaced by `We build it. Then we grow it with you.` The finding is left in place rather than deleted, because the resolution method it records still stands and because a reader arriving from the Phase 0 report needs to see what changed rather than find nothing.
+
+Original finding:
+
+> Both agree on `We don't just build websites. We build everything around them.` No conflict. The brief's hero lead paragraph is connective copy and is kept, since `brand.md` permits connective copy that does not rewrite the locked lines.
+
+The second sentence survives intact: the hero lead is still connective copy, and it has been rewritten under the same permission.
 
 ### 3. Taglines
 

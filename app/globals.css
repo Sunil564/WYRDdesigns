@@ -555,7 +555,11 @@
   Tracking compensation for the unkerned headline. See .split-headline in the base layer
   for why kerning is off at all.
 
-  Unkerned, the two lines measure 9.76px and 10.17px wider, which is 0.95 and 1.40 percent.
+  Measured against the pre ADR 0030 headline. Unkerned, its two lines measured 9.76px and
+  10.17px wider, which was 0.95 and 1.40 percent. The compensation was not re-derived for the
+  shorter headline: it is a per character adjustment, the `We` pair it was aimed at is still
+  on line one, and the thing it exists to protect is asserted directly rather than inferred
+  from this number, by the CLS and overflow criteria in scripts/check-hero.mjs.
   This recovers the width, not the look: almost all of the extra is the single `We` pair, and
   tracking cannot be pair-specific, so it takes 0.004em off every gap to offset one. It is
   worth doing because the width is what decides where the headline wraps, and an extra 10px

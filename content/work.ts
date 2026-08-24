@@ -26,6 +26,6 @@ export const workPage = {
   meta: {
     title: 'Work',
     description:
-      'Selected projects from WYRD Designs across web and ecommerce, search, film and video, and exhibitions. More on request.',
+      'Selected projects from WYRD Designs across web and ecommerce, search, film and video, and exhibitions. All of it made in-house. More on request.',
   },
 } as const

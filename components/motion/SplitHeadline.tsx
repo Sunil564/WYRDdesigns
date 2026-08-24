@@ -59,6 +59,11 @@ const ENTRANCE_WINDOW = 2000
  *
  * At 0.65 the lead begins at 1.19s into a 1.84s timeline, while the last character started
  * at 0.94s and is still landing. Arriving into the end of the reveal rather than after it.
+ *
+ * Every second above was measured against the previous headline, which was 62 characters.
+ * ADR 0030 replaced it with a 37 character one, so the timeline is shorter and the absolute
+ * numbers no longer describe it. The fraction is what is tuned and it still holds: the value
+ * is read off `timeline.duration()` at runtime, never off a character count written here.
  */
 const REVEAL_AT = 0.65
 

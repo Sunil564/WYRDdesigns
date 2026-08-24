@@ -22,7 +22,7 @@
 
 export const contactPage = {
   eyebrow: 'Contact',
-  headline: 'Tell us what you are making.',
+  headline: 'Tell us what you are building.',
   lead: 'One email, one form, one studio. You will talk to the people doing the work.',
   details: {
     emailLabel: 'Email',
@@ -75,7 +75,7 @@ export const contactPage = {
   meta: {
     title: 'Contact',
     description:
-      'Start a project with WYRD Designs. Tell us what you are making and we will reply from a real address. Bangalore, India.',
+      'Start a project with WYRD Designs. Tell us what you are building and we will reply from a real address. Bangalore, India.',
   },
 } as const
 

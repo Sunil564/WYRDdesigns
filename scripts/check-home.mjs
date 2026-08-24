@@ -120,7 +120,7 @@ async function walk(page, step = 600, settle = 220) {
   // Copy that is locked by docs/brand.md must appear verbatim.
   const copy = await page.evaluate(() => document.body.innerText)
   const locked = [
-    "We don't just build websites. We build everything around them.",
+    'We build it. Then we grow it with you.',
     'Fast, product-led websites and stores, built to be found and built to last.',
     'Rank on Google, and get named by AI answer engines when buyers ask.',
     'A content engine that keeps the brand present every week, not in bursts.',
@@ -135,6 +135,29 @@ async function walk(page, step = 600, settle = 220) {
     'every service line is verbatim from docs/brand.md',
     missing.length === 0,
     missing.join(' | '),
+  )
+
+  /*
+    The other half of the same criterion. `locked` proves the current line is on the page;
+    this proves the line it replaced is not, anywhere. Copy that has been superseded does
+    not fail a positive check when it is left behind in a second component, a meta tag or a
+    harness fixture, it just sits there arguing the old position. ADR 0030 changed the
+    site's argument from scope to continuity, so every one of these is a scope sentence
+    that must be gone rather than merely outnumbered.
+  */
+  const superseded = [
+    "We don't just build websites",
+    'We build everything around them',
+    'the room it all happens in',
+    'one thread through the whole thing',
+    'the booth at the trade show',
+    'Tell us what you are making',
+  ]
+  const survivors = superseded.filter((line) => copy.replace(/\s+/g, ' ').includes(line))
+  record(
+    'no superseded scope copy survives anywhere on the page',
+    survivors.length === 0,
+    survivors.join(' | '),
   )
 
   const banned = [
@@ -261,11 +284,21 @@ async function threadOnColumn(page) {
         meant to stand for "this page without a thread on it", so the least inked candidate
         is the closest thing to that, and picking it costs nothing when none of them is
         contaminated.
+
+        The offsets reach 600 because picking the emptiest candidate only helps if one of
+        them is empty. ADR 0030 added a sentence to the positioning paragraph, and at 1440
+        every candidate from 150 to 300 was inside the centred display text: the control
+        inked 119 rows of 331 on its own and the Thread's real margin collapsed to 8.5 mean
+        deviation against a threshold of 10. Nothing about the render had changed. Each
+        offset is still filtered by the width guard below, so the far ones simply do not
+        exist at 375px, and a cleaner control cannot make a blank column look painted: the
+        Thread's own numbers are measured on the Thread's own column and are untouched by
+        which column it is compared against.
       */
       const minRoute = Math.min(...rowX)
       const maxRoute = Math.max(...rowX)
       const candidates = []
-      for (const offset of [150, 200, 250, 300]) {
+      for (const offset of [150, 200, 250, 300, 400, 500, 600]) {
         for (const sign of [1, -1]) {
           // Offsets are from the route's own extremes, so a control never lands inside the
           // band a woven route sweeps through.
@@ -287,19 +320,29 @@ async function threadOnColumn(page) {
         return peak
       }
 
-      // `at` gives the column to probe for a row: the route itself, or a fixed offset from
-      // the band it sweeps. Either way it is evaluated per row, never once for the band.
+      /*
+        `at` gives the column to probe for a row: a fixed offset from the band the route
+        sweeps. It is evaluated per row, never once for the band.
+
+        **The ground is read around the column being probed, not around the route.** It was
+        read around the route, which meant a control far from the route was measured against
+        a ground taken 500px away, so any horizontal gradient across the page registered as
+        ink that is not there. At 1440 that reported every candidate column as inked and made
+        the emptiest-candidate rule pick between contaminated options: a control 600px clear
+        of all text scored worse than one sitting inside the paragraph. A control is supposed
+        to stand for this page with no Thread on it, and it can only do that if it is
+        compared against its own surroundings.
+      */
       const measure = (at) => {
         let rows = 0
         let inked = 0
         let sum = 0
         for (let y = 250; y <= 580; y += 1) {
-          const here = rowX[y - 250]
-          const strip = []
-          for (let x = here - 70; x <= here + 70; x += 1) strip.push(lum(x, y))
-          const ground = [...strip].sort((a, b) => a - b)[Math.floor(strip.length / 2)]
           const centre = at(y)
           if (centre - 6 < 0 || centre + 6 >= width) continue
+          const strip = []
+          for (let x = centre - 70; x <= centre + 70; x += 1) strip.push(lum(x, y))
+          const ground = [...strip].sort((a, b) => a - b)[Math.floor(strip.length / 2)]
           const peak = peakNear(centre, y, ground)
           rows += 1
           sum += peak
@@ -366,10 +409,30 @@ function inkDetail(ink) {
 }
 
 /**
- * Put the reveal line inside the positioning section, which the occlusion inventory in
- * ADR 0020 section 7 records as carrying the Thread with nothing in front of it, and far
- * enough down that the hero field is off screen and cannot contribute ink.
+ * Put the measured band on the stretch of Thread the occlusion inventory in ADR 0020
+ * section 7 records as carrying it with nothing in front of it: below the positioning
+ * paragraph, above the cluster cards, and far enough down that the hero field is off
+ * screen and cannot contribute ink.
  *
+ * **The stop is read off the paragraph, not written here as a number.** It was a flat
+ * 1100, which put the band inside the paragraph the moment the paragraph grew. ADR 0030
+ * added one sentence to it and at 1440 the text then filled the band edge to edge: every
+ * candidate control column inked 118 rows of 331, and the Thread's own column got quieter
+ * rather than louder, because the local ground is the median of the strip around the
+ * column and a band full of dark type drags that median down until a dark hairline barely
+ * deviates from it. Both sides of the comparison degraded and the criterion failed by 0.4
+ * of a luminance step on a page that was drawing perfectly well.
+ *
+ * A constant that only worked for one length of copy is a second source of truth about the
+ * layout. This asks the layout instead, and it asks for both edges of the clean stretch:
+ * below the paragraph, and above the cluster cards. Only the upper bound was there at
+ * first, and 375px failed on it, because a phone stacks the cards full width and a band
+ * that reaches them has no uncontaminated column left anywhere on the row.
+ *
+ * The floor of 1100 is the stop this used to be. Below 1024 the paragraph is short enough
+ * that both bounds resolve above it, and the old stop is the one that measures cleanest.
+ *
+ * Two steps, because the paragraph's position can only be read once the page is near it.
  * Through Lenis when it is running, because that is the number the stream places itself
  * from. `window.scrollTo` would leave the two disagreeing.
  */
@@ -377,6 +440,23 @@ async function revealInPositioning(page) {
   await page.evaluate(() => {
     if (window.__lenis) window.__lenis.scrollTo(1100, { immediate: true })
     else window.scrollTo(0, 1100)
+  })
+  await page.waitForTimeout(1400)
+
+  await page.evaluate(() => {
+    const paragraph = document.querySelector('#positioning p')
+    const capabilities = document.getElementById('capabilities')
+    if (!paragraph || !capabilities) return
+    const current = window.__lenis ? window.__lenis.scroll : window.scrollY
+    // Far enough that the last lines of the paragraph sit in the top quarter of the 250
+    // to 580 band and the rest of it is open ground.
+    const clearOfText = current + paragraph.getBoundingClientRect().bottom - 330
+    // And no further: past this the cluster cards enter the band from below, and on a
+    // phone they are full width, so there is no column left that a control can stand on.
+    const clearOfCards = current + capabilities.getBoundingClientRect().top - 580
+    const target = Math.round(Math.max(1100, Math.min(clearOfText, clearOfCards)))
+    if (window.__lenis) window.__lenis.scrollTo(target, { immediate: true })
+    else window.scrollTo(0, target)
   })
   await page.waitForTimeout(1400)
 }

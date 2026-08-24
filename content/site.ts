@@ -15,11 +15,15 @@ export const site = {
   brand: 'WYRD',
   /** Primary approved tagline, docs/brand.md section 2. */
   tagline: 'Shape what becomes.',
-  /** Descriptor, docs/brand.md section 2, verbatim. */
+  /** Descriptor, docs/brand.md section 2, verbatim. Amended 2026-08-24, ADR 0030. */
   descriptor:
-    'WYRD Designs is a digital and creative studio covering what a brand needs to be seen, understood and remembered, online and offline. One team across strategy, content and production.',
-  /** Positioning line, docs/brand.md section 2, verbatim. Also the hero headline. */
-  positioning: "We don't just build websites. We build everything around them.",
+    'WYRD Designs is a digital and creative studio covering what a brand needs to be seen, understood and remembered, online and offline. One team across strategy, content and production, in-house, so the people who built it are the people who keep working on it.',
+  /**
+   * Positioning line, docs/brand.md section 2, verbatim. Also the hero headline.
+   * Amended 2026-08-24. Superseded: "We don't just build websites. We build
+   * everything around them." See ADR 0030.
+   */
+  positioning: 'We build it. Then we grow it with you.',
   email: 'hello@wyrddesigns.in',
   /** Both numbers supplied in docs/brand.md section 1. */
   phones: ['+91 86603 33165', '+91 82176 18082'],
@@ -60,5 +64,5 @@ export const legalNav = [
 export const defaultMeta = {
   title: 'WYRD Designs, digital and creative studio in Bangalore',
   description:
-    'Web and ecommerce, SEO and GEO, marketing and social, film and video, brand direction, exhibitions and events. One studio across strategy, content and production. Bangalore, India.',
+    'Web and ecommerce, SEO and GEO, marketing and social, film and video, brand direction, exhibitions and events. One team across strategy, content and production, in-house, and still on it after launch. Bangalore, India.',
 } as const

@@ -27,7 +27,7 @@ export const studioPage = {
     label: 'The name',
     statement: 'WYRD is Old English for fate. It also sounds like weird. We answer to both.',
     thread:
-      'Fate was a thread. Something spun, measured, and cut. A brand works the same way. Every choice about how you show up gets woven in. We handle the whole length of it.',
+      'Fate was a thread. Something spun, measured, and cut. A brand works the same way. Every choice about how you show up gets woven in. We stay on it for the whole length.',
   },
   capabilities: {
     label: 'What we do',
@@ -53,6 +53,6 @@ export const studioPage = {
   meta: {
     title: 'Studio',
     description:
-      'WYRD Designs is a digital and creative studio in Bangalore. One team across strategy, content and production, covering web, search, film and events.',
+      'WYRD Designs is a digital and creative studio in Bangalore. One team across strategy, content and production, in-house, so the people who build it are the people who keep working on it.',
   },
 } as const

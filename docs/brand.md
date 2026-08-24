@@ -32,13 +32,20 @@ fate-controlling, not strange.
 
 **One line**
 
-> We don't just build websites. We build everything around them.
+> We build it. Then we grow it with you.
+
+*Amended 2026-08-24, by operator decision. This replaces "We don't just build
+websites. We build everything around them.", which argued scope. The
+differentiator below is deliberately unchanged: in-house is still the claim, and
+continuity is what in-house buys the client. The two are sequential, not
+competing. See ADR 0030.*
 
 **Descriptor**
 
 > WYRD Designs is a digital and creative studio covering what a brand needs to
 > be seen, understood and remembered, online and offline. One team across
-> strategy, content and production.
+> strategy, content and production, in-house, so the people who built it are the
+> people who keep working on it.
 
 **Taglines, approved**
 
