@@ -54,16 +54,20 @@ const first = slugs[0]
 await harness.checkHead(first)
 await harness.checkKeyboardAndTargets(first)
 /*
-  Under reduced motion the route still has to be composed, which used to be asserted by
-  counting placeholders. The case study visuals are real image files now and carry no
-  `data-placeholder`, so that count is permanently zero and the criterion passed on nothing.
-  Loaded images are the equivalent evidence: a composed case study has its hero and its three
-  visuals decoded. Four is measured rather than assumed, at the 1440x900 this opens and
-  inside the wait it already had, with no scroll.
+  Under reduced motion the route still has to be composed. That was once asserted by counting
+  placeholders, which went permanently zero when the visuals became real files, and then by
+  counting decoded images, which goes to zero on a project whose assets are all still pending.
+  Each fix was right for the route in front of it and wrong for the route that came next.
+
+  So count both. A composed case study carries at least four visuals, and whether they are
+  decoded images or described pending slots is a fact about the project rather than about
+  whether the page rendered. Bhavani Garments is the case that broke the previous version:
+  cleared, composed, and every asset outstanding.
 */
 await harness.checkReducedMotion(first, {
-  expect: (state) => state.loadedImages >= 4,
-  describe: (state) => `${state.loadedImages} loaded case study images`,
+  expect: (state) => state.loadedImages + state.placeholders >= 4,
+  describe: (state) =>
+    `${state.loadedImages} decoded images and ${state.placeholders} pending slots`,
 })
 await harness.checkOverflow(first)
 
@@ -126,6 +130,15 @@ await harness.checkOverflow(first)
           loadedImages: Array.from(document.querySelectorAll('main img')).filter(
             (img) => img.complete && img.naturalWidth > 0,
           ).length,
+          /*
+            Pending slots, which are the other way a visual can be filled. A cleared project
+            can have every asset outstanding, and then the evidence that the page is composed
+            is a placeholder carrying the sentence that describes what belongs in it. An
+            empty note would satisfy an element count and is the failure worth catching.
+          */
+          placeholders: Array.from(document.querySelectorAll('main [data-placeholder]')).filter(
+            (node) => (node.getAttribute('data-placeholder') ?? '').trim().length > 10,
+          ).length,
           h1: document.querySelector('h1')?.textContent?.trim() ?? '',
         }
       }, slug),
@@ -161,18 +174,36 @@ await harness.checkOverflow(first)
   )
 
   /*
-    Every slot filled, asserted on the browser's own decode rather than on a tag. These are
-    generated stand-ins pending real photography and docs/placeholders.md records them as
-    such: something can be a stand-in without being a Placeholder, so the evidence that the
-    route is composed is the image, not the attribute.
+    Every slot filled, by one of the two things that can fill one, and asserted on what the
+    browser did rather than on a tag being present.
+
+    A visual is either a decoded image, measured by `naturalWidth` because that is zero for a
+    broken src, an empty src and an img that never loaded, or a pending slot carrying the
+    note that says what belongs in it. Since ADR 0032 both shapes exist on this route at
+    once: the two uncleared projects render four generated frames each, and Bhavani Garments
+    is cleared with every asset outstanding, so it renders nine placeholders and no image.
+
+    The threshold is per project rather than a single number, because a page that dropped
+    from nine slots to one would otherwise pass a check written for four.
   */
-  const unfilled = pages.filter((entry) => entry.loadedImages < 4)
+  const EXPECTED_SLOTS = { 'bhavani-garments': 9 }
+  const unfilled = pages.filter(
+    (entry) => entry.loadedImages + entry.placeholders < (EXPECTED_SLOTS[entry.slug] ?? 4),
+  )
   record(
-    'every case study renders all four of its generated visuals',
+    'every case study fills every visual slot, with an image or with a described placeholder',
     unfilled.length === 0,
     unfilled.length
-      ? unfilled.map((entry) => `${entry.slug}: ${entry.loadedImages} of 4`).join(', ')
-      : `${pages[0].loadedImages} decoded on the first page, ${pages.length} pages checked`,
+      ? unfilled
+          .map(
+            (entry) =>
+              `${entry.slug}: ${entry.loadedImages} images and ${entry.placeholders} slots, ` +
+              `expected ${EXPECTED_SLOTS[entry.slug] ?? 4}`,
+          )
+          .join(', ')
+      : pages
+          .map((entry) => `${entry.slug} ${entry.loadedImages}img ${entry.placeholders}slot`)
+          .join(', '),
   )
 
   const titled = pages.every((entry) => entry.h1.length > 0)

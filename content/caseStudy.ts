@@ -17,6 +17,12 @@ export const caseStudy = {
     year: 'Year',
     services: 'Services',
     role: 'Role',
+    /** Sector and place as one line, because on a case study they are one fact. */
+    sector: 'Sector',
+    /** What the engagement is, in the client's terms. Replaces services where it exists. */
+    engagement: 'Engagement',
+    /** Which clusters the project sits in. Plural: a project can serve more than one. */
+    clusters: 'Clusters',
   },
   briefLabel: 'The brief',
   outcomeLabel: 'Outcome',

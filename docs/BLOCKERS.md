@@ -29,13 +29,25 @@ Unblocks by: supplying an SVG, AI, EPS or PDF of the mark, and ideally a square 
 
 Blocks: nothing. Both grounds now carry the real mark.
 
-### 5. No real project data
+### 5. Two of three projects have no real data, and the third has no pictures
 
-`/work` and `/work/[slug]` render from `content/projects.ts`, which carries placeholder entries flagged as such. No client name, outcome metric, or year is invented. The outcome block does not render without real numbers.
+**Partly closed 2026-09-10.** Bhavani Garments is cleared and named, from
+`BHAVANI-VISUAL-CASE-STUDY.md`: a client, a sector, a place, an engagement, and a case study
+written around its visuals. See ADR 0032. Two entries in `content/projects.ts` are still
+placeholders flagged as such, and no client name, outcome metric, or year is invented on
+either. The outcome block does not render without real numbers, and none was supplied for
+Bhavani either, so it does not render there.
 
-Unblocks by: supplying cleared project details.
+**What the cleared project still needs is its nine visuals.** Every slot on
+`/work/bhavani-garments` is a seeded placeholder carrying the sentence that describes what
+belongs in it, and `docs/placeholders.md` lists all nine with the capture rules. Six assets
+cover them: a hero, two paired mobile screenshots, a motion loop, an admin screenshot, two
+more paired mobile screenshots, and a reel still.
 
-Blocks: nothing. Placeholder cards are the specified behaviour.
+Unblocks by: capturing those six, per section 6 of the brief, and supplying cleared details
+for the other two projects.
+
+Blocks: nothing. The page is fully composed in placeholder state, which was the requirement.
 
 ### 6. No street address, no team names
 

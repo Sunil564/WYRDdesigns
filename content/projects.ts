@@ -1,16 +1,19 @@
 /**
  * Projects.
  *
- * Every entry here is a **placeholder**, flagged as such, and shown as such on the
- * site. There is no client name, no outcome metric, no year, and no invented
- * detail anywhere in this file.
+ * **One entry is cleared and two are placeholders.** Bhavani Garments is named, with
+ * facts, every one of which traces to the operator's brief `BHAVANI-VISUAL-CASE-STUDY.md`
+ * and to nothing else. Its visuals are still pending, which is a different thing from the
+ * project being uncleared: the page says nothing about missing pictures, it just has slots
+ * waiting for screenshots. See ADR 0032.
  *
- * What the entries do say is sourced. `docs/brand.md` section 6 lists the true
- * statements available today: studio work spans web, marketing, video, and
- * on-ground events, and there are clients in manufacturing, garments, and
- * hospitality. Named case studies are pending clearance. So each card names a
- * discipline and one of those three sectors, and says plainly that the detail is
- * pending. Nothing implies a finished, cleared case study.
+ * The other two remain placeholders, flagged as such and shown as such. Neither carries a
+ * client name, an outcome metric, a year, or any invented detail.
+ *
+ * What those two do say is sourced. `docs/brand.md` section 6 lists the true statements
+ * available today: studio work spans web, marketing, video, and on-ground events, and there
+ * are clients in manufacturing, garments, and hospitality. So each names a discipline and
+ * one of those sectors, and says plainly that the detail is pending.
  *
  * When real project data arrives: replace the entry, set `placeholder: false`, add
  * `client`, `year`, and `outcome` if and only if the numbers are real. An outcome
@@ -64,15 +67,84 @@ export type ProjectImages = {
   blockInset2: ProjectImage
 }
 
+export type ProjectCluster = 'build' | 'reach' | 'show' | 'stage'
+
+/**
+ * A visual slot with no asset behind it yet.
+ *
+ * Every field here is what the seeded `<Placeholder>` needs plus the sentence that goes
+ * in `docs/placeholders.md`. `note` is rendered into `data-placeholder`, so a grep over
+ * the built HTML finds every empty slot on the site and says what belongs in it.
+ */
+export type PendingVisual = {
+  /** Width over height. The slot reserves this box whether or not anything fills it. */
+  aspect: number
+  /** Portrait ratio below `lg`, when the slot needs a different shape on a phone. */
+  aspectMobile?: number
+  /**
+   * A phone or browser outline around the slot, drawn from tokens. A screenshot with no
+   * frame reads as a floating rectangle on a white page.
+   *
+   * Per slot rather than per block, because a pair can mix: a phone beside a search result.
+   */
+  frame?: 'none' | 'phone' | 'browser'
+  /** What real asset replaces this, in the words of the operator's brief. */
+  note: string
+}
+
+/**
+ * The four block types a case study body can hold, beyond the default three frames.
+ * See ADR 0032.
+ *
+ * Four, and deliberately no more. This is a case study body, not a page builder: a fifth
+ * type should have to argue for itself against putting the same thing in `copy`.
+ *
+ * Device framing and pairing are fields rather than types of their own, and so is the
+ * caption. A caption is not a sibling of the picture it describes, it is part of it, and
+ * the pair renders as `figure` and `figcaption` for exactly that reason.
+ */
+export type CaseStudyBlock =
+  /** One or two lines of body copy. The page's prose lives here and nowhere else. */
+  | { kind: 'copy'; lines: string[] }
+  /**
+   * One visual, or two side by side on desktop and stacked below `sm`. A screenshot with
+   * no frame around it reads as a floating rectangle on a white page, so `frame` puts a
+   * phone or a browser outline around each slot, drawn from tokens rather than an asset.
+   */
+  | { kind: 'visual'; bleed?: boolean; slots: PendingVisual[]; caption?: string }
+  /**
+   * A short muted looping clip. **In placeholder state this renders a still, never a
+   * `video` element**, because an empty `video` is a request for a file that does not
+   * exist and a poster attribute pointing at nothing.
+   */
+  | { kind: 'loop'; slot: PendingVisual; caption?: string }
+  /** Labelled nodes joined by a line, drawn in the design system. Never an image. */
+  | { kind: 'diagram'; nodes: string[]; caption?: string }
+
 export type Project = {
   slug: string
-  /** Discipline and sector. Never a client name while `placeholder` is true. */
+  /** Discipline and sector, or the client's name once the project is cleared. */
   title: string
-  /** One line. Says what the work is, and that the detail is pending. */
+  /**
+   * The hero statement. One line, the largest type on the page after the title, and the
+   * argument the case study makes. Null on a project with nothing cleared to argue.
+   */
+  statement: string | null
+  /** One line on a card. Two on a cleared case study, where it is the standfirst. */
   summary: string
-  /** Which cluster it belongs to, for the `/work` filter. */
-  cluster: 'build' | 'reach' | 'show' | 'stage'
+  /** Which clusters it belongs to, for the `/work` filter. One project can serve two. */
+  clusters: ProjectCluster[]
   services: string[]
+  /**
+   * Sector and place, as one line. `Retail, Tumkur, Karnataka`. Null when not supplied,
+   * and a null field renders no row rather than an empty one.
+   */
+  sector: string | null
+  /**
+   * What the engagement is, in the client's terms rather than in the service list's.
+   * Renders in place of the services row, which is the same fact at a coarser resolution.
+   */
+  engagement: string | null
   /** Real client name, or null. Null renders nothing. */
   client: string | null
   /** Real year, or null. Null renders nothing. */
@@ -82,92 +154,174 @@ export type Project = {
   /** True while this stands in for a project that has not been cleared. */
   placeholder: boolean
   /**
-   * Generated imagery, pending real photography. Present on every project, so no renderer
-   * needs a branch for a project without pictures.
+   * One line of build detail at the foot of the page, at label size in muted ink. Not a
+   * block and not prose: it is the answer to "what is it made of" for the one reader in
+   * twenty who asks, and everything beyond it belongs in an enquiry.
    */
-  images: ProjectImages
+  stack: string | null
+  /**
+   * Generated imagery, or null for a project whose real assets are pending. Null is not an
+   * omission: it is what sends every slot to the seeded placeholder instead.
+   */
+  images: ProjectImages | null
+  /**
+   * The case study body. Absent means the default three frames, which is what the two
+   * uncleared projects still render and what this template did for every project before
+   * ADR 0032.
+   */
+  blocks?: CaseStudyBlock[]
 }
 
 export const projects: Project[] = [
+  /*
+    The one cleared project. Named, with real facts, all of them traceable to the operator's
+    brief `BHAVANI-VISUAL-CASE-STUDY.md` and to nothing else. No year, because none was
+    supplied. No outcome, because none was supplied. See ADR 0032.
+
+    `images` is null on purpose. The generated silk frames still sit in `public/work` and are
+    the wrong subject for this client: a picture of silk is decoration beside a screenshot of
+    the catalogue that was actually built. Every slot on this page waits for the real screens.
+  */
   {
-    slug: 'ecommerce-garments',
-    title: 'Ecommerce build, garments',
-    summary: 'A storefront and catalogue for a garment business. Details pending clearance.',
-    cluster: 'build',
-    services: ['Web & ecommerce development', 'SEO & GEO'],
-    client: null,
+    slug: 'bhavani-garments',
+    title: 'Bhavani Garments',
+    statement: 'Built the shopfront. Then filled it.',
+    summary:
+      'Three women’s clothing showrooms in Tumkur. Strong walk-in trade, no online ' +
+      'presence, and staff sending product photos one at a time from their own phones.',
+    clusters: ['build', 'reach'],
+    services: ['Web & ecommerce development', 'Digital marketing & social', 'SEO & GEO'],
+    sector: 'Retail, Tumkur, Karnataka',
+    engagement: 'Catalogue website, digital marketing retainer',
+    client: 'Bhavani Garments',
     year: null,
     outcome: null,
-    placeholder: true,
-    images: {
-      cardLarge: {
-        webp: '/work/ecommerce-garments-card-large.webp',
-        jpg: '/work/ecommerce-garments-card-large.jpg',
-        width: 1122,
-        height: 1402,
-        source: '1.1.png',
-        alt: 'Close-up of deep magenta silk with gold thread woven through it, folds catching a single shaft of light.',
+    placeholder: false,
+    stack: 'Next.js, TypeScript, Tailwind, Supabase, Cloudinary, Vercel.',
+    images: null,
+    blocks: [
+      {
+        kind: 'visual',
+        bleed: true,
+        slots: [
+          {
+            aspect: 16 / 9,
+            aspectMobile: 4 / 5,
+            note: 'Hero: the live catalogue, desktop and mobile together. Browser frame left holding the homepage, phone frame overlapping right holding a category view. Plain ground, no reflections.',
+          },
+        ],
       },
-      cardSmall: {
-        webp: '/work/ecommerce-garments-card-small.webp',
-        jpg: '/work/ecommerce-garments-card-small.jpg',
-        width: 1536,
-        height: 1024,
-        source: '1.2.png',
-        alt: 'Folded lengths of magenta and gold silk stacked on dark wood, seen from a low angle.',
+      {
+        kind: 'copy',
+        lines: [
+          'Browse by category, open a product, tap Enquire on WhatsApp.',
+          'Name, price and size pre-fill into the chat.',
+        ],
       },
-      heroDesktop: {
-        webp: '/work/ecommerce-garments-hero-desktop.webp',
-        jpg: '/work/ecommerce-garments-hero-desktop.jpg',
-        width: 1672,
-        height: 941,
-        source: '1.3.png',
-        alt: 'Warp threads stretched the width of a handloom in a dark workshop, magenta and gold silk catching light from a high window.',
+      {
+        kind: 'visual',
+        slots: [
+          {
+            aspect: 9 / 16,
+            frame: 'phone',
+            note: 'Mobile screenshot: a category grid. Real products, real prices.',
+          },
+          {
+            aspect: 9 / 16,
+            frame: 'phone',
+            note: 'Mobile screenshot: a single product page with the Enquire button visible.',
+          },
+        ],
+        caption: 'Lady Nighty, Jeans Tops and Kurtis, Ladies Undergarments at launch.',
       },
-      heroMobile: {
-        webp: '/work/ecommerce-garments-hero-mobile.webp',
-        jpg: '/work/ecommerce-garments-hero-mobile.jpg',
-        width: 1122,
-        height: 1402,
-        source: '1.4.png',
-        alt: 'Taut warp threads on a handloom filling the frame top to bottom, magenta and gold silk lit from one side.',
+      {
+        kind: 'copy',
+        lines: ['The sale still closes where it always did. We removed the friction, not the relationship.'],
       },
-      blockBleed: {
-        webp: '/work/ecommerce-garments-block-bleed.webp',
-        jpg: '/work/ecommerce-garments-block-bleed.jpg',
-        width: 1672,
-        height: 941,
-        source: '1.5.png',
-        alt: 'A shuttle wound with gold thread resting on dark wood in the foreground, hands out of focus behind it.',
+      {
+        kind: 'loop',
+        slot: {
+          aspect: 9 / 16,
+          frame: 'phone',
+          note: 'Motion loop, 3 to 5s, muted, MP4 and WebM under 400kb each: product page, thumb taps Enquire, WhatsApp opens with the message already filled in.',
+        },
+        caption:
+          'No cart, no checkout, no payment gateway. The client did not need ecommerce, so we did not build it.',
       },
-      blockInset1: {
-        webp: '/work/ecommerce-garments-block-inset-1.webp',
-        jpg: '/work/ecommerce-garments-block-inset-1.jpg',
-        width: 1448,
-        height: 1086,
-        source: '1.6.png',
-        alt: 'A single length of magenta silk falling vertically through the frame against a pale background.',
+      {
+        kind: 'copy',
+        lines: ['The owner adds products, sets prices, and toggles sizes. No developer call to change a price.'],
       },
-      blockInset2: {
-        webp: '/work/ecommerce-garments-block-inset-2.webp',
-        jpg: '/work/ecommerce-garments-block-inset-2.jpg',
-        width: 1448,
-        height: 1086,
-        source: '1.7.png',
-        alt: 'Detail of a woven gold geometric border on deep magenta cloth, photographed from directly above under raking light.',
+      {
+        kind: 'visual',
+        slots: [
+          {
+            aspect: 16 / 10,
+            frame: 'browser',
+            note: 'Desktop screenshot: the admin, product edit view. Blur or replace any real customer data.',
+          },
+        ],
+        caption: 'Domain, hosting and every account in the client’s name. No lock-in.',
       },
-    },
+      {
+        kind: 'copy',
+        lines: [
+          'A website nobody finds is a brochure in a drawer.',
+          'Bhavani Garments moved onto a monthly retainer after go-live.',
+        ],
+      },
+      {
+        kind: 'visual',
+        slots: [
+          {
+            aspect: 9 / 16,
+            frame: 'phone',
+            note: 'Mobile screenshot: the Instagram grid, showing the actual posts.',
+          },
+          {
+            aspect: 9 / 16,
+            frame: 'phone',
+            note: 'Mobile screenshot: the Google Business Profile panel as it appears in search. Captured as a mobile screen so the pair sits level beside the Instagram grid.',
+          },
+        ],
+        caption:
+          'Seven posts and five reels a month, shot on location. Google Business Profile and local SEO carried the weight, because for three showrooms in Tumkur local search beats national reach.',
+      },
+      {
+        kind: 'visual',
+        bleed: true,
+        slots: [
+          {
+            aspect: 16 / 9,
+            aspectMobile: 4 / 5,
+            note: 'A still from the reel shoots. Real garments, real store. The only slot where photography rather than a screen is right.',
+          },
+        ],
+      },
+      {
+        kind: 'diagram',
+        nodes: ['Instagram', 'Catalogue', 'WhatsApp', 'In store'],
+      },
+      {
+        kind: 'copy',
+        lines: ['Every piece points at the next one. That is the whole design.'],
+      },
+    ],
   },
   {
     slug: 'brand-film-manufacturing',
     title: 'Brand film, manufacturing',
+    statement: null,
     summary: 'A brand film and product stories, shot and cut in-house. Details pending clearance.',
-    cluster: 'show',
+    clusters: ['show'],
     services: ['Corporate films & video', 'Brand & creative direction'],
+    sector: null,
+    engagement: null,
     client: null,
     year: null,
     outcome: null,
     placeholder: true,
+    stack: null,
     images: {
       cardLarge: {
         webp: '/work/brand-film-manufacturing-card-large.webp',
@@ -230,13 +384,17 @@ export const projects: Project[] = [
   {
     slug: 'exhibition-hospitality',
     title: 'Exhibition presence, hospitality',
+    statement: null,
     summary: 'Stall design, collateral and on-ground management. Details pending clearance.',
-    cluster: 'stage',
+    clusters: ['stage'],
     services: ['Exhibitions & events', 'Promotional campaigns'],
+    sector: null,
+    engagement: null,
     client: null,
     year: null,
     outcome: null,
     placeholder: true,
+    stack: null,
     images: {
       cardLarge: {
         webp: '/work/exhibition-hospitality-card-large.webp',

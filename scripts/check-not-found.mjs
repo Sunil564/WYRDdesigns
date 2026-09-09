@@ -38,13 +38,13 @@ await harness.launch()
 {
   const { context, page } = await open(1440, 900)
   const statuses = []
-  for (const path of [UNMATCHED, BAD_SLUG, '/work/ecommerce-garments']) {
+  for (const path of [UNMATCHED, BAD_SLUG, '/work/bhavani-garments']) {
     const response = await page.request.get(`${BASE}${path}`)
     statuses.push({ path, status: response.status() })
   }
   const unmatched = statuses.find((entry) => entry.path === UNMATCHED)
   const badSlug = statuses.find((entry) => entry.path === BAD_SLUG)
-  const real = statuses.find((entry) => entry.path === '/work/ecommerce-garments')
+  const real = statuses.find((entry) => entry.path === '/work/bhavani-garments')
 
   record(
     'an unmatched address answers 404, not a soft 200',

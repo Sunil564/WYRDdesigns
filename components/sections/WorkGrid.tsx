@@ -25,7 +25,8 @@ type WorkGridProps = { projects: Project[] }
  *
  * A cluster with no projects gets a disabled chip, not a clickable route into an empty
  * state. The count comes from the list, so a chip enables itself the moment a project in
- * that cluster is cleared.
+ * that cluster is cleared. A project can sit in more than one cluster and is counted in
+ * each: Bhavani Garments is the reason Reach is no longer an empty chip.
  *
  * The card is the homepage's card, unchanged. One component, per brief 6.2.
  */
@@ -36,13 +37,18 @@ export function WorkGrid({ projects }: WorkGridProps) {
   const counts = useMemo(() => {
     const map = new Map<string, number>()
     for (const project of projects) {
-      map.set(project.cluster, (map.get(project.cluster) ?? 0) + 1)
+      for (const cluster of project.clusters) {
+        map.set(cluster, (map.get(cluster) ?? 0) + 1)
+      }
     }
     return map
   }, [projects])
 
   const visible = useMemo(
-    () => (active === null ? projects : projects.filter((project) => project.cluster === active)),
+    () =>
+      active === null
+        ? projects
+        : projects.filter((project) => project.clusters.some((cluster) => cluster === active)),
     [active, projects],
   )
 

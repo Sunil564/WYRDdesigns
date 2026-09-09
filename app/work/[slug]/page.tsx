@@ -9,6 +9,7 @@ import { Eyebrow } from '@/components/ui/Eyebrow'
 import { ProjectHero } from '@/components/ui/ProjectHero'
 import { Reveal } from '@/components/ui/Reveal'
 import { caseStudy } from '@/content/caseStudy'
+import { clusters } from '@/content/services'
 import { projects } from '@/content/projects'
 import type { Project } from '@/content/projects'
 
@@ -34,6 +35,15 @@ export function generateStaticParams(): Params[] {
 
 function find(slug: string): Project | undefined {
   return projects.find((project) => project.slug === slug)
+}
+
+/**
+ * A cluster's display name, from `content/services.ts` rather than from a capitalised id.
+ * The clusters are named once, in the module that owns them, and a second spelling here
+ * would be a second source of truth that goes stale without anything failing.
+ */
+function clusterLabel(id: string): string {
+  return clusters.find((cluster) => cluster.name.toLowerCase() === id)?.name ?? id
 }
 
 export async function generateMetadata({
@@ -66,32 +76,64 @@ export default async function CaseStudyPage({ params }: { params: Promise<Params
     the row is short rather than padded with blanks.
   */
   const meta: { label: string; value: string }[] = []
-  if (project.client) meta.push({ label: caseStudy.meta.client, value: project.client })
+  if (project.sector) meta.push({ label: caseStudy.meta.sector, value: project.sector })
+  /*
+    The client row is skipped when it would repeat the h1. On a cleared project the title is
+    the client's name, and a meta row that says it again under a heading that just said it is
+    noise dressed as information.
+  */
+  if (project.client && project.client !== project.title) {
+    meta.push({ label: caseStudy.meta.client, value: project.client })
+  }
   if (project.year !== null) meta.push({ label: caseStudy.meta.year, value: String(project.year) })
-  if (project.services.length > 0) {
+  /*
+    Engagement replaces services where it exists. They are the same fact at two resolutions,
+    and the client's words for the work beat our service catalogue's on the client's page.
+  */
+  if (project.engagement) {
+    meta.push({ label: caseStudy.meta.engagement, value: project.engagement })
+  } else if (project.services.length > 0) {
     meta.push({ label: caseStudy.meta.services, value: project.services.join(', ') })
   }
+  if (project.clusters.length > 0) {
+    meta.push({
+      label: caseStudy.meta.clusters,
+      value: project.clusters.map((cluster) => clusterLabel(cluster)).join(', '),
+    })
+  }
+
+  /*
+    Two page orders, decided by the data.
+
+    The default template opens with the hero visual and puts the title under it. A project
+    with `blocks` opens with the words and lets its own first block be the hero, which is
+    what `BHAVANI-VISUAL-CASE-STUDY.md` section 3 asks for and what keeps the largest paint
+    on that route a heading rather than a picture. See ADR 0032.
+  */
+  const heroImages = project.blocks ? null : project.images
 
   return (
     <main className="relative">
-      {/*
-        Full bleed hero visual on a dark block, per Phase 4b section 4, so its placeholder
-        generates from the inverse tokens rather than being a light panel on a dark ground.
-      */}
-      <Section
-        label={project.title}
-        variant="inverse"
-        bleed
-        rhythm={false}
-        className="pt-[calc(var(--gutter)*2)]"
-      >
-        {/*
-          Two separate frames, landscape above 1024px and portrait below, chosen by the
-          browser before it fetches. The slot was 21:9 at every width; it is now the ratio
-          of whichever image is served. See ProjectHero.
-        */}
-        <ProjectHero images={project.images} />
-      </Section>
+      {heroImages && (
+        /*
+          Full bleed hero visual on a dark block, per Phase 4b section 4, so its placeholder
+          generates from the inverse tokens rather than being a light panel on a dark ground.
+        */
+        <Section
+          label={project.title}
+          variant="inverse"
+          bleed
+          rhythm={false}
+          className="pt-[calc(var(--gutter)*2)]"
+        >
+          {/*
+            Two separate frames, landscape above 1024px and portrait below, chosen by the
+            browser before it fetches. The slot was 21:9 at every width; it is now the ratio
+            of whichever image is served. See ProjectHero.
+          */}
+          <ProjectHero images={heroImages} />
+        </Section>
+      )}
 
       <Section label={`${project.title}, detail`}>
         <Reveal>
@@ -100,6 +142,12 @@ export default async function CaseStudyPage({ params }: { params: Promise<Params
         <Reveal delay={60}>
           <h1 className="text-display text-fg mt-8 font-black">{project.title}</h1>
         </Reveal>
+
+        {project.statement && (
+          <Reveal delay={90}>
+            <p className="text-title text-fg mt-6 max-w-[24ch] font-bold">{project.statement}</p>
+          </Reveal>
+        )}
 
         {project.placeholder && (
           <Reveal delay={90}>
@@ -132,12 +180,29 @@ export default async function CaseStudyPage({ params }: { params: Promise<Params
         )}
 
         <Reveal delay={180}>
-          <h2 className="label text-fg-muted mt-16">{caseStudy.briefLabel}</h2>
-          <p className="measure text-lead text-fg mt-4">{project.summary}</p>
+          {/*
+            The label is for the default template, where the summary is a line about an
+            uncleared project and needs saying what it is. On a cleared page the summary is
+            the standfirst and a label above it is furniture.
+          */}
+          {!project.blocks && <h2 className="label text-fg-muted mt-16">{caseStudy.briefLabel}</h2>}
+          <p className={`measure text-lead text-fg ${project.blocks ? 'mt-10' : 'mt-4'}`}>
+            {project.summary}
+          </p>
         </Reveal>
       </Section>
 
       <CaseStudyBlocks project={project} />
+
+      {/*
+        One line of build detail, at label size in muted ink. Not a block and not a section
+        heading: everything past it is detail for an enquiry rather than for a page.
+      */}
+      {project.stack && (
+        <Section label={`${project.title}, stack`} rhythm={false} className="pb-[var(--gutter)]">
+          <p className="label text-fg-muted mx-auto max-w-[62rem]">{project.stack}</p>
+        </Section>
+      )}
 
       {/*
         The outcome block. It renders only with real numbers in it, so on every entry today it

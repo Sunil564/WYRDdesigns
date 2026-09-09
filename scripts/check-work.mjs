@@ -31,14 +31,16 @@ await harness.launch()
 await harness.checkHead(ROUTE)
 await harness.checkKeyboardAndTargets(ROUTE)
 /*
-  Under reduced motion the route still has to be composed, which used to be asserted by
-  counting placeholders. The card visuals are real image files now and carry no
-  `data-placeholder`, so that count is permanently zero and the criterion passed on nothing.
-  Loaded images are the equivalent evidence: a composed /work has a visual in every card.
+  Under reduced motion the route still has to be composed: a visual in every card. What fills
+  a card changed twice, so the count is now of both kinds. Placeholders went to zero when the
+  visuals became real files; decoded images go to zero on a card whose project has no imagery
+  yet, which is where Bhavani Garments sits. The grid is composed either way, and one card
+  short is the failure worth catching.
 */
 await harness.checkReducedMotion(ROUTE, {
-  expect: (state) => state.loadedImages >= 3,
-  describe: (state) => `${state.loadedImages} loaded card images`,
+  expect: (state) => state.loadedImages + state.placeholders >= 3,
+  describe: (state) =>
+    `${state.loadedImages} decoded card images and ${state.placeholders} pending slots`,
 })
 await harness.checkOverflow(ROUTE)
 
@@ -65,10 +67,23 @@ await harness.checkOverflow(ROUTE)
         alt: (img.getAttribute('alt') ?? '').trim(),
         lazy: img.loading === 'lazy',
       })),
+      /*
+        A card whose project has no imagery yet renders the seeded placeholder at the same
+        shape. Measured on the drawn box as well as on the note, because a placeholder that
+        collapsed to zero height would leave a hole in the grid and still carry its attribute.
+      */
+      pending: Array.from(
+        document.querySelectorAll('article.work-card [data-placeholder]'),
+      ).map((node) => ({
+        note: (node.getAttribute('data-placeholder') ?? '').trim(),
+        shown: Math.round(node.getBoundingClientRect().height),
+      })),
       chips: Array.from(document.querySelectorAll(chipGroup)).map((button) => ({
         label: button.textContent?.trim() ?? '',
         disabled: button.disabled,
       })),
+      /** Which clusters each card says it belongs to. Published by the card itself. */
+      cardClusters: cards.map((card) => (card.getAttribute('data-clusters') ?? '').split(' ')),
     }
   }, CHIP_GROUP)
 
@@ -106,22 +121,53 @@ await harness.checkOverflow(ROUTE)
     assertion can tell an honest description from a claim about our work.
   */
   const drawn = grid.visuals.filter((visual) => visual.loaded)
+  const pendingDrawn = grid.pending.filter((slot) => slot.note.length > 10 && slot.shown > 40)
   record(
-    'every card renders a real image, decoded, described and lazy',
-    grid.visuals.length === grid.cards &&
-      drawn.length === grid.cards &&
+    'every card carries a visual, either a decoded described image or a drawn placeholder',
+    grid.visuals.length + grid.pending.length === grid.cards &&
+      drawn.length === grid.visuals.length &&
+      pendingDrawn.length === grid.pending.length &&
       grid.visuals.every((visual) => visual.alt.length > 20) &&
       grid.visuals.every((visual) => visual.lazy),
-    grid.visuals
-      .map((visual) => `${visual.shown} from ${visual.natural}${visual.loaded ? '' : ' NOT LOADED'}`)
-      .join(', '),
+    [
+      ...grid.visuals.map(
+        (visual) => `${visual.shown} from ${visual.natural}${visual.loaded ? '' : ' NOT LOADED'}`,
+      ),
+      ...grid.pending.map((slot) => `placeholder ${slot.shown}px high`),
+    ].join(', '),
   )
   const enabled = grid.chips.filter((chip) => !chip.disabled).map((chip) => chip.label)
   const disabled = grid.chips.filter((chip) => chip.disabled).map((chip) => chip.label)
+  /*
+    This asserted that at least one chip was disabled, which was true while three projects sat
+    in three clusters and stopped being a test the moment a project sat in two: Bhavani
+    Garments is in Build and in Reach, so every cluster now holds one and nothing is disabled.
+
+    An assertion with no case left to catch is worse than none, because it reads as coverage.
+    So the criterion is now the invariant rather than one instance of it: a chip is disabled
+    if and only if no project in the content module sits in its cluster. That holds whether
+    the answer is four enabled chips or none, and it fails if the count and the state
+    disagree, which is the actual failure worth catching.
+  */
+  /*
+    Both sides read off the page: the chips are what the filter offers, and the clusters come
+    from the cards themselves through `data-clusters`. Neither is a constant copied out of
+    `content/services.ts`, which would go stale the moment a cluster was renamed.
+  */
+  const occupied = new Set(grid.cardClusters.flat().filter(Boolean))
+  const expectedDisabled = grid.chips
+    .slice(1)
+    .map((chip) => chip.label)
+    .filter((name) => !occupied.has(name.toLowerCase()))
+  const stateMatchesContent =
+    disabled.length === expectedDisabled.length &&
+    expectedDisabled.every((name) => disabled.includes(name))
   record(
-    'a cluster with no cleared project is a disabled chip, not a route into an empty state',
-    grid.chips.length === 5 && disabled.length > 0,
-    `${grid.chips.length} chips. Enabled: ${enabled.join(', ')}. Disabled: ${disabled.join(', ') || 'none'}`,
+    'a chip is disabled exactly when no project sits in its cluster',
+    grid.chips.length === 5 && stateMatchesContent,
+    `${grid.chips.length} chips. Enabled: ${enabled.join(', ')}. ` +
+      `Disabled: ${disabled.join(', ') || 'none'}. ` +
+      `Content says empty: ${expectedDisabled.join(', ') || 'none'}`,
   )
   await context.close()
 }

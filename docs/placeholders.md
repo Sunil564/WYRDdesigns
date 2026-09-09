@@ -8,7 +8,9 @@ grep -o 'data-placeholder="[^"]*"' .next/server/app/*.html
 
 Kept current at the end of every phase. Updated through Phase 6.
 
-Note that the grep no longer finds the project imagery: those slots render real files rather than `Placeholder` components. `data-placeholder` now appears only in `/tokens`, which is a development harness. Something can be a stand-in without being a `Placeholder`, and this register is the list, not the attribute.
+Note that the grep does not find every stand-in. The two uncleared projects render real generated files rather than `Placeholder` components, so nothing on those pages carries the attribute. Something can be a stand-in without being a `Placeholder`, and this register is the list, not the attribute.
+
+The Bhavani Garments case study is the other way round: it is a cleared project whose visuals are all pending, so every slot on it is a real `Placeholder` and the grep finds all nine.
 
 ## Brand
 
@@ -27,13 +29,14 @@ are real image files, and the thing standing in is the photography, not the elem
 
 | Where | Slot | Source file | What replaces it |
 |---|---|---|---|
-| S4 lead card | `ecommerce-garments-card-large`, 4:5 | `1.1.png` | Real photography from the project |
+| S4 lead card | `Placeholder`, 4:5 | none, `1.1.png` retired | A screenshot of the Bhavani Garments catalogue, or photography from the project |
 | S4 second card | `brand-film-manufacturing-card-small`, 3:2 | `2.2.png` | Same |
 | S4 third card | `exhibition-hospitality-card-small`, 3:2 | `3.2.png` | Same |
 
-Each S4 card still carries its visible `Pending clearance` tag, because the project itself is
-unconfirmed and not only its visual. The tag disappears when `content/projects.ts` sets
-`placeholder: false`.
+Two of the three S4 cards still carry a visible `Pending clearance` tag, because those
+projects are unconfirmed and not only their visuals. Bhavani Garments no longer does: it is
+cleared, so the tag is gone and only its picture is pending. The tag disappears for the
+others when `content/projects.ts` sets `placeholder: false`.
 
 **The images are atmospheric, not evidential, and the alt text is written to match.** None of
 them shows a client's product, a client's premises, or anything this studio delivered. Every
@@ -43,11 +46,51 @@ picture, which is the test applied. See `content/projects.ts` for the strings an
 
 ## Work
 
+### Bhavani Garments, every visual pending
+
+Nine slots, all `Placeholder`, all carrying `data-placeholder` with the note reproduced here.
+The page is fully reviewable in this state: if it only works once the screenshots land, the
+layout is wrong. Capture rules are in section 6 of `BHAVANI-VISUAL-CASE-STUDY.md`: 2x pixel
+ratio, real content and never test products, nothing sensitive on screen.
+
+| Slot | Shape | Frame | What replaces it |
+|---|---|---|---|
+| Card, `/work` grid and S4 | 4:5 and 3:2 | none | Real photography or a screenshot of the work |
+| Visual 1, hero | 16:9, 4:5 below `lg` | none | The live catalogue, desktop and mobile together. Browser frame left holding the homepage, phone frame overlapping right holding a category view. Plain ground, no reflections |
+| Visual 2a | 9:16 | phone | Mobile screenshot: a category grid. Real products, real prices |
+| Visual 2b | 9:16 | phone | Mobile screenshot: a single product page with the Enquire button visible |
+| Visual 3, the loop | 9:16 | phone | Motion loop, 3 to 5s, muted, MP4 and WebM under 400kb each: product page, thumb taps Enquire, WhatsApp opens with the message already filled in |
+| Visual 4 | 16:10 | browser | Desktop screenshot: the admin, product edit view. Blur or replace any real customer data |
+| Visual 5a | 9:16 | phone | Mobile screenshot: the Instagram grid, showing the actual posts |
+| Visual 5b | 9:16 | phone | Mobile screenshot: the Google Business Profile panel as it appears in search |
+| Visual 6 | 16:9, 4:5 below `lg` | none | A still from the reel shoots. Real garments, real store |
+
+**Two decisions recorded rather than left to whoever captures these.**
+
+The Google Business Profile panel is captured as a mobile screen, not a desktop one. Section 6
+of the brief asks for a per-slot decision on desktop against mobile, and this one sits beside
+the Instagram grid in a pair: two screens of the same shape sit level, a desktop panel beside
+a phone does not.
+
+The loop slot renders a still, not a `video` element. There is no file, and an empty video is
+a poster attribute pointing at nothing plus a source that 404s. The element arrives with the
+clip, and with it the `preload="none"`, `muted`, `playsinline`, the in-viewport autoplay, and
+the reduced motion branch that shows the poster and never loads the video.
+
+**The generated silk imagery is not used on this project.** `1.1.png` through `1.7.png` are
+processed into `public/work/ecommerce-garments-*` and are now wired to nothing. They are the
+wrong subject for this client: a picture of silk is decoration beside a screenshot of the
+catalogue that was actually built. The files stay where they are rather than being deleted,
+because `docs/image-inventory.md` records how they were produced and a deleted file with a
+surviving record is worse than an unused one. See ADR 0032.
+
+### The two uncleared projects
+
 | Where | Component | What is there now | What replaces it |
 |---|---|---|---|
 | `/work` grid cards | `ProjectImage` | **AI-generated, pending real photography.** One 4:5 frame per project, `x.1`. The grid is exactly as long as `content/projects.ts` and is never padded | Real photography |
 | `/work/[slug]` hero visual | `ProjectHero` | **AI-generated, pending real photography.** Two separate frames, `x.3` landscape at 16:9 above 1024px and `x.4` portrait at 4:5 below, chosen by the browser. Not one image cropped by CSS | Real photography, both orientations |
-| `/work/[slug]` body visuals | `ProjectImage` | **AI-generated, pending real photography.** Three frames: `x.6` inset 4:3, `x.5` bleed 16:9, `x.7` inset 4:3. Three because that is how many frames each project has, which is now a fact about the imagery rather than a judgement about how many empty placeholders a reader tolerates | Real photography, and then the count follows it |
+| `/work/[slug]` body visuals | `ProjectImage` | **AI-generated, pending real photography.** Three frames: `x.6` inset 4:3, `x.5` bleed 16:9, `x.7` inset 4:3 | Real photography, and then the count follows it |
 | `/work/[slug]` body captions | none | Nothing. A caption on a placeholder visual would be invented copy about a project nobody has described | Real captions, written from the project |
 
 ## Legal

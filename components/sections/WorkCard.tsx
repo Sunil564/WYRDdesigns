@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRef } from 'react'
 import { CursorLabel } from '@/components/ui/CursorLabel'
+import { Placeholder } from '@/components/ui/Placeholder'
 import { ProjectImage } from '@/components/ui/ProjectImage'
 import type { Project } from '@/content/projects'
 import { cn } from '@/lib/utils'
@@ -41,7 +42,16 @@ export function WorkCard({ project, aspect, sizes, headingLevel = 3, className }
   const cardRef = useRef<HTMLElement | null>(null)
 
   return (
-    <article ref={cardRef} className={cn('work-card group relative', className)}>
+    <article
+      ref={cardRef}
+      /*
+        Published so verification can read which clusters this card belongs to instead of
+        keeping its own copy of the content module. A copied constant is a second source
+        of truth that goes stale silently.
+      */
+      data-clusters={project.clusters.join(' ')}
+      className={cn('work-card group relative', className)}
+    >
       <Link href={`/work/${project.slug}`} className="block focus-visible:outline-offset-8">
         {/* The fixed frame. The visual scales inside it and never outside it. */}
         <div className="border-border relative overflow-hidden border">
@@ -50,11 +60,23 @@ export function WorkCard({ project, aspect, sizes, headingLevel = 3, className }
               The tall card takes the 4:5 frame and the short card the 3:2. `aspect` is
               still the prop that decides, so a caller asking for a shape gets the image
               composed for it rather than that image cropped.
+
+              A project with no imagery gets the seeded placeholder at the same shape, so
+              the grid keeps its rhythm whether or not a card has a picture yet. That is
+              the state Bhavani Garments is in: cleared, named, and waiting on screenshots.
             */}
-            <ProjectImage
-              image={aspect < 1 ? project.images.cardLarge : project.images.cardSmall}
-              sizes={sizes}
-            />
+            {project.images ? (
+              <ProjectImage
+                image={aspect < 1 ? project.images.cardLarge : project.images.cardSmall}
+                sizes={sizes}
+              />
+            ) : (
+              <Placeholder
+                seed={`${project.slug}-card`}
+                aspect={aspect}
+                note={`Card visual for ${project.title}. Real photography or a screenshot of the work.`}
+              />
+            )}
           </div>
         </div>
 
