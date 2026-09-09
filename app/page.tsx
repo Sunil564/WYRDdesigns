@@ -27,9 +27,12 @@ export const metadata: Metadata = {
  * is measured from the sections above it. It cannot be built before their positions
  * are stable. Brief Phase 4.
  *
- * `SceneLayer` is the one canvas the page is allowed, mounted here rather than in a
- * section because both the hero field and the Thread stream are scenes inside it.
- * It renders nothing on the Static tier. Brief 7b.4, ADR 0020.
+ * `SceneLayer` is the page's shared canvas, mounted here rather than in a section
+ * because both the hero field and the Thread stream are scenes inside it. It renders
+ * nothing on the Static tier. Brief 7b.4, ADR 0020.
+ *
+ * It was the only canvas the page was allowed until ADR 0031, which put a second one
+ * behind S6. Two is the count. A third needs the same argument made again.
  */
 export default function Home() {
   return (

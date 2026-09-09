@@ -164,6 +164,34 @@ If that is it, the fix is padding rather than timing: enough bottom padding on t
 
 Blocks: nothing. It is a visual defect in the first two seconds of the homepage.
 
+### 20. The S6 text is not legible against the clouds
+
+Opened 2026-09-10 with ADR 0031, which added a Vanta cloud field behind `How we work` at the
+operator's request. The effect works. The text on top of it does not meet the standard the
+rest of the site meets.
+
+Measured on a text free strip inside the section, Full tier, 1440, against rendered pixels
+rather than against tokens:
+
+| text colour | worst ratio over the strip | |
+| --- | --- | --- |
+| `--color-fg` `#0a0a0c` | 2.11:1 | fails AA |
+| `--color-fg-muted` `#5e5e66` | 1.46:1 | fails AA |
+| `--color-accent-strong` `#336bc8` | 1.56:1 | fails AA |
+
+Visible as well as measured: at 768 the stacked layout puts the first step's body line on the
+dark band at the top of the field, where it nearly disappears.
+
+**`scripts/check-contrast.mjs` reports a pass on this section and will keep reporting one.**
+It reads background colours from the DOM, and a canvas has none. Do not read a green contrast
+run as covering this.
+
+Unblocks by: an operator decision between tinting the sky and cloud colours to the light
+palette, putting a scrim between the field and the content, or keeping the field clear of the
+columns the text occupies. Each is a small change. Which one is a design judgement.
+
+Blocks: WCAG AA on one section of the homepage, and plan criterion 11. Nothing else.
+
 ## Resolved
 
 ### 19. Mobile Performance is 73, and the cause is the Thread weave
