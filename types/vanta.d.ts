@@ -6,7 +6,7 @@
  * them, and because Vanta's own `destroy()` leaves the WebGL context alive.
  */
 declare module 'vanta/dist/vanta.clouds2.min' {
-  import type { Texture, WebGLRenderer } from 'three'
+  import type { Color, Texture, WebGLRenderer } from 'three'
 
   export type VantaCloudsOptions = {
     el: HTMLElement
@@ -26,6 +26,16 @@ declare module 'vanta/dist/vanta.clouds2.min' {
     scaleMobile?: number
     speed?: number
     texturePath?: string
+    /*
+      Any option whose key contains "color" becomes a vec3 uniform, through
+      `new THREE.Color(value).toVector()`. A `Color` is passed rather than a hex
+      number so the value reaches the shader unconverted, and so it can hold the
+      out of range components the sky offset needs. See CloudsScene.
+    */
+    skyColor?: Color
+    cloudColor?: Color
+    lightColor?: Color
+    backgroundColor?: Color
   }
 
   export type VantaEffect = {

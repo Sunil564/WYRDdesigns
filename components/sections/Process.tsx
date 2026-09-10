@@ -15,6 +15,14 @@ import { processSteps } from '@/content/process'
  * only. It is handed to `Section` as a background rather than mounted in here, so it
  * paints below the Thread rather than over it.
  *
+ * **It is an inverse band because of that field, and the reason is arithmetic.**
+ * ADR 0033 has the working: no cloud field bright enough to sit under this section's
+ * light ink is still visible as clouds, and the same field under inverse ink has a
+ * whole usable range. So the section flipped, and every piece of ink in it went to
+ * full `--color-fg-inverse`. Not muted, not accent: both fail against a moving
+ * ground, and the codebase already does this on the blue cluster card for the same
+ * reason. The one accent left is the scrubbed line, which is not text.
+ *
  * On desktop the connecting line draws left to right, scrubbed to scroll progress,
  * and each step's text reveals as the head reaches its node. The user controls the
  * pace, which is the point: it is the one place on the page where the Thread is
@@ -101,17 +109,22 @@ export function Process() {
   }, [reduced])
 
   return (
-    <Section id="process" label="How we work" divider background={<CloudsLayer />}>
-      <Eyebrow>How we work</Eyebrow>
+    <Section
+      id="process"
+      label="How we work"
+      variant="inverse"
+      background={<CloudsLayer />}
+    >
+      <Eyebrow variant="inverse">How we work</Eyebrow>
 
       <div ref={hostRef} className="relative mt-16" data-thread-node>
         {/* The horizontal thread through the nodes. Desktop only. */}
         <div className="absolute inset-x-0 top-3 hidden lg:block">
-          <span aria-hidden="true" className="bg-border block h-px w-full" />
+          <span aria-hidden="true" className="bg-border-inverse block h-px w-full" />
           <span
             aria-hidden="true"
             data-process-line
-            className="bg-accent absolute inset-x-0 top-0 block h-px w-full"
+            className="bg-accent-on-inverse absolute inset-x-0 top-0 block h-px w-full"
           />
         </div>
 
@@ -120,12 +133,12 @@ export function Process() {
             <li key={step.index} data-process-step data-process-node className="relative">
               <span
                 aria-hidden="true"
-                className="rounded-pill bg-fg mb-8 hidden size-1.5 lg:block"
+                className="rounded-pill bg-fg-inverse mb-8 hidden size-1.5 lg:block"
                 style={{ marginTop: '0.4rem' }}
               />
-              <p className="label text-accent-strong">{step.index}</p>
-              <h3 className="text-title text-fg mt-4 font-bold">{step.name}</h3>
-              <p className="measure text-body text-fg-muted mt-3">{step.line}</p>
+              <p className="label text-fg-inverse">{step.index}</p>
+              <h3 className="text-title text-fg-inverse mt-4 font-bold">{step.name}</h3>
+              <p className="measure text-body text-fg-inverse mt-3">{step.line}</p>
             </li>
           ))}
         </ol>

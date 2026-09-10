@@ -3,6 +3,17 @@ import { cn } from '@/lib/utils'
 
 type EyebrowProps = {
   children: ReactNode
+  /**
+   * Which ground this eyebrow sits on. Passed explicitly, never inferred from a parent,
+   * the same rule `Section` and `Placeholder` follow.
+   *
+   * It is a prop rather than a `className` override because `cn` is a plain joiner with
+   * no conflict resolution, by its own documented contract: passing `text-fg-inverse`
+   * alongside this component's own `text-fg-muted` leaves both in the attribute and lets
+   * stylesheet order decide, which is how the first version of this rendered muted on a
+   * dark band and looked like a bug in the colour rather than in the API.
+   */
+  variant?: 'default' | 'inverse'
   className?: string
 }
 
@@ -21,6 +32,21 @@ type EyebrowProps = {
  * own heading sat on. Without the row the text starts at the container edge, flush with the
  * h1 below it.
  */
-export function Eyebrow({ children, className }: EyebrowProps) {
-  return <p className={cn('label text-fg-muted', className)}>{children}</p>
+export function Eyebrow({ children, variant = 'default', className }: EyebrowProps) {
+  /*
+    Full ink on an inverse ground, not the muted token. `--color-fg-inverse-muted` needs a
+    background at or below L 0.034 to clear AA, and the cloud band runs to L 0.13. See
+    ADR 0033.
+  */
+  return (
+    <p
+      className={cn(
+        'label',
+        variant === 'inverse' ? 'text-fg-inverse' : 'text-fg-muted',
+        className,
+      )}
+    >
+      {children}
+    </p>
+  )
 }
