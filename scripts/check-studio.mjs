@@ -27,7 +27,7 @@ assertBuildFresh({ base: BASE })
 const ROUTE = '/studio'
 
 /** Every route the site links to, so the name can be checked across all of them. */
-const ALL_ROUTES = ['/', '/studio', '/work', '/work/bhavani-garments']
+const ALL_ROUTES = ['/', '/studio', '/work', '/contact']
 
 const harness = createHarness({ base: BASE })
 const { record, open } = harness

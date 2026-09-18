@@ -1,31 +1,28 @@
 /**
- * Copy for the `/work` route. Brief section 6.2 and the Phase 5 brief section 4.
+ * Copy for the `/work` route.
  *
- * Both strings are given verbatim by the Phase 5 brief, which is an operator
- * instruction and therefore a source. Nothing here is inferred, and nothing counts
- * or characterises the project list: the page says "selected projects" and leaves
- * the number to whatever `content/projects.ts` actually holds.
+ * Both visible strings are the operator's, given verbatim on 2026-09-18. The page no
+ * longer claims a selection or a case study: it says what these are, which is work in
+ * progress, and says when the fuller version arrives without promising a date.
  *
- * The filter labels are the four cluster names from `content/services.ts`, which
- * `docs/brand.md` section 4 fixes. `All` is the only added label and it is
- * structure rather than a claim.
+ * The cluster filter is gone with the case studies. Six rows do not need a filter, and
+ * the chips were wired to `project.clusters`, a field the engagement content does not
+ * carry and should not. See ADR 0034.
  */
 
 export const workPage = {
   eyebrow: 'Work',
   headline: 'Work',
-  lead: 'Selected projects. More on request.',
-  /** The label for the filter that clears the others. */
-  allLabel: 'All',
+  lead: 'Current engagements. Full case studies as they finish.',
   /**
-   * Shown in place of the grid if the project list is ever empty. Not reachable
-   * today, and written rather than left to a crash, because an empty list is a
-   * real state for a new studio.
+   * Shown in place of the list if the engagement list is ever empty. Not reachable
+   * today, and written rather than left to a crash, because an empty list is a real
+   * state for a new studio.
    */
-  empty: 'Nothing cleared for publication yet. Ask and we will show you the work.',
+  empty: 'Nothing to show here yet. Ask and we will talk you through what we are building.',
   meta: {
     title: 'Work',
     description:
-      'Selected projects from WYRD Designs across web and ecommerce, search, film and video, and exhibitions. All of it made in-house. More on request.',
+      'Current engagements at WYRD Designs across web and ecommerce, digital marketing, film and video, and events. All of it made in-house.',
   },
 } as const

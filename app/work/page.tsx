@@ -1,24 +1,24 @@
 import type { Metadata } from 'next'
 import { Section } from '@/components/layout/Section'
 import { ContactCta } from '@/components/sections/ContactCta'
-import { WorkGrid } from '@/components/sections/WorkGrid'
+import { EngagementRow } from '@/components/sections/EngagementRow'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Reveal } from '@/components/ui/Reveal'
-import { projects } from '@/content/projects'
+import { engagements } from '@/content/engagements'
 import { workPage } from '@/content/work'
 
 /**
- * `/work`. Brief 6.2.
+ * `/work`. A list of what the studio is working on now.
  *
- * A server component around one client island: the filter and the grid need state, the
- * heading and the closing call to action do not, so only the grid crosses the boundary.
+ * Entirely a server component since the filter went. Nothing on this page holds state,
+ * so nothing crosses the client boundary: the list is six rows of text.
  *
- * The Thread is not here. It is measured from the homepage's sections and belongs to that
- * page alone, per the Phase 5 brief's scope boundary. This route carries the grain and the
- * type system and nothing else from the motion work.
+ * The Thread is not here. It is measured from the homepage's sections and belongs to
+ * that page alone. This route carries the grain and the type system and nothing else
+ * from the motion work.
  *
- * The grid is exactly as long as `content/projects.ts`. It is not padded, and there is no
- * layout here that needs a particular number of cards to look right.
+ * The list is exactly as long as `content/engagements.ts`. It is not padded, and no
+ * layout here needs a particular number of rows to look right.
  */
 export const metadata: Metadata = {
   title: workPage.meta.title,
@@ -39,9 +39,21 @@ export default function WorkPage() {
         <Reveal delay={120}>
           <p className="measure text-lead text-fg-muted mt-6">{workPage.lead}</p>
         </Reveal>
-        <Reveal delay={180}>
-          <WorkGrid projects={projects} />
-        </Reveal>
+
+        {engagements.length === 0 ? (
+          <Reveal delay={180}>
+            <p className="measure text-lead text-fg-muted mt-16">{workPage.empty}</p>
+          </Reveal>
+        ) : (
+          <ul className="mt-20 flex flex-col gap-12">
+            {engagements.map((engagement, index) => (
+              <Reveal as="li" key={engagement.name} delay={Math.min(index, 3) * 60} y={24}>
+                {/* Directly under the page h1, so the client name is an h2 here. */}
+                <EngagementRow engagement={engagement} headingLevel={2} />
+              </Reveal>
+            ))}
+          </ul>
+        )}
       </Section>
       <ContactCta />
     </main>

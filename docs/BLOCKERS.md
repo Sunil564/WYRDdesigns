@@ -225,6 +225,41 @@ behind the step index or a body line, the text is not low contrast, it is invisi
 background for a mid luminance ink is the one nearest it, not the darkest one, so sampling only
 the darkest pixel understates this section by more than a point.
 
+### 21. Five of the six client names differ between the logo row and the work list
+
+Opened 2026-09-18 with ADR 0034, which put client names on `/work` and on homepage S4 as
+headings. Until today those names existed only as the accessible names on the six logo
+images, where a mismatch was invisible. Now both render on the homepage at once.
+
+| `content/clients.ts`, from the logo artwork | `content/engagements.ts`, from the operator |
+| --- | --- |
+| Bhavani Sarees | **Bhavani Garments** |
+| Vahini Pipes | **Vahini Polytech** |
+| G Monisa | **G-Monisa** |
+| SITEO | SITEO |
+| Seervi Business Expo | **Seervi Expo** |
+| Maharaja | **Maharaja Cables** |
+
+Only SITEO agrees. `G Monisa` against `G-Monisa` is hyphenation and the source file is named
+`G-Monisa.png`, so the logo manifest is probably the one that drifted. The other four are
+different words: `Sarees` against `Garments`, `Pipes` against `Polytech`, and two names that
+gained or lost a word.
+
+**These are real companies and a wrong name is the worst error the site can make.** The two
+sets are not obviously reconcilable by rule: a logo shows a brand, and the operator supplied
+business names, and either could be the right thing to print. It was not resolved by picking,
+at the operator's explicit instruction.
+
+Note that `content/projects.ts` has carried `Bhavani Garments` since ADR 0032, sourced from
+`BHAVANI-VISUAL-CASE-STUDY.md`, so that one name has disagreed with the logo row for eight
+days already and shipped that way.
+
+Unblocks by: the operator confirming, per client, which name is correct. If the logo row is
+wrong, `content/clients.ts` and `public/logos/manifest.json` both change and
+`scripts/process-assets.py` needs the corrected name so a regeneration does not undo it.
+
+Blocks: nothing technical. Everything renders. This is a correctness problem in the copy.
+
 ## Resolved
 
 ### 19. Mobile Performance is 73, and the cause is the Thread weave

@@ -800,32 +800,39 @@ for (const width of [375, 768, 1023]) {
     JSON.stringify(pointerVars),
   )
 
-  const card = page.locator('.work-card').first()
-  await card.scrollIntoViewIfNeeded()
-  // Park the pointer off the card first, or the rest state is already a hover state.
-  await page.mouse.move(4, 4)
-  await page.waitForTimeout(800)
-  const visualRest = await card.evaluate(
-    (el) => getComputedStyle(el.querySelector('.work-card-visual')).transform,
-  )
-  await card.hover()
-  await page.waitForTimeout(700)
-  const visualHover = await card.evaluate(
-    (el) => getComputedStyle(el.querySelector('.work-card-visual')).transform,
-  )
-  const titleHover = await card.evaluate(
-    (el) => getComputedStyle(el.querySelector('.work-card-title')).transform,
-  )
-  const cursorLabel = await card.evaluate((el) => {
-    const label = el.querySelector('.cursor-label')
-    return label ? label.getAttribute('data-active') : null
+  /*
+    S4 was three image cards that scaled on hover and raised a VIEW cursor. It is three
+    text rows now, and the criterion had to change with it rather than be loosened: there
+    is no visual to scale, no title to shift, and the cursor label component is deleted.
+
+    What replaces it is the property the rows do have to hold. They are inert. Nothing in
+    S4 is hoverable, focusable or clickable except the one link out to `/work`, and a row
+    that grew an affordance would be offering a case study that does not exist.
+  */
+  await page.locator('#work').scrollIntoViewIfNeeded()
+  await page.waitForTimeout(600)
+  const s4 = await page.evaluate(() => {
+    const section = document.querySelector('#work')
+    const rows = Array.from(section?.querySelectorAll('article[data-engagement]') ?? [])
+    return {
+      rows: rows.length,
+      insideRows: rows.reduce((total, row) => total + row.querySelectorAll('a, button').length, 0),
+      /* The one link out is the section's own, not a row's. */
+      sectionLinks: Array.from(section?.querySelectorAll('a') ?? []).map((a) => a.getAttribute('href')),
+      images: section?.querySelectorAll('img').length ?? 0,
+      frames: section?.querySelectorAll('.work-card, .cursor-label').length ?? 0,
+    }
   })
   record(
-    'S4 card hover scales the visual, shifts the title, and shows the VIEW label',
-    visualRest !== visualHover &&
-      /matrix\(1, 0, 0, 1, 8/.test(titleHover) &&
-      cursorLabel === 'true',
-    `visual ${visualRest} to ${visualHover}, title ${titleHover}, label ${cursorLabel}`,
+    'S4 is three inert engagement rows with one link out, no cards and no VIEW cursor',
+    s4.rows === 3 &&
+      s4.insideRows === 0 &&
+      s4.images === 0 &&
+      s4.frames === 0 &&
+      s4.sectionLinks.length === 1 &&
+      s4.sectionLinks[0] === '/work',
+    `${s4.rows} rows, ${s4.insideRows} clickable inside rows, ${s4.images} images, ` +
+      `${s4.frames} card frames, section links: ${s4.sectionLinks.join(', ') || 'none'}`,
   )
 
   await context.close()

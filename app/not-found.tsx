@@ -9,8 +9,9 @@ import { nav } from '@/content/site'
 /**
  * The 404. Phase 6.
  *
- * Serves both cases the App Router routes here: an address that matches no route, and an
- * explicit `notFound()` call, which `/work/[slug]` makes for an unknown slug.
+ * Serves an address that matches no route. It also serves any explicit `notFound()` call,
+ * though no route makes one today: `/work/[slug]` was the only one that did and it is
+ * deleted until a case study exists to put behind it. See ADR 0034.
  *
  * It replaces Next's built in error page, which shipped a bare `404` heading in inline styles
  * and put a second `<title>` into the document alongside the layout's own.

@@ -48,7 +48,6 @@ assertBuildFresh({ base: BASE })
 const ROUTES = [
   '/',
   '/work',
-  '/work/bhavani-garments',
   '/studio',
   '/contact',
   '/privacy',

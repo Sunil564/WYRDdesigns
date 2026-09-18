@@ -28,7 +28,6 @@ const ROUTES = [
   '/tokens',
   '/tiers',
   '/work',
-  '/work/bhavani-garments',
   '/studio',
   '/contact',
   '/privacy',

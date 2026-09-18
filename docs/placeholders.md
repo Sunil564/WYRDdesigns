@@ -27,16 +27,20 @@ The Bhavani Garments case study is the other way round: it is a cleared project 
 components and no longer carry `data-placeholder`, so the grep above will not find them: they
 are real image files, and the thing standing in is the photography, not the element.
 
+**Retired 2026-09-18 by ADR 0034.** S4 and `/work` are text rows now and carry no imagery at
+all, so there is nothing here standing in for a photograph. The three rows below are kept as
+the record of what was there, struck rather than deleted, because the files still exist in
+`public/work/` and will be wanted when a case study comes back.
+
 | Where | Slot | Source file | What replaces it |
 |---|---|---|---|
-| S4 lead card | `Placeholder`, 4:5 | none, `1.1.png` retired | A screenshot of the Bhavani Garments catalogue, or photography from the project |
-| S4 second card | `brand-film-manufacturing-card-small`, 3:2 | `2.2.png` | Same |
-| S4 third card | `exhibition-hospitality-card-small`, 3:2 | `3.2.png` | Same |
+| ~~S4 lead card~~ | ~~`Placeholder`, 4:5~~ | ~~none, `1.1.png` retired~~ | Gone with the card. No image in S4 |
+| ~~S4 second card~~ | ~~`brand-film-manufacturing-card-small`, 3:2~~ | ~~`2.2.png`~~ | Gone with the card |
+| ~~S4 third card~~ | ~~`exhibition-hospitality-card-small`, 3:2~~ | ~~`3.2.png`~~ | Gone with the card |
 
-Two of the three S4 cards still carry a visible `Pending clearance` tag, because those
-projects are unconfirmed and not only their visuals. Bhavani Garments no longer does: it is
-cleared, so the tag is gone and only its picture is pending. The tag disappears for the
-others when `content/projects.ts` sets `placeholder: false`.
+The `Pending clearance` tag is gone too. It was a property of the card, and the engagement
+rows carry no clearance state: the six clients on them are named with the operator's consent,
+which is a different question from a project being cleared for a written case study.
 
 **The images are atmospheric, not evidential, and the alt text is written to match.** None of
 them shows a client's product, a client's premises, or anything this studio delivered. Every
@@ -45,6 +49,12 @@ picture, which is the test applied. See `content/projects.ts` for the strings an
 `docs/image-inventory.md` for how the files were produced.
 
 ## Work
+
+**The `/work/[slug]` route is deleted as of 2026-09-18, ADR 0034.** Everything in this section
+describes a page that no longer renders. It is kept in full, and kept accurate, because the
+template returns one project at a time and this is the capture brief for the first of them.
+Nothing here carries `data-placeholder` on the live site any more, so the grep at the top of
+this file will not find it.
 
 ### Bhavani Garments, every visual pending
 
@@ -55,7 +65,6 @@ ratio, real content and never test products, nothing sensitive on screen.
 
 | Slot | Shape | Frame | What replaces it |
 |---|---|---|---|
-| Card, `/work` grid and S4 | 4:5 and 3:2 | none | Real photography or a screenshot of the work |
 | Visual 1, hero | 16:9, 4:5 below `lg` | none | The live catalogue, desktop and mobile together. Browser frame left holding the homepage, phone frame overlapping right holding a category view. Plain ground, no reflections |
 | Visual 2a | 9:16 | phone | Mobile screenshot: a category grid. Real products, real prices |
 | Visual 2b | 9:16 | phone | Mobile screenshot: a single product page with the Enquire button visible |
@@ -88,7 +97,7 @@ surviving record is worse than an unused one. See ADR 0032.
 
 | Where | Component | What is there now | What replaces it |
 |---|---|---|---|
-| `/work` grid cards | `ProjectImage` | **AI-generated, pending real photography.** One 4:5 frame per project, `x.1`. The grid is exactly as long as `content/projects.ts` and is never padded | Real photography |
+| ~~`/work` grid cards~~ | ~~`ProjectImage`~~ | Retired with the grid, ADR 0034. `/work` is text rows | Nothing. The files stay for a returning case study |
 | `/work/[slug]` hero visual | `ProjectHero` | **AI-generated, pending real photography.** Two separate frames, `x.3` landscape at 16:9 above 1024px and `x.4` portrait at 4:5 below, chosen by the browser. Not one image cropped by CSS | Real photography, both orientations |
 | `/work/[slug]` body visuals | `ProjectImage` | **AI-generated, pending real photography.** Three frames: `x.6` inset 4:3, `x.5` bleed 16:9, `x.7` inset 4:3 | Real photography, and then the count follows it |
 | `/work/[slug]` body captions | none | Nothing. A caption on a placeholder visual would be invented copy about a project nobody has described | Real captions, written from the project |

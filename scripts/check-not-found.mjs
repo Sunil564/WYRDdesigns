@@ -23,13 +23,28 @@ assertBuildFresh({ base: BASE })
 /** An address matching no route at all. */
 const UNMATCHED = '/no-such-page'
 
-/** A route that exists with a parameter that does not, so the page calls `notFound()`. */
+/**
+ * A second unmatched address, under a path prefix that does exist.
+ *
+ * It used to be the parameterised case: `/work/[slug]` existed and called `notFound()` for
+ * an unknown slug. That route is deleted, so this is now an ordinary no-match, and it is
+ * kept because a no-match under a live prefix is the shape a stale inbound link takes.
+ */
 const BAD_SLUG = '/work/no-such-project'
 
 /*
   The two paths below answer 404 by design, so their own status is not a problem to report. The
   status assertions above check it directly instead, which is where that claim belongs.
 */
+/**
+ * The control, and the reason the two assertions above mean anything.
+ *
+ * If the 404 handler were catching everything, both would pass on a completely broken site.
+ * It was `/work/bhavani-garments` until that route was deleted; `/work` is now the nearest
+ * live page and is the right control precisely because `BAD_SLUG` sits under it.
+ */
+const CONTROL = '/work'
+
 const harness = createHarness({ base: BASE, expectedErrorPaths: [UNMATCHED, BAD_SLUG] })
 const { record, open } = harness
 await harness.launch()
@@ -38,13 +53,13 @@ await harness.launch()
 {
   const { context, page } = await open(1440, 900)
   const statuses = []
-  for (const path of [UNMATCHED, BAD_SLUG, '/work/bhavani-garments']) {
+  for (const path of [UNMATCHED, BAD_SLUG, CONTROL]) {
     const response = await page.request.get(`${BASE}${path}`)
     statuses.push({ path, status: response.status() })
   }
   const unmatched = statuses.find((entry) => entry.path === UNMATCHED)
   const badSlug = statuses.find((entry) => entry.path === BAD_SLUG)
-  const real = statuses.find((entry) => entry.path === '/work/bhavani-garments')
+  const real = statuses.find((entry) => entry.path === CONTROL)
 
   record(
     'an unmatched address answers 404, not a soft 200',
@@ -52,7 +67,7 @@ await harness.launch()
     `${unmatched.path} returned ${unmatched.status}`,
   )
   record(
-    'a real route with an unknown parameter answers 404',
+    'an unmatched address under a live prefix answers 404',
     badSlug.status === 404,
     `${badSlug.path} returned ${badSlug.status}`,
   )

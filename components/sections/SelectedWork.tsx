@@ -1,25 +1,26 @@
 import { Section } from '@/components/layout/Section'
-import { WorkCard } from '@/components/sections/WorkCard'
+import { EngagementRow } from '@/components/sections/EngagementRow'
 import { Button } from '@/components/ui/Button'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Reveal } from '@/components/ui/Reveal'
+import { engagements, HOME_ENGAGEMENT_COUNT } from '@/content/engagements'
 import { workIntro } from '@/content/home'
-import { projects } from '@/content/projects'
 
 /**
- * S4. Selected work, honestly framed. Brief 6.1 S4.
+ * S4. The first three current engagements, in the same treatment `/work` uses.
  *
- * Asymmetric layout: the lead card spans 7 columns and is tall, the other two stack
- * in the remaining 5. Full width stacked on mobile.
+ * **The asymmetry is gone.** The old layout put a tall 4:5 card across seven columns
+ * with two shorter ones stacked in the remaining five, which existed to give a lead
+ * image the room a lead image needs. There are no images now, so the composition was
+ * holding space for a reason that no longer applies. Three equal rows instead.
  *
- * The headline is the honest framing the brief asks for. Nothing here manufactures
- * volume: three cards, all flagged as pending clearance, no client names, no
- * metrics. See ADR 0009 and content/projects.ts.
+ * Nothing here manufactures volume: three rows, no client metrics, no outcomes, and the
+ * link to the full list says what it is. See ADR 0034.
  */
 export function SelectedWork() {
-  const [lead, ...rest] = projects
+  const shown = engagements.slice(0, HOME_ENGAGEMENT_COUNT)
 
-  if (!lead) return null
+  if (shown.length === 0) return null
 
   return (
     <Section id="work" label="Selected work" divider>
@@ -38,19 +39,13 @@ export function SelectedWork() {
         </div>
       </Reveal>
 
-      <div className="mt-16 grid gap-[var(--gutter)] lg:grid-cols-12">
-        <Reveal className="lg:col-span-7" y={40}>
-          <WorkCard project={lead} aspect={4 / 5} sizes="(min-width: 64rem) 762px, 92vw" />
-        </Reveal>
-
-        <div className="flex flex-col gap-[var(--gutter)] lg:col-span-5">
-          {rest.map((project, index) => (
-            <Reveal key={project.slug} delay={(index + 1) * 60} y={40}>
-              <WorkCard project={project} aspect={3 / 2} sizes="(min-width: 64rem) 530px, 92vw" />
-            </Reveal>
-          ))}
-        </div>
-      </div>
+      <ul className="mt-16 flex flex-col gap-12">
+        {shown.map((engagement, index) => (
+          <Reveal as="li" key={engagement.name} delay={index * 60} y={24}>
+            <EngagementRow engagement={engagement} headingLevel={3} />
+          </Reveal>
+        ))}
+      </ul>
     </Section>
   )
 }
