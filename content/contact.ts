@@ -70,7 +70,20 @@ export const contactPage = {
     name: 'Tell us what to call you.',
     email: 'We need an email address that works, or we cannot reply.',
     message: 'Tell us a little about the project.',
-    tooFast: 'That submitted faster than a person can type. Try again.',
+    /**
+     * The timing backstop's message.
+     *
+     * Was "That submitted faster than a person can type. Try again." That sentence tells a
+     * visitor they behaved like a bot, and it was wrong every single time it appeared in
+     * production: the cause was our own hidden field resetting, not anything they did. See
+     * ADR 0036.
+     *
+     * So it takes the blame and offers the address in the same breath. A person who has
+     * just written a paragraph and been refused should not have to go looking for another
+     * way to reach us.
+     */
+    tooFast:
+      'Something went wrong at our end and that did not send. Try again, or email hello@wyrddesigns.in and it reaches the same place.',
   },
   meta: {
     title: 'Contact',

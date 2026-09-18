@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useRef, useState } from 'react'
+import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { submitContact } from '@/app/contact/actions'
 import { Chip } from '@/components/ui/Chip'
@@ -57,13 +57,55 @@ export function ContactForm() {
   const errorRef = useRef<HTMLParagraphElement | null>(null)
 
   /*
-    Stamped on mount rather than rendered on the server. A server rendered timestamp is the
-    build time on a static page, which would make every submission look hours old and defeat
-    the timing check in the direction that matters.
+    The clock lives in a ref, not only in the hidden input, and this is the whole fix.
+
+    React 19 resets the form when a form action completes, which puts every uncontrolled
+    field back to its `defaultValue`. The stamp used to be written once on mount by an
+    effect with no dependencies, so the first failed submit sent the hidden input back to
+    "0" and nothing ever wrote it again. From that point the action measured every
+    submission as instant and rejected it as too fast, for the life of the page. One typo
+    in an email address killed the form until a reload. See ADR 0036.
+
+    A ref survives the reset. The effect below writes it back into the input after every
+    action, which is what makes the second submission work.
+  */
+  const started = useRef(0)
+
+  /** Copies the clock into the hidden field. Safe to call as often as you like. */
+  const syncStamp = useCallback(() => {
+    if (startedAt.current) startedAt.current.value = String(started.current)
+  }, [])
+
+  /*
+    Started on first interaction, not on mount. Mount time measures how long the tab has
+    been open, which on a cached or restored page is not a measurement of this person at
+    all. Focus covers every field a person can reach; input covers an autofill that lands
+    without one.
+  */
+  const beginClock = useCallback(() => {
+    if (started.current !== 0) return
+    started.current = Date.now()
+    syncStamp()
+  }, [syncStamp])
+
+  /* React reset the form when the action finished, so put the stamp back into it. */
+  useEffect(() => {
+    syncStamp()
+  }, [state, syncStamp])
+
+  /*
+    A restored page carries whatever the clock held when it was put away, which measures the
+    wrong thing in both directions. Clear it and let the next interaction start it again.
+    `pageshow` fires on a bfcache restore where no effect and no mount will.
   */
   useEffect(() => {
-    if (startedAt.current) startedAt.current.value = String(Date.now())
-  }, [])
+    const restart = () => {
+      started.current = 0
+      syncStamp()
+    }
+    window.addEventListener('pageshow', restart)
+    return () => window.removeEventListener('pageshow', restart)
+  }, [syncStamp])
 
   /* Move the reader to the failure rather than leaving them at a button that did nothing. */
   useEffect(() => {
@@ -80,7 +122,19 @@ export function ContactForm() {
   }
 
   return (
-    <form action={action} className="flex flex-col gap-8" data-contact-state={state.status} noValidate>
+    <form
+      action={action}
+      className="flex flex-col gap-8"
+      data-contact-state={state.status}
+      noValidate
+      /*
+        Capture, on the form, so one pair of handlers covers every field including ones
+        added later. A person has to focus something to fill it in; the input handler is
+        for an autofill that arrives without focus.
+      */
+      onFocusCapture={beginClock}
+      onInputCapture={beginClock}
+    >
       <fieldset className="contents">
         <legend className="sr-only">{contactPage.form.legend}</legend>
 

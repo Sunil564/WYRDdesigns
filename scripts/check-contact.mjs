@@ -25,19 +25,28 @@ assertBuildFresh({ base: BASE })
 
 const ROUTE = '/contact'
 
-/** Above MIN_ELAPSED_MS in lib/contact-schema.ts, so a legitimate submit is not rejected. */
+/** Above MIN_ELAPSED_MS in lib/contact-fields.ts, so a legitimate submit is not rejected. */
 const SETTLE_MS = 3000
 
 const harness = createHarness({ base: BASE })
 const { record, open } = harness
 await harness.launch()
 
-/** Fill the form the way a person would, leaving the honeypot alone. */
+/**
+ * Fill the form the way a person would, leaving the honeypot alone, then let the clock run.
+ *
+ * **The settle is at the end, not before.** The timing clock used to start on mount, so a
+ * wait before filling was the right shape. Since ADR 0036 it starts on the first
+ * interaction with any field, which is the first `fill` below, so a wait before this
+ * function does nothing at all and four scenarios failed on that when the clock moved. The
+ * wait lives here so no call site can forget it.
+ */
 async function fillValidly(page, { email = 'someone@example.com', message = 'A real enquiry.' } = {}) {
   await page.fill('#name', 'Test Person')
   await page.fill('#company', 'Test Company')
   await page.fill('#email', email)
   await page.fill('#message', message)
+  await page.waitForTimeout(SETTLE_MS)
 }
 
 async function stateOf(page) {
@@ -124,9 +133,15 @@ await harness.checkOverflow(ROUTE)
     form.trapPresent && !form.trapVisible && !form.trapTabbable,
     `present ${form.trapPresent}, visible ${form.trapVisible}, tabbable ${form.trapTabbable}`,
   )
+  /*
+    The stamp exists and is zero until something is touched. It used to be asserted as
+    non zero on mount; since ADR 0036 the clock deliberately starts on first interaction,
+    so mount time zero is the correct state and the check that the clock actually starts
+    lives in its own scenario near the end of this file.
+  */
   record(
-    'the timing stamp is set on mount rather than at build time',
-    form.startedAt !== null && Number(form.startedAt) > 0,
+    'the timing stamp is present and starts at zero, before any interaction',
+    form.startedAt !== null && Number(form.startedAt) === 0,
     `startedAt ${form.startedAt}`,
   )
   await context.close()
@@ -136,7 +151,6 @@ await harness.checkOverflow(ROUTE)
 {
   const { context, page } = await open(1440, 900)
   await page.goto(`${BASE}${ROUTE}`, { waitUntil: 'load' })
-  await page.waitForTimeout(SETTLE_MS)
   await fillValidly(page, { email: 'not-an-email' })
   await page.click('[data-contact-submit]')
   await page.waitForTimeout(2500)
@@ -161,10 +175,11 @@ await harness.checkOverflow(ROUTE)
 {
   const { context, page } = await open(1440, 900)
   await page.goto(`${BASE}${ROUTE}`, { waitUntil: 'load' })
-  await page.waitForTimeout(SETTLE_MS)
   /* Everything but the message, which is required. */
   await page.fill('#name', 'Test Person')
   await page.fill('#email', 'someone@example.com')
+  /* After the fills, because the clock starts on the first of them. See ADR 0036. */
+  await page.waitForTimeout(SETTLE_MS)
   await page.click('[data-contact-submit]')
   await page.waitForTimeout(2500)
   const after = await stateOf(page)
@@ -186,7 +201,6 @@ await harness.checkOverflow(ROUTE)
 {
   const { context, page } = await open(1440, 900)
   await page.goto(`${BASE}${ROUTE}`, { waitUntil: 'load' })
-  await page.waitForTimeout(SETTLE_MS)
   await fillValidly(page)
 
   /*
@@ -219,7 +233,6 @@ await harness.checkOverflow(ROUTE)
 {
   const { context, page } = await open(1440, 900)
   await page.goto(`${BASE}${ROUTE}`, { waitUntil: 'load' })
-  await page.waitForTimeout(SETTLE_MS)
   await fillValidly(page)
 
   /*
@@ -263,7 +276,6 @@ await harness.checkOverflow(ROUTE)
 {
   const { context, page, problems } = await open(1440, 900)
   await page.goto(`${BASE}${ROUTE}`, { waitUntil: 'load' })
-  await page.waitForTimeout(SETTLE_MS)
   await fillValidly(page)
   await page.click('[data-contact-submit]')
   await page.waitForTimeout(5000)
@@ -339,6 +351,107 @@ await harness.checkOverflow(ROUTE)
     unexplained.length
       ? `unexplained: ${unexplained.join(', ')}`
       : `digits found: ${numbers.join(', ')}`,
+  )
+  await context.close()
+}
+
+// ------------------------------- the timing gate survives a failed submit and a restore
+{
+  /*
+    The regression this harness did not have, and the reason it shipped.
+
+    Every scenario above submits once on a freshly loaded page, so none of them could see
+    what happened on the second submission: React 19 resets the form when an action
+    completes, the hidden stamp went back to "0", and every later submit on that page was
+    rejected as too fast. The suite was 22 of 22 green for eight days while the production
+    contact form refused real enquiries. See ADR 0036.
+
+    So this submits twice on one page, with the first one deliberately failing validation,
+    which is exactly what a visitor with a typo in their email address does.
+  */
+  const { context, page } = await open(1440, 1200)
+  await page.goto(`${BASE}${ROUTE}`, { waitUntil: 'load' })
+  await page.waitForTimeout(1200)
+
+  const stamp = () =>
+    page.evaluate(() => document.querySelector('input[name="startedAt"]')?.value ?? 'MISSING')
+
+  /* The clock starts on interaction, not on load, so it is zero until something is touched. */
+  const atLoad = await stamp()
+  await page.click('#name')
+  await page.fill('#name', 'Test Person')
+  await page.waitForTimeout(200)
+  const afterTouch = await stamp()
+
+  record(
+    'the clock starts on first interaction, not on page load',
+    Number(atLoad) === 0 && Number(afterTouch) > 0,
+    `at load ${atLoad}, after touching a field ${afterTouch}`,
+  )
+
+  /* First submit fails validation: a bad email address, nothing exotic. */
+  await page.fill('#email', 'not-an-email')
+  await page.fill('#message', 'A real enquiry that will be refused for the address.')
+  await page.waitForTimeout(SETTLE_MS)
+  await page.click('button[type="submit"]')
+  await page.waitForTimeout(3000)
+
+  const afterFailure = await stamp()
+  record(
+    'the clock survives the form reset that follows a failed submit',
+    Number(afterFailure) > 0,
+    `stamp after the failed submit: ${afterFailure}`,
+  )
+
+  /* Now fix the address and submit properly, the way the visitor would. */
+  await page.fill('#email', 'someone@example.com')
+  await page.waitForTimeout(SETTLE_MS)
+  await page.click('button[type="submit"]')
+  await page.waitForTimeout(4000)
+
+  const shown = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('p'))
+      .map((node) => node.textContent.trim())
+      .filter((text) => text.length > 0),
+  )
+  const refusedAsTooFast = shown.some((text) => /did not send|faster than a person/i.test(text))
+  record(
+    'a second submission on the same page is not refused by the timing gate',
+    !refusedAsTooFast,
+    refusedAsTooFast
+      ? `refused: ${shown.find((t) => /did not send|faster than a person/i.test(t))}`
+      : 'the retry after a validation failure was accepted',
+  )
+
+  await context.close()
+}
+
+// ------------------------------------------- an unmeasurable stamp does not reject anyone
+{
+  /*
+    The gate fails open. Strip the stamp entirely, which is what an ad blocker, a stripped
+    hidden field or any future reset bug looks like from the server, and check that the
+    submission is judged on its content rather than refused for being unmeasurable.
+  */
+  const { context, page } = await open(1440, 1200)
+  await page.goto(`${BASE}${ROUTE}`, { waitUntil: 'load' })
+  await page.waitForTimeout(1200)
+  await fillValidly(page, { message: 'Submitted with the timing stamp removed entirely.' })
+  await page.evaluate(() => {
+    const el = document.querySelector('input[name="startedAt"]')
+    if (el) el.value = ''
+  })
+  await page.click('button[type="submit"]')
+  await page.waitForTimeout(4000)
+
+  const shown = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('p')).map((n) => n.textContent.trim()),
+  )
+  const refused = shown.some((text) => /did not send|faster than a person/i.test(text))
+  record(
+    'a submission with no timing stamp is not refused by the timing gate',
+    !refused,
+    refused ? 'refused with no stamp present' : 'accepted, the gate abstained as designed',
   )
   await context.close()
 }

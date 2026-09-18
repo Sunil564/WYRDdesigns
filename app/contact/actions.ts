@@ -86,9 +86,23 @@ export async function submitContact(
     return { status: 'error', fieldErrors: {}, formError: contactPage.errors.generic, values }
   }
 
-  const startedAt = Number(formData.get(FIELD.startedAt) ?? 0)
-  const elapsed = Number.isFinite(startedAt) && startedAt > 0 ? Date.now() - startedAt : 0
-  if (elapsed < MIN_ELAPSED_MS) {
+  /*
+    The timing gate, and it **fails open**.
+
+    A missing, empty, zero or unparseable stamp means the clock never started, so there is
+    nothing to measure and this check abstains. It used to do the opposite: unmeasurable
+    became `elapsed = 0`, which is below any threshold, so an absent stamp was treated as
+    proof of a bot. That is how a hidden field reset by React turned into a form that
+    refused every enquiry on the page after the first validation error, in production, for
+    eight days. See ADR 0036.
+
+    Abstaining costs almost nothing. The honeypot runs on every request and is the check
+    that actually catches bots; this one only ever existed to raise the price of clearing
+    it. A backstop that rejects real enquiries is worse than no backstop.
+  */
+  const stamp = Number(formData.get(FIELD.startedAt) ?? 0)
+  const measurable = Number.isFinite(stamp) && stamp > 0
+  if (measurable && Date.now() - stamp < MIN_ELAPSED_MS) {
     return { status: 'error', fieldErrors: {}, formError: contactPage.errors.tooFast, values }
   }
 
@@ -147,11 +161,13 @@ export async function submitContact(
     const resend = new Resend(key)
     const { error } = await resend.emails.send({
       /*
-        `onboarding@resend.dev` is Resend's own verified sender and works before a domain is
-        verified, which cannot happen while the production domain is unregistered. It moves to
-        the real domain with the same variable that unblocks BLOCKERS item 1.
+        Must be on a domain verified with Resend, or the send is refused whatever the key
+        says. `send.wyrddesigns.in` is the verified sending subdomain. This was
+        `onboarding@resend.dev`, Resend's shared sender, which was correct while the
+        production domain did not exist and is wrong now that it does: that sender only
+        delivers to the Resend account holder.
       */
-      from: 'WYRD Designs <onboarding@resend.dev>',
+      from: site.mailFrom,
       to: [site.email],
       replyTo: parsed.data.email,
       subject: subjectFor(parsed.data),

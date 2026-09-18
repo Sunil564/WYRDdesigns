@@ -22,19 +22,30 @@ export const FIELD = {
   message: 'message',
   /** Honeypot. Must arrive empty. */
   trap: 'website',
-  /** Milliseconds since epoch, stamped when the form mounts. */
+  /**
+   * Milliseconds since epoch, stamped on the visitor's first interaction with any field.
+   *
+   * Not stamped on mount. A page can sit in a tab for an hour, or come back from bfcache
+   * with its fields already filled, and in both cases a mount time measures how long the
+   * tab was open rather than how long this person spent on the form. Zero means the clock
+   * never started, which the action treats as unmeasurable rather than as instant.
+   */
   startedAt: 'startedAt',
 } as const
 
 /**
- * How long a form must be open before a submission is believable, in milliseconds.
+ * How long the form must have been in use before a submission is believable, in milliseconds.
  *
  * Paired with the honeypot rather than replacing it: a bot that clears the trap still has to
- * wait, and a bot that waits still has to leave the trap alone. Two and a half seconds is
- * below the time it takes a person to fill four fields and above the time it takes a script
- * to post one.
+ * wait, and a bot that waits still has to leave the trap alone.
+ *
+ * **The honeypot is the check that catches bots. This one is a backstop and nothing more.**
+ * It is measured from first interaction, not from page load, and when it cannot be measured
+ * the action abstains rather than rejecting. Both of those make it weaker on purpose. A
+ * timing gate that rejects a real enquiry has done more damage than the spam it prevented,
+ * which is not a hypothetical: see ADR 0036.
  */
-export const MIN_ELAPSED_MS = 2500
+export const MIN_ELAPSED_MS = 2000
 
 /** The text fields, echoed back so a failed submit can refill the form. */
 export type ContactValues = {

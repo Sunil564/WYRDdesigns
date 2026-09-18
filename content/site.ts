@@ -25,6 +25,21 @@ export const site = {
    */
   positioning: 'We build it. Then we grow it with you.',
   email: 'hello@wyrddesigns.in',
+  /**
+   * The sender the contact form posts as. Not an inbox, and never shown to a visitor.
+   *
+   * **Resend refuses a send whose `from` is not on a domain verified in the account**, with
+   * a valid key and everything else correct. The verified domain is `wyrddesigns.in` and
+   * the sending subdomain is `send.wyrddesigns.in`, so the address has to sit under that
+   * subdomain. Changing it to anything else silently stops delivery.
+   *
+   * Replies do not come here. The action sets `replyTo` to the visitor's own address, so
+   * hitting reply on an enquiry reaches the person who sent it.
+   *
+   * `RESEND_FROM` overrides it, for the case where the sending subdomain changes before
+   * this file does. Unset in normal operation.
+   */
+  mailFrom: process.env.RESEND_FROM?.trim() || 'WYRD Designs <forms@send.wyrddesigns.in>',
   /** Both numbers supplied in docs/brand.md section 1. */
   phones: ['+91 86603 33165', '+91 82176 18082'],
   location: {
