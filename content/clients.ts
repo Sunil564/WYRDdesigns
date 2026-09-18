@@ -43,7 +43,7 @@ export type Client = {
    *   SITEO      86.5%   the reference, untouched at 1.0
    *   Seervi     53.4%
    *   Maharaja   52.1%
-   *   G Monisa   47.6%
+   *   G-Monisa   47.6%
    *   Vahini     39.4%
    *   Bhavani    30.4%   the lightest, and it needs the most
    *
@@ -77,15 +77,15 @@ export const clients: Client[] = [
     scale: 1.5,
   },
   {
-    name: 'G Monisa',
+    name: 'G-Monisa',
     file: '/logos/g-monisa.webp',
     width: 113,
     height: 90,
     scale: 1.42,
   },
   {
-    name: 'Maharaja',
-    file: '/logos/maharaja.webp',
+    name: 'Maharaja Wires and Cables',
+    file: '/logos/maharaja-wires-and-cables.webp',
     width: 135,
     height: 88,
     scale: 1.39,

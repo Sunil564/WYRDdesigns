@@ -1,7 +1,7 @@
 /**
  * Projects.
  *
- * **One entry is cleared and two are placeholders.** Bhavani Garments is named, with
+ * **One entry is cleared and two are placeholders.** Bhavani Sarees is named, with
  * facts, every one of which traces to the operator's brief `BHAVANI-VISUAL-CASE-STUDY.md`
  * and to nothing else. Its visuals are still pending, which is a different thing from the
  * project being uncleared: the page says nothing about missing pictures, it just has slots
@@ -184,7 +184,7 @@ export const projects: Project[] = [
   */
   {
     slug: 'bhavani-garments',
-    title: 'Bhavani Garments',
+    title: 'Bhavani Sarees',
     statement: 'Built the shopfront. Then filled it.',
     summary:
       'Three women’s clothing showrooms in Tumkur. Strong walk-in trade, no online ' +
@@ -193,7 +193,7 @@ export const projects: Project[] = [
     services: ['Web & ecommerce development', 'Digital marketing & social', 'SEO & GEO'],
     sector: 'Retail, Tumkur, Karnataka',
     engagement: 'Catalogue website, digital marketing retainer',
-    client: 'Bhavani Garments',
+    client: 'Bhavani Sarees',
     year: null,
     outcome: null,
     placeholder: false,
@@ -267,7 +267,7 @@ export const projects: Project[] = [
         kind: 'copy',
         lines: [
           'A website nobody finds is a brochure in a drawer.',
-          'Bhavani Garments moved onto a monthly retainer after go-live.',
+          'Bhavani Sarees moved onto a monthly retainer after go-live.',
         ],
       },
       {

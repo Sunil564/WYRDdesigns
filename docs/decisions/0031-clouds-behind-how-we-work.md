@@ -1,6 +1,6 @@
 # 0031. A Vanta cloud field behind S6
 
-Status: accepted
+Status: reverted 2026-09-18, see ADR 0035
 Date: 2026-09-10
 Phase: post launch build
 

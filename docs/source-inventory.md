@@ -61,8 +61,8 @@ Derived output, written by `scripts/process-assets.py`, one ink mask per logo at
 | Client | Files | Mask size |
 |---|---|---|
 | Bhavani Sarees | `public/logos/bhavani-sarees.webp` and `.png` | 115 x 96 |
-| G Monisa | `public/logos/g-monisa.webp` and `.png` | 113 x 96 |
-| Maharaja | `public/logos/maharaja.webp` and `.png` | 135 x 96 |
+| G-Monisa | `public/logos/g-monisa.webp` and `.png` | 113 x 96 |
+| Maharaja Wires and Cables | `public/logos/maharaja-wires-and-cables.webp` and `.png` | 135 x 96 |
 | SITEO | `public/logos/siteo.webp` and `.png` | 284 x 96 |
 | Seervi Business Expo | `public/logos/seervi-business-expo.webp` and `.png` | 87 x 96 |
 | Vahini Pipes | `public/logos/vahini-pipes.webp` and `.png` | 201 x 96 |

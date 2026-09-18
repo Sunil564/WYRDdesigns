@@ -6,11 +6,19 @@
  * described in one line, and a second sentence would be invention. Three entries carry
  * no location for the same reason. See ADR 0034.
  *
- * **These are real clients, so `name` is the highest risk string on the site.** Five of
- * the six differ from the names in `content/clients.ts`, which come from the logo artwork
- * via `public/logos/manifest.json`. The names here are the operator's, supplied later and
- * describing the business rather than the mark. Both render on the homepage at once, the
- * logo row's as accessible names and these as headings. See BLOCKERS item 21.
+ * **These are real clients, so `name` is the highest risk string on the site.** Every name
+ * here is the one the operator settled on 2026-09-18, and it is the same string in
+ * `content/clients.ts`, `public/logos/manifest.json`, `scripts/process-assets.py` and
+ * `content/projects.ts`. One name per client, everywhere. If one changes, it changes in all
+ * five places or the homepage contradicts itself: these render as headings in S4 and the
+ * logo row renders the same clients as accessible names, on the same page.
+ *
+ * `scripts/process-assets.py` derives the logo filename from the name, so a rename there
+ * renames the file too. That is why the Maharaja mark is `maharaja-wires-and-cables.webp`.
+ *
+ * **Three sectors are deliberately one word.** Vahini Pipes, Seervi Business Expo and
+ * Maharaja Wires and Cables each carry their sector inside the name already, so a longer
+ * sector line would only repeat the heading beside it.
  *
  * No case studies exist behind these. There is no slug, no link, no image, no year and no
  * outcome, and none of those should be added here until a project actually finishes. When
@@ -30,14 +38,14 @@ export type Engagement = {
 
 export const engagements: Engagement[] = [
   {
-    name: 'Bhavani Garments',
+    name: 'Bhavani Sarees',
     sector: 'Retail, Tumkur, Karnataka',
     line: 'A mobile-first catalogue website with WhatsApp enquiry, and a monthly digital marketing retainer covering Instagram, local SEO and Google Business Profile.',
     services: ['Web', 'Digital marketing', 'Local SEO', 'Photography'],
   },
   {
-    name: 'Vahini Polytech',
-    sector: 'Manufacturing, pipes',
+    name: 'Vahini Pipes',
+    sector: 'Manufacturing',
     line: 'Brand website, product photography and educational video for a large pipe manufacturer.',
     services: ['Web', 'Film', 'Brand direction'],
   },
@@ -54,14 +62,14 @@ export const engagements: Engagement[] = [
     services: ['Web', 'Brand direction'],
   },
   {
-    name: 'Seervi Expo',
-    sector: 'Events, business expo',
+    name: 'Seervi Business Expo',
+    sector: 'Events',
     line: 'Digital marketing, event management software covering registration and pass handling, and the event website.',
     services: ['Web', 'Digital marketing', 'Events'],
   },
   {
-    name: 'Maharaja Cables',
-    sector: 'Manufacturing, wires and cables',
+    name: 'Maharaja Wires and Cables',
+    sector: 'Manufacturing',
     line: 'Software support across the business.',
     services: ['Web', 'Software'],
   },

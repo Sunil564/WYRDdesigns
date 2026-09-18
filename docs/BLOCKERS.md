@@ -31,7 +31,7 @@ Blocks: nothing. Both grounds now carry the real mark.
 
 ### 5. Two of three projects have no real data, and the third has no pictures
 
-**Partly closed 2026-09-10.** Bhavani Garments is cleared and named, from
+**Partly closed 2026-09-10.** Bhavani Sarees is cleared and named, from
 `BHAVANI-VISUAL-CASE-STUDY.md`: a client, a sector, a place, an engagement, and a case study
 written around its visuals. See ADR 0032. Two entries in `content/projects.ts` are still
 placeholders flagged as such, and no client name, outcome metric, or year is invented on
@@ -176,91 +176,58 @@ If that is it, the fix is padding rather than timing: enough bottom padding on t
 
 Blocks: nothing. It is a visual defect in the first two seconds of the homepage.
 
+## Resolved
+
+### 21. Five of the six client names differed between the logo row and the work list
+
+**Closed 2026-09-18.** The operator settled one name per client and it is now the same string
+in `content/clients.ts`, `public/logos/manifest.json`, `scripts/process-assets.py`,
+`content/projects.ts` and `content/engagements.ts`.
+
+| was, in the logo row | was, in the work list | settled on |
+| --- | --- | --- |
+| Bhavani Sarees | Bhavani Garments | **Bhavani Sarees** |
+| Vahini Pipes | Vahini Polytech | **Vahini Pipes** |
+| G Monisa | G-Monisa | **G-Monisa** |
+| SITEO | SITEO | SITEO |
+| Seervi Business Expo | Seervi Expo | **Seervi Business Expo** |
+| Maharaja | Maharaja Cables | **Maharaja Wires and Cables** |
+
+`content/projects.ts` had carried `Bhavani Garments` since ADR 0032 and shipped that way for
+eight days. It says `Bhavani Sarees` now.
+
+**The logo file was renamed with the client.** `scripts/process-assets.py` derives the
+filename from the name, `name.lower().replace(" ", "-")`, so leaving `maharaja.webp` in place
+would have meant the next regeneration writing `maharaja-wires-and-cables.webp` beside it and
+repointing the manifest, silently. The file is renamed now and a regeneration reproduces it.
+
+**Flagged, and not a blocker: the Maharaja artwork does not carry the words.** The mark reads
+`Maharaja` alone, in script with a crown, and has no `Wires and Cables` in it at any casing.
+So there is nothing in the artwork to agree or disagree with, and the longer name is a
+business name rather than a reading of the logo. Same shape for `G-Monisa`, whose mark sets a
+circled `G` above `MONISA` in caps, with no hyphen drawn anywhere. Both are the operator's
+call and both are recorded here rather than left to be rediscovered from a logo file.
+
 ### 20. The S6 text is not legible against the clouds
 
-Opened 2026-09-10 with ADR 0031, which added a Vanta cloud field behind `How we work` at the
-operator's request. The effect works. The text on top of it does not meet the standard the
-rest of the site meets.
+**Closed 2026-09-18 by removing the cloud field.** Not solved: removed. The section is plain
+again and every pair in it is back to the 18:1 the rest of the site runs at.
 
-Measured on a text free strip inside the section, Full tier, 1440, against rendered pixels
-rather than against tokens:
+It was open for eight days across three attempts. Opened 2026-09-10 with ADR 0031, which put
+a Vanta field behind `How we work` at the operator's request. Closed the same day by ADR 0033,
+which made S6 a dark band and took the body line to 8.08:1. Reopened 2026-09-18 when that band
+was reverted on composition grounds. Remeasured that day at **1.00:1** on two of the three
+inks, which is not low contrast, it is invisible: the field holds pixels at exactly the ink's
+own luminance, and where they landed behind the eyebrow, a body line or a step index, that
+text was gone.
 
-| text colour | worst ratio over the strip | |
-| --- | --- | --- |
-| `--color-fg` `#0a0a0c` | 2.11:1 | fails AA |
-| `--color-fg-muted` `#5e5e66` | 1.46:1 | fails AA |
-| `--color-accent-strong` `#336bc8` | 1.56:1 | fails AA |
+The thing that settled it was asking whether the invisible element was text or decoration.
+Every one of them was text. `--color-fg-muted` is the `How we work` eyebrow and all four step
+lines, `--color-accent-strong` is the step index. The only decoration in the section is the
+scrubbed rule, which uses `bg-accent` and was never the problem.
 
-Visible as well as measured: at 768 the stacked layout puts the first step's body line on the
-dark band at the top of the field, where it nearly disappears.
-
-**`scripts/check-contrast.mjs` reports a pass on this section and will keep reporting one.**
-It reads background colours from the DOM, and a canvas has none. Do not read a green contrast
-run as covering this.
-
-Unblocks by: an operator decision between tinting the sky and cloud colours to the light
-palette, putting a scrim between the field and the content, or keeping the field clear of the
-columns the text occupies. Each is a small change. Which one is a design judgement.
-
-Blocks: WCAG AA on one section of the homepage, and plan criterion 11. Nothing else.
-
-Closed 2026-09-10 by ADR 0033, which made S6 an inverse band, and **reopened 2026-09-18** when
-that band was reverted at the operator's call. ADR 0033 keeps the arithmetic: tinting the field
-to the light palette is impossible rather than difficult, and a scrim is the same solve wearing
-a different hat. The two routes still open are a layout change that keeps the field clear of the
-text, or a different treatment of the ink.
-
-Remeasured 2026-09-18 on the reverted build, right gutter of the section at 1440, Full tier,
-no text in the strip. It is worse than the 2026-09-10 table above, which sampled a narrower
-strip:
-
-| text colour | worst over the strip | against |
-| --- | --- | --- |
-| `--color-fg` | 1.32:1 | rgb(0,37,87) |
-| `--color-fg-muted` | **1.00:1** | rgb(36,99,145) |
-| `--color-accent-strong` | **1.00:1** | rgb(55,114,160) |
-
-**1.00:1 means the field holds pixels at exactly the ink's own luminance.** Where those land
-behind the step index or a body line, the text is not low contrast, it is invisible. The worst
-background for a mid luminance ink is the one nearest it, not the darkest one, so sampling only
-the darkest pixel understates this section by more than a point.
-
-### 21. Five of the six client names differ between the logo row and the work list
-
-Opened 2026-09-18 with ADR 0034, which put client names on `/work` and on homepage S4 as
-headings. Until today those names existed only as the accessible names on the six logo
-images, where a mismatch was invisible. Now both render on the homepage at once.
-
-| `content/clients.ts`, from the logo artwork | `content/engagements.ts`, from the operator |
-| --- | --- |
-| Bhavani Sarees | **Bhavani Garments** |
-| Vahini Pipes | **Vahini Polytech** |
-| G Monisa | **G-Monisa** |
-| SITEO | SITEO |
-| Seervi Business Expo | **Seervi Expo** |
-| Maharaja | **Maharaja Cables** |
-
-Only SITEO agrees. `G Monisa` against `G-Monisa` is hyphenation and the source file is named
-`G-Monisa.png`, so the logo manifest is probably the one that drifted. The other four are
-different words: `Sarees` against `Garments`, `Pipes` against `Polytech`, and two names that
-gained or lost a word.
-
-**These are real companies and a wrong name is the worst error the site can make.** The two
-sets are not obviously reconcilable by rule: a logo shows a brand, and the operator supplied
-business names, and either could be the right thing to print. It was not resolved by picking,
-at the operator's explicit instruction.
-
-Note that `content/projects.ts` has carried `Bhavani Garments` since ADR 0032, sourced from
-`BHAVANI-VISUAL-CASE-STUDY.md`, so that one name has disagreed with the logo row for eight
-days already and shipped that way.
-
-Unblocks by: the operator confirming, per client, which name is correct. If the logo row is
-wrong, `content/clients.ts` and `public/logos/manifest.json` both change and
-`scripts/process-assets.py` needs the corrected name so a regeneration does not undo it.
-
-Blocks: nothing technical. Everything renders. This is a correctness problem in the copy.
-
-## Resolved
+The field comes back when the contrast is solved, not before. ADR 0035 records what solving it
+would take and keeps the arithmetic.
 
 ### 19. Mobile Performance is 73, and the cause is the Thread weave
 
@@ -327,7 +294,7 @@ It could not close on its own terms. It was a request to another company for a n
 
 Closed by the operator, 2026-08-21: the six client marks are cleared for display on our site.
 
-They are Bhavani Sarees, G Monisa, Maharaja, SITEO, Seervi Business Expo and Vahini Pipes, rendering in section 5 of the homepage from `content/clients.ts`, five as muted masks and SITEO as original artwork. This item was never about WYRD's own mark, and nothing about that mark being supplied answered it. See ADR 0002 section 6.
+They are Bhavani Sarees, G-Monisa, Maharaja Wires and Cables, SITEO, Seervi Business Expo and Vahini Pipes, rendering in section 5 of the homepage from `content/clients.ts`, five as muted masks and SITEO as original artwork. This item was never about WYRD's own mark, and nothing about that mark being supplied answered it. See ADR 0002 section 6.
 
 `docs/brand.md`'s line about named case studies pending clearance still stands and is a separate thing: it governs project detail on `/work`, which is item 5, not the logo row.
 

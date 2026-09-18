@@ -10,7 +10,7 @@ Kept current at the end of every phase. Updated through Phase 6.
 
 Note that the grep does not find every stand-in. The two uncleared projects render real generated files rather than `Placeholder` components, so nothing on those pages carries the attribute. Something can be a stand-in without being a `Placeholder`, and this register is the list, not the attribute.
 
-The Bhavani Garments case study is the other way round: it is a cleared project whose visuals are all pending, so every slot on it is a real `Placeholder` and the grep finds all nine.
+The Bhavani Sarees case study is the other way round: it is a cleared project whose visuals are all pending, so every slot on it is a real `Placeholder` and the grep finds all nine.
 
 ## Brand
 
@@ -56,7 +56,7 @@ template returns one project at a time and this is the capture brief for the fir
 Nothing here carries `data-placeholder` on the live site any more, so the grep at the top of
 this file will not find it.
 
-### Bhavani Garments, every visual pending
+### Bhavani Sarees, every visual pending
 
 Nine slots, all `Placeholder`, all carrying `data-placeholder` with the note reproduced here.
 The page is fully reviewable in this state: if it only works once the screenshots land, the

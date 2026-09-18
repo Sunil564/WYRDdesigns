@@ -68,8 +68,8 @@ MASK_H = 96
 # owners drew them. See ADR 0027.
 CLIENTS = [
     ("Bhavani Sarees", "Bhavani logo.png", 1.00),
-    ("G Monisa", "G-Monisa.png", 0.94),
-    ("Maharaja", "Maharaja_Logo.png", 0.92),
+    ("G-Monisa", "G-Monisa.png", 0.94),
+    ("Maharaja Wires and Cables", "Maharaja_Logo.png", 0.92),
     ("SITEO", "SITEO LOGO.jpeg", 0.74),
     ("Seervi Business Expo", "Seervi EXPO - Copy.png", 1.00),
     ("Vahini Pipes", "Vaihini.png", 0.86),

@@ -23,15 +23,6 @@ type SectionProps = {
   bleed?: boolean
   /** A top hairline is how one section announces itself against the last. */
   divider?: boolean
-  /**
-   * A layer painted behind this section's content, clipped to the section box.
-   *
-   * It goes on a wrapper rather than inside the section, so it sits in the
-   * positioned-auto layer with the dark grounds: ground, Thread at z-2, content at
-   * z-10. A background handed to a section is therefore crossed by the Thread and
-   * never covers it. Used by S6. See ADR 0031.
-   */
-  background?: ReactNode
   className?: string
   innerClassName?: string
 }
@@ -57,7 +48,6 @@ export function Section({
   rhythm = true,
   bleed = false,
   divider = false,
-  background,
   className,
   innerClassName,
 }: SectionProps) {
@@ -75,22 +65,7 @@ export function Section({
     </section>
   )
 
-  if (variant === 'light') {
-    if (!background) return inner
-
-    /*
-      Same layering argument as the inverse block below, one layer further out. The
-      wrapper is `relative` with no z-index, so it creates no stacking context and
-      the background paints in the positioned-auto layer: behind the Thread at z-2
-      and behind the content at z-10, clipped to the section box.
-    */
-    return (
-      <div data-section-background className="relative overflow-hidden">
-        {background}
-        {inner}
-      </div>
-    )
-  }
+  if (variant === 'light') return inner
 
   return (
     /*
@@ -110,7 +85,6 @@ export function Section({
     <div data-inverse-band className="bg-bg-inverse relative overflow-hidden">
       {/* The light grain, so a dark block carries texture rather than flat ink. */}
       <span aria-hidden="true" className="grain-inverse" />
-      {background}
       {inner}
     </div>
   )

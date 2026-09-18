@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from 'react'
 import { Section } from '@/components/layout/Section'
-import { CloudsLayer } from '@/components/motion/CloudsLayer'
 import { DUR, EASE, loadGsap } from '@/components/motion/gsap'
 import { useReducedMotion } from '@/components/motion/useReducedMotion'
 import { Eyebrow } from '@/components/ui/Eyebrow'
@@ -10,10 +9,6 @@ import { processSteps } from '@/content/process'
 
 /**
  * S6. Four steps, horizontal on desktop, connected by the Thread. Brief 6.1 S6.
- *
- * Since ADR 0031 the section also carries a cloud field behind it, on the Full tier
- * only. It is handed to `Section` as a background rather than mounted in here, so it
- * paints below the Thread rather than over it.
  *
  * On desktop the connecting line draws left to right, scrubbed to scroll progress,
  * and each step's text reveals as the head reaches its node. The user controls the
@@ -101,7 +96,7 @@ export function Process() {
   }, [reduced])
 
   return (
-    <Section id="process" label="How we work" divider background={<CloudsLayer />}>
+    <Section id="process" label="How we work" divider>
       <Eyebrow>How we work</Eyebrow>
 
       <div ref={hostRef} className="relative mt-16" data-thread-node>
