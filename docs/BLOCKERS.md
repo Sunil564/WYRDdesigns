@@ -176,28 +176,56 @@ If that is it, the fix is padding rather than timing: enough bottom padding on t
 
 Blocks: nothing. It is a visual defect in the first two seconds of the homepage.
 
+### 20. The S6 text is not legible against the clouds
+
+Opened 2026-09-10 with ADR 0031, which added a Vanta cloud field behind `How we work` at the
+operator's request. The effect works. The text on top of it does not meet the standard the
+rest of the site meets.
+
+Measured on a text free strip inside the section, Full tier, 1440, against rendered pixels
+rather than against tokens:
+
+| text colour | worst ratio over the strip | |
+| --- | --- | --- |
+| `--color-fg` `#0a0a0c` | 2.11:1 | fails AA |
+| `--color-fg-muted` `#5e5e66` | 1.46:1 | fails AA |
+| `--color-accent-strong` `#336bc8` | 1.56:1 | fails AA |
+
+Visible as well as measured: at 768 the stacked layout puts the first step's body line on the
+dark band at the top of the field, where it nearly disappears.
+
+**`scripts/check-contrast.mjs` reports a pass on this section and will keep reporting one.**
+It reads background colours from the DOM, and a canvas has none. Do not read a green contrast
+run as covering this.
+
+Unblocks by: an operator decision between tinting the sky and cloud colours to the light
+palette, putting a scrim between the field and the content, or keeping the field clear of the
+columns the text occupies. Each is a small change. Which one is a design judgement.
+
+Blocks: WCAG AA on one section of the homepage, and plan criterion 11. Nothing else.
+
+Closed 2026-09-10 by ADR 0033, which made S6 an inverse band, and **reopened 2026-09-18** when
+that band was reverted at the operator's call. ADR 0033 keeps the arithmetic: tinting the field
+to the light palette is impossible rather than difficult, and a scrim is the same solve wearing
+a different hat. The two routes still open are a layout change that keeps the field clear of the
+text, or a different treatment of the ink.
+
+Remeasured 2026-09-18 on the reverted build, right gutter of the section at 1440, Full tier,
+no text in the strip. It is worse than the 2026-09-10 table above, which sampled a narrower
+strip:
+
+| text colour | worst over the strip | against |
+| --- | --- | --- |
+| `--color-fg` | 1.32:1 | rgb(0,37,87) |
+| `--color-fg-muted` | **1.00:1** | rgb(36,99,145) |
+| `--color-accent-strong` | **1.00:1** | rgb(55,114,160) |
+
+**1.00:1 means the field holds pixels at exactly the ink's own luminance.** Where those land
+behind the step index or a body line, the text is not low contrast, it is invisible. The worst
+background for a mid luminance ink is the one nearest it, not the darkest one, so sampling only
+the darkest pixel understates this section by more than a point.
+
 ## Resolved
-
-### 20. The S6 text was not legible against the clouds
-
-Closed 2026-09-10 by ADR 0033: the section is an inverse band and the field is bounded below
-the luminance its ink needs. Worst measured ratio went from **1.46:1 to 8.08:1** at 1440 and
-**8.35:1** at 412, on a text free strip at the bright end of the field.
-
-The recommendation this item carried, tinting the field to the light palette, turned out to be
-impossible rather than merely difficult, and the arithmetic is worth keeping. Solving 4.5:1 for
-the background puts the floor at grey 216 for `--color-fg-muted` and grey 240 for
-`--color-accent-strong`. A cloud field confined to the fifteen values between grey 240 and
-white is not a cloud field. A scrim is the same solve wearing a different hat: 92 percent white
-to clear grey 240.
-
-Inverting it gives a ceiling of grey 113 against `--color-fg-inverse`, which is a usable range,
-so the section flipped and every ink in it went to full inverse strength.
-
-**The measurement that closed this was wrong the first time and said 1.00:1.** It sampled the
-whole band, and on a dark ground the brightest pixel in any sample containing text is the text.
-The field has to be measured where no ink is.
-
 
 ### 19. Mobile Performance is 73, and the cause is the Thread weave
 

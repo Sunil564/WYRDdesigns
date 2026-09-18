@@ -108,14 +108,9 @@ export function Section({
       the block instead of hiding behind it.
     */
     <div data-inverse-band className="bg-bg-inverse relative overflow-hidden">
-      {/*
-        Background first, then grain. Both sit in the same paint layer, so tree order is
-        what decides: the grain has to come second for the texture to lie over a moving
-        ground rather than under it. Reversed, a canvas hides the grain wherever it draws.
-      */}
-      {background}
       {/* The light grain, so a dark block carries texture rather than flat ink. */}
       <span aria-hidden="true" className="grain-inverse" />
+      {background}
       {inner}
     </div>
   )
