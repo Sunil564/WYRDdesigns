@@ -103,7 +103,10 @@ Separately, and it would have bitten on the next deploy regardless.
 
 `RESEND_API_KEY` is read in `app/contact/actions.ts`, in `resendKey()`, from `process.env`
 **at call time rather than at module load**, which is correct and means the deployed value
-is the one used.
+is the one used. It was never the problem: a 403 about domain verification is an
+authorization decision about the sender, so the request reached Resend and authenticated.
+A missing key returns `errors.unconfigured` before any network call, and an invalid one
+returns 401.
 
 The `from` address was `WYRD Designs <onboarding@resend.dev>`. That is Resend's shared
 sender, it was the right choice while no domain existed, and it only delivers to the Resend
@@ -111,13 +114,46 @@ account holder. With `wyrddesigns.in` verified and `send.wyrddesigns.in` as the 
 subdomain, **Resend refuses any send whose `from` is not on the verified domain**, valid key
 or not.
 
-The sender moves to `site.mailFrom`, `WYRD Designs <forms@send.wyrddesigns.in>`, defined
-once in `content/site.ts` next to the recipient and overridable with `RESEND_FROM`. The
-recipient is unchanged at `site.email`, `hello@wyrddesigns.in`, and `replyTo` is still the
-visitor's own address, so replying to an enquiry reaches the person who sent it.
+The sender moves to `site.mailFrom`, defined once in `content/site.ts` next to the
+recipient and overridable with `RESEND_FROM`. The recipient is unchanged at `site.email`,
+`hello@wyrddesigns.in`, and `replyTo` is still the visitor's own address, so replying to an
+enquiry reaches the person who sent it.
 
-`forms@` is a choice, not a requirement. Any local part works as long as the domain is
-`send.wyrddesigns.in`.
+`forms@` is a choice, not a requirement. Any local part works as long as the domain is one
+Resend has verified.
+
+### The sender was wrong twice, and the second time is the one worth writing down
+
+It shipped first as `forms@send.wyrddesigns.in`, on the understanding that `wyrddesigns.in`
+was verified with `send.wyrddesigns.in` as a sending subdomain. Every submission on that
+deploy came back:
+
+```
+statusCode: 403,
+message: 'The send.wyrddesigns.in domain is not verified. Please, add and verify your
+          domain on https://resend.com/domains',
+name: 'validation_error'
+```
+
+**Resend's "Enable Sending" step adds CNAME records named `send` and `rsend`. Those
+authorise sending for the apex domain. They do not create a verifiable domain entry for
+`send.wyrddesigns.in`.** A subdomain sender needs its own entry in the Domains page with
+its own DKIM, SPF and MX records; verifying the apex confers nothing on it. The record
+names look like a subdomain because they are the hostnames the records live at, which is
+where the reading went wrong.
+
+The account has exactly one domain entry, `wyrddesigns.in`, verified. So the sender is
+`forms@wyrddesigns.in` on the apex.
+
+Two things this is worth remembering for:
+
+1. **The failure is a 403 at the API, not a bounce.** Nothing is queued, nothing retries,
+   and the visitor sees the generic error. An unverified sender is not a delivery problem
+   that resolves itself, it is a refusal at the door.
+2. **The error names the exact domain it rejected**, which is what made this a two minute
+   diagnosis from the runtime logs rather than a guess between the key and the sender. The
+   log line exists because the action logs the Resend error object rather than swallowing
+   it, which is the same instinct as never reporting a success it did not achieve.
 
 ## Consequences
 

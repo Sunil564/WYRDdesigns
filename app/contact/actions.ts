@@ -161,11 +161,10 @@ export async function submitContact(
     const resend = new Resend(key)
     const { error } = await resend.emails.send({
       /*
-        Must be on a domain verified with Resend, or the send is refused whatever the key
-        says. `send.wyrddesigns.in` is the verified sending subdomain. This was
-        `onboarding@resend.dev`, Resend's shared sender, which was correct while the
-        production domain did not exist and is wrong now that it does: that sender only
-        delivers to the Resend account holder.
+        Must be on a domain registered and verified with Resend, or the send is refused
+        whatever the key says. That is the apex, `wyrddesigns.in`, which is the account's
+        only domain entry. See the note on `site.mailFrom` for why it is not the `send.`
+        subdomain, which cost a deploy.
       */
       from: site.mailFrom,
       to: [site.email],

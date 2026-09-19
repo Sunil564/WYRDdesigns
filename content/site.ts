@@ -28,18 +28,25 @@ export const site = {
   /**
    * The sender the contact form posts as. Not an inbox, and never shown to a visitor.
    *
-   * **Resend refuses a send whose `from` is not on a domain verified in the account**, with
-   * a valid key and everything else correct. The verified domain is `wyrddesigns.in` and
-   * the sending subdomain is `send.wyrddesigns.in`, so the address has to sit under that
-   * subdomain. Changing it to anything else silently stops delivery.
+   * **Resend refuses a send whose `from` is not on a domain registered and verified in the
+   * account**, with a valid key and everything else correct. The account has exactly one
+   * domain entry, `wyrddesigns.in`, so the address sits on the apex. Anything else stops
+   * delivery, and it stops it with a 403 rather than a bounce.
+   *
+   * **It is not `send.wyrddesigns.in`.** Resend's "Enable Sending" step adds CNAMEs named
+   * `send` and `rsend`, which authorise sending for the apex domain. They do not create a
+   * verifiable domain entry for `send.wyrddesigns.in`, and a subdomain would need its own
+   * entry with its own records. This was `forms@send.wyrddesigns.in` for one deploy and
+   * every submission came back `403 validation_error, The send.wyrddesigns.in domain is
+   * not verified`. See ADR 0036.
    *
    * Replies do not come here. The action sets `replyTo` to the visitor's own address, so
    * hitting reply on an enquiry reaches the person who sent it.
    *
-   * `RESEND_FROM` overrides it, for the case where the sending subdomain changes before
-   * this file does. Unset in normal operation.
+   * `RESEND_FROM` overrides it, for the case where the verified domain changes before this
+   * file does. Unset in normal operation.
    */
-  mailFrom: process.env.RESEND_FROM?.trim() || 'WYRD Designs <forms@send.wyrddesigns.in>',
+  mailFrom: process.env.RESEND_FROM?.trim() || 'WYRD Designs <forms@wyrddesigns.in>',
   /** Both numbers supplied in docs/brand.md section 1. */
   phones: ['+91 86603 33165', '+91 82176 18082'],
   location: {
