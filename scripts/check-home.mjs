@@ -191,7 +191,7 @@ async function walk(page, step = 600, settle = 220) {
   )
   record(
     'the only numbers on the page are the step and cluster indexes, the phone numbers, and the year',
-    numbers.every((value) => /^(86603|33165|82176|18082|91|20\d\d)$/.test(value)),
+    numbers.every((value) => /^(63619|61213|82176|18082|91|20\d\d)$/.test(value)),
     numbers.join(' | '),
   )
 

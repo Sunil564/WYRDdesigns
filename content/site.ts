@@ -47,8 +47,18 @@ export const site = {
    * file does. Unset in normal operation.
    */
   mailFrom: process.env.RESEND_FROM?.trim() || 'WYRD Designs <forms@wyrddesigns.in>',
-  /** Both numbers supplied in docs/brand.md section 1. */
-  phones: ['+91 86603 33165', '+91 82176 18082'],
+  /**
+   * Contact numbers, in the order they render.
+   *
+   * The first was `+91 86603 33165` and was replaced by the operator on 2026-09-19.
+   * **`docs/brand.md` section 1 still carries the old one and is not edited**, because a
+   * supplied document is a record of what was supplied. See ADR 0037, which is where that
+   * conflict is resolved. The second number is unchanged and still traces to brand.md.
+   *
+   * Grouped `+91 XXXXX XXXXX` to match its sibling. The formatting is display only: every
+   * render strips whitespace for the `tel:` href.
+   */
+  phones: ['+91 63619 61213', '+91 82176 18082'],
   location: {
     city: 'Bangalore',
     region: 'Karnataka',

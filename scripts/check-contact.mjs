@@ -330,7 +330,9 @@ await harness.checkOverflow(ROUTE)
     carries more numbers than any other, so reviewing them by eye is exactly where a stray
     figure would survive.
 
-      91, 86603, 33165, 82176, 18082   the two phone numbers, docs/brand.md section 1
+      91, 63619, 61213, 82176, 18082   the two phone numbers. The second is brand.md
+                                       section 1; the first was replaced by the operator,
+                                       see ADR 0037
       4, 1, 3                          the timeline options, brief 6.5 verbatim
       25,000 / 1,00,000 / 5,00,000     INR brackets. 25,000 and 5,00,000 are the deal size
                                        range in docs/brand.md section 5. 1,00,000 is an
@@ -339,7 +341,7 @@ await harness.checkOverflow(ROUTE)
                                        not conversions. The one unsourced set on the route
   */
   const allowed = new Set([
-    '91', '86603', '33165', '82176', '18082',
+    '91', '63619', '61213', '82176', '18082',
     '4', '1', '3',
     '25,000', '1,00,000', '5,00,000',
     '1,000', '5,000',

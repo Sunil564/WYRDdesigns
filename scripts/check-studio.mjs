@@ -81,7 +81,7 @@ await harness.checkOverflow(ROUTE)
     structure rather than claims, and the phone numbers are verified facts from brand.md, so
     those are the only digits allowed to reach the page.
   */
-  const allowed = /^(01|02|03|04|91|86603|33165|82176|18082)$/
+  const allowed = /^(01|02|03|04|91|63619|61213|82176|18082)$/
   const unexplained = body.numbers.filter((value) => !allowed.test(value))
   record(
     'no founding year, headcount, or years in business is rendered',
